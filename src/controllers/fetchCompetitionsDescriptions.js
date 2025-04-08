@@ -32,12 +32,12 @@ async function fetchTournamentDescription(tournamentName) {
 
         const responseText = response.data.candidates[0].content.parts[0].text;
         const extractedJson = responseText.match(/```json\n([\s\S]+?)\n```/);
-        const jsonData = extractedJson ? JSON.parse(extractedJson[1]) : { description: "Sin descripción" };
+        const jsonData = extractedJson ? JSON.parse(extractedJson[1]) : { description: null };
 
-        return jsonData.description || "Sin descripción";
+        return jsonData.description || null;
     } catch (error) {
         console.error(`❌ Error obteniendo datos de Gemini para ${tournamentName}:`, error.message);
-        return "Sin descripción";
+        return null;
     }
 }
 
@@ -50,8 +50,8 @@ async function updateTournamentDescriptions() {
         const connection = await mysql.createConnection(dbConfig);
 
         try {
-            // Obtener torneos con "Sin descripción"
-            const [tournaments] = await connection.execute("SELECT id, name FROM competitions WHERE description = 'Sin descripción'");
+            // Obtener torneos con descripción NULL
+            const [tournaments] = await connection.execute("SELECT id, name FROM competitions WHERE description IS NULL");
             remainingTournaments = tournaments.length;
             console.log(`🔍 Torneos encontrados: ${remainingTournaments}`);
 
@@ -61,7 +61,7 @@ async function updateTournamentDescriptions() {
 
                 // Actualizar la base de datos con la nueva descripción
                 await connection.execute("UPDATE competitions SET description = ? WHERE id = ?", [description, id]);
-                console.log(`✅ Actualizado torneo '${name}' con descripción: ${description}`);
+                console.log(`✅ Actualizado torneo '${name}' con descripción: ${description || 'NULL'}`);
 
                 // Pequeño retraso entre solicitudes para evitar bloqueos
                 await new Promise(resolve => setTimeout(resolve, 1000));
