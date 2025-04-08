@@ -1,0 +1,64 @@
+{
+    "competitions": [
+        {
+            "id": 13366,
+            "name": "ESL Challenger League Season 47: North America",
+            "sportAlias": "cs2",
+            "startDate": 1707782400000,
+            "endDate": 1717891200000,
+            "prizePoolUSD": 80000,
+            "location": "North America",
+            "organizer": "FACEIT",
+            "type": "Online",
+            "fixtureCount": 306,
+            "derivatives": {
+                "series": "ESL Challenger League North America",
+                "season": "47:"
+            },
+            "metadata": {
+                "liquipediaTier": "B"
+            },
+            "streams": []
+        },
+        {
+            "id": 13367,
+            "name": "ESL Challenger League Season 46: North America",
+            "sportAlias": "cs2",
+            "startDate": 1692057600000,
+            "endDate": 1702166400000,
+            "prizePoolUSD": 100000,
+            "location": "North America",
+            "organizer": "FACEIT",
+            "type": "Online",
+            "fixtureCount": 146,
+            "derivatives": {
+                "series": "ESL Challenger League North America",
+                "season": "46:"
+            },
+            "metadata": {
+                "liquipediaTier": "B"
+            },
+            "streams": []
+        },
+        {
+            "id": 13369,
+            "name": "ESL Challenger League Season 46: Asia-Pacific",
+            "sportAlias": "cs2",
+            "startDate": 1692057600000,
+            "endDate": 1702166400000,
+            "prizePoolUSD": 40000,
+            "location": "Asia Pacific",
+            "organizer": "FACEIT",
+            "type": "Online",
+            "fixtureCount": 14,
+            "derivatives": {
+                "series": "ESL Challenger League Asia-Pacific",
+                "season": "46:"
+            },
+            "metadata": {
+                "liquipediaTier": "B"
+            },
+            "streams": []
+        }
+    ]
+}
