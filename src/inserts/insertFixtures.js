@@ -40,6 +40,7 @@ async function saveFixturesToDB(fixtures) {
             status = VALUES(status),
             tie = VALUES(tie),
             winnerId = VALUES(winnerId);
+            participants = VALUES(participants);
     `;
 
     const participantQuery = `
@@ -77,7 +78,8 @@ async function saveFixturesToDB(fixtures) {
                 fixture.startTime,
                 fixture.status,
                 fixture.tie,
-                fixture.winnerId
+                fixture.winnerId,
+                JSON.stringify(fixture.participants), // Convertimos el array "participants" a JSON
             ]);
 
             // Guardar participantes
