@@ -8,7 +8,7 @@ const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    database: cprocess.env.DB_NAME,
 };
 
 async function fetchFixtures() {
@@ -25,23 +25,22 @@ async function saveFixturesToDB(fixtures) {
     const connection = await mysql.createConnection(dbConfig);
     
     const fixtureQuery = `
-    INSERT INTO fixtures (id, competition_id, competition_name, endTime, format_name, format_value, scheduledStartTime, sport_alias, sport_name, startTime, status, tie, winnerId, participants)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ON DUPLICATE KEY UPDATE
-        competition_id = VALUES(competition_id),
-        competition_name = VALUES(competition_name),
-        endTime = VALUES(endTime),
-        format_name = VALUES(format_name),
-        format_value = VALUES(format_value),
-        scheduledStartTime = VALUES(scheduledStartTime),
-        sport_alias = VALUES(sport_alias),
-        sport_name = VALUES(sport_name),
-        startTime = VALUES(startTime),
-        status = VALUES(status),
-        tie = VALUES(tie),
-        winnerId = VALUES(winnerId),
-        participants = VALUES(participants);
-`;
+        INSERT INTO fixtures (id, competition_id, competition_name, endTime, format_name, format_value, scheduledStartTime, sport_alias, sport_name, startTime, status, tie, winnerId)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON DUPLICATE KEY UPDATE
+            competition_id = VALUES(competition_id),
+            competition_name = VALUES(competition_name),
+            endTime = VALUES(endTime),
+            format_name = VALUES(format_name),
+            format_value = VALUES(format_value),
+            scheduledStartTime = VALUES(scheduledStartTime),
+            sport_alias = VALUES(sport_alias),
+            sport_name = VALUES(sport_name),
+            startTime = VALUES(startTime),
+            status = VALUES(status),
+            tie = VALUES(tie),
+            winnerId = VALUES(winnerId);
+    `;
 
     const participantQuery = `
         INSERT INTO participants (id, fixture_id, name, score, scoreWithoutHandicap, handicap)
@@ -78,8 +77,7 @@ async function saveFixturesToDB(fixtures) {
                 fixture.startTime,
                 fixture.status,
                 fixture.tie,
-                fixture.winnerId,
-                JSON.stringify(fixture.participants), // Convertimos el array "participants" a JSON
+                fixture.winnerId
             ]);
 
             // Guardar participantes
