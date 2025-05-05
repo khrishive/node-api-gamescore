@@ -25,23 +25,23 @@ async function saveFixturesToDB(fixtures) {
     const connection = await mysql.createConnection(dbConfig);
     
     const fixtureQuery = `
-        INSERT INTO fixtures (id, competition_id, competition_name, endTime, format_name, format_value, scheduledStartTime, sport_alias, sport_name, startTime, status, tie, winnerId)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            competition_id = VALUES(competition_id),
-            competition_name = VALUES(competition_name),
-            endTime = VALUES(endTime),
-            format_name = VALUES(format_name),
-            format_value = VALUES(format_value),
-            scheduledStartTime = VALUES(scheduledStartTime),
-            sport_alias = VALUES(sport_alias),
-            sport_name = VALUES(sport_name),
-            startTime = VALUES(startTime),
-            status = VALUES(status),
-            tie = VALUES(tie),
-            winnerId = VALUES(winnerId);
-            participants = VALUES(participants);
-    `;
+    INSERT INTO fixtures (id, competition_id, competition_name, endTime, format_name, format_value, scheduledStartTime, sport_alias, sport_name, startTime, status, tie, winnerId, participants)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+        competition_id = VALUES(competition_id),
+        competition_name = VALUES(competition_name),
+        endTime = VALUES(endTime),
+        format_name = VALUES(format_name),
+        format_value = VALUES(format_value),
+        scheduledStartTime = VALUES(scheduledStartTime),
+        sport_alias = VALUES(sport_alias),
+        sport_name = VALUES(sport_name),
+        startTime = VALUES(startTime),
+        status = VALUES(status),
+        tie = VALUES(tie),
+        winnerId = VALUES(winnerId),
+        participants = VALUES(participants);
+`;
 
     const participantQuery = `
         INSERT INTO participants (id, fixture_id, name, score, scoreWithoutHandicap, handicap)
