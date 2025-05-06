@@ -23,6 +23,16 @@ router.get('/fixtures', async (req, res) => {
     }
 });
 
+router.get('/team_fixture_stats', async (req, res) => {
+    try {
+        const data = await dbController('team_fixture_stats');
+        res.json(data);
+    } catch (error) {
+        console.error('Error en la conexión:', error);
+        res.status(500).json({ error: 'Error de servidor' });
+    }
+});
+
 router.get('/fixture_links', async (req, res) => {
     try {
         const data = await dbController('fixture_links');
