@@ -11,30 +11,30 @@ const dbConfig = {
     database: process.env.DB_NAME,
 };
 
-// Encabezado para las solicitudes a la API
 const apiHeaders = {
     headers: {
         Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob3RzcGF3bi5jb20iLCJpc3MiOiJHYW1lU2NvcmVrZWVwZXIiLCJqdGkiOi02MzExOTMxODQyNjM3NTgyNTg4LCJjdXN0b21lciI6dHJ1ZX0.QHVEIBZMYxkq9IiUHFqq3SCz9qncrk-jMtjorQBcbss',
     },
 };
 
-// Función para obtener las competiciones desde la API
+// Función para obtener competiciones desde la API
 async function fetchCompetitions() {
     try {
         const response = await axios.get('https://api.gamescorekeeper.com/v1/competitions?sport=cs2', apiHeaders);
-        console.log('Competitions API Response:', response.data); // Verifica la estructura de la respuesta
-        return response.data || [];
+        console.log('Respuesta de la API de competiciones:', response.data); // Verifica la estructura
+        return response.data.competitions || []; // Asegúrate de acceder a la propiedad `competitions`
     } catch (error) {
         console.error('❌ Error al obtener competiciones de la API:', error.message);
         return [];
     }
 }
 
-// Función para obtener las fixtures desde la API
+// Función para obtener fixtures desde la API
 async function fetchFixtures() {
     try {
         const response = await axios.get('https://api.gamescorekeeper.com/v1/fixtures?sport=cs2', apiHeaders);
-        return response.data.fixtures || [];
+        console.log('Respuesta de la API de fixtures:', response.data); // Verifica la estructura
+        return response.data.fixtures || []; // Asegúrate de acceder a la propiedad `fixtures`
     } catch (error) {
         console.error('❌ Error al obtener fixtures de la API:', error.message);
         return [];
@@ -83,6 +83,11 @@ async function saveTeamFixtureStats(fixturesByCompetition) {
     console.log('🔄 Obteniendo competiciones...');
     const competitions = await fetchCompetitions();
 
+    if (!Array.isArray(competitions)) {
+        console.error('⚠️ La respuesta de competiciones no es un array:', competitions);
+        return;
+    }
+
     if (competitions.length === 0) {
         console.log('⚠️ No se encontraron competiciones.');
         return;
@@ -93,6 +98,11 @@ async function saveTeamFixtureStats(fixturesByCompetition) {
 
     console.log('🔄 Obteniendo fixtures...');
     const fixtures = await fetchFixtures();
+
+    if (!Array.isArray(fixtures)) {
+        console.error('⚠️ La respuesta de fixtures no es un array:', fixtures);
+        return;
+    }
 
     if (fixtures.length === 0) {
         console.log('⚠️ No se encontraron fixtures.');
