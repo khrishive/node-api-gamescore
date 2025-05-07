@@ -22,6 +22,7 @@ const apiHeaders = {
 async function fetchCompetitions() {
     try {
         const response = await axios.get('https://api.gamescorekeeper.com/v1/competitions?sport=cs2', apiHeaders);
+        console.log('Competitions API Response:', response.data); // Verifica la estructura de la respuesta
         return response.data || [];
     } catch (error) {
         console.error('❌ Error al obtener competiciones de la API:', error.message);
