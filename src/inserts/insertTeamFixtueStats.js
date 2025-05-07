@@ -11,10 +11,17 @@ const dbConfig = {
     database: process.env.DB_NAME,
 };
 
+// Encabezado para las solicitudes a la API
+const apiHeaders = {
+    headers: {
+        Authorization: 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJob3RzcGF3bi5jb20iLCJpc3MiOiJHYW1lU2NvcmVrZWVwZXIiLCJqdGkiOi02MzExOTMxODQyNjM3NTgyNTg4LCJjdXN0b21lciI6dHJ1ZX0.QHVEIBZMYxkq9IiUHFqq3SCz9qncrk-jMtjorQBcbss',
+    },
+};
+
 // Función para obtener las competiciones desde la API
 async function fetchCompetitions() {
     try {
-        const response = await axios.get('https://api.gamescorekeeper.com/v1/competitions?sport=cs2');
+        const response = await axios.get('https://api.gamescorekeeper.com/v1/competitions?sport=cs2', apiHeaders);
         return response.data || [];
     } catch (error) {
         console.error('❌ Error al obtener competiciones de la API:', error.message);
@@ -25,7 +32,7 @@ async function fetchCompetitions() {
 // Función para obtener las fixtures desde la API
 async function fetchFixtures() {
     try {
-        const response = await axios.get('https://api.gamescorekeeper.com/v1/fixtures?sport=cs2');
+        const response = await axios.get('https://api.gamescorekeeper.com/v1/fixtures?sport=cs2', apiHeaders);
         return response.data.fixtures || [];
     } catch (error) {
         console.error('❌ Error al obtener fixtures de la API:', error.message);
