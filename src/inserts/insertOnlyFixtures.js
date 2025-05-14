@@ -12,8 +12,8 @@ const dbConfig = {
     port: process.env.DB_PORT,
 };
 
-const API_URL = '${process.env.GAME_SCORE_API}/fixtures';
-const AUTH_TOKEN = 'Bearer ${process.env.GAME_SCORE_APIKEY}';
+const API_URL = `${process.env.GAME_SCORE_API}/fixtures`;
+const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 /**
  * Generar rangos de fechas día por día entre dos fechas.
