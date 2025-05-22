@@ -8,6 +8,7 @@ import teamsRoutes from './routes/teams.js'
 import playersRoutes from './routes/players.js'
 import dbAPIRoutes from './routes/dbAPIRoutes.js'; // Importar las rutas de la API de la base de datos
 //import geminiRoutes from './routes/gemini.js';
+import { apiKeyAuth } from './middleware/apiKeyAuth.js';
 
 dotenv.config();  // ⚠️ Cargar variables de entorno antes de usarlas
 
@@ -24,12 +25,12 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(morgan('dev')); // Registra cada solicitud en la consola
 
-// Usar rutas
-app.use('/api/competitions', competitionsRoutes);
-app.use('/api/fixtures', fixturesRoutes);
-app.use('/api/teams', teamsRoutes);
-app.use('/api/players', playersRoutes);
-app.use('/db',dbAPIRoutes);
+// Rutas protegidas con API Key:
+app.use('/api/competitions', apiKeyAuth, competitionsRoutes);
+app.use('/api/fixtures', apiKeyAuth, fixturesRoutes);
+app.use('/api/teams', apiKeyAuth, teamsRoutes);
+app.use('/api/players', apiKeyAuth, playersRoutes);
+app.use('/db', apiKeyAuth, dbAPIRoutes);
 //app.use('/api/gemini', geminiRoutes);
 
 
