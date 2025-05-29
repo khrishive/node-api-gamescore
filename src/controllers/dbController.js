@@ -11,12 +11,16 @@ const createConnection = async () => {
   });
 };
 
-// Obtener todos los registros de una tabla
-const getAllRecords = async (tableName) => {
+// Obtener registros paginados de una tabla
+const getRecords = async (tableName, offset = 0, limit = 100) => {
   const connection = await createConnection();
-  const [rows] = await connection.execute(`SELECT * FROM ${tableName}`);
+  // PRECAUCIÓN: tableName no debe venir del usuario sin validar para evitar SQL injection
+  const [rows] = await connection.execute(
+    `SELECT * FROM \`${tableName}\` LIMIT ? OFFSET ?`,
+    [Number(limit), Number(offset)]
+  );
   await connection.end();
   return rows;
 };
 
-export default getAllRecords;
+export default getRecords;
