@@ -14,8 +14,12 @@ router.get('/competitions', async (req, res) => {
 });
 
 router.get('/fixtures', async (req, res) => {
+    // Lee offset y limit de la query string, con valores por defecto
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 100;
+
     try {
-        const data = await dbController('fixtures');
+        const data = await dbController('fixtures', offset, limit);
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
