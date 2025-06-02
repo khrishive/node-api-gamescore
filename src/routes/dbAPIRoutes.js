@@ -14,17 +14,20 @@ router.get('/competitions', async (req, res) => {
 });
 
 router.get('/fixtures', async (req, res) => {
-    // Lee offset y limit de la query string, con valores por defecto
-    const offset = parseInt(req.query.offset) || 0;
-    const limit = parseInt(req.query.limit) || 100;
+  // Lee offset y limit de la query string, con valores por defecto
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = parseInt(req.query.limit) || 100;
+  
+  // Extrae filtros (excepto offset y limit)
+  const { offset: _offset, limit: _limit, ...filters } = req.query;
 
-    try {
-        const data = await dbController('fixtures', offset, limit);
-        res.json(data);
-    } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
-    }
+  try {
+    const data = await dbController('fixtures', offset, limit, filters);
+    res.json(data);
+  } catch (error) {
+    console.error('Error en la conexión:', error);
+    res.status(500).json({ error: 'Error de servidor' });
+  }
 });
 
 router.get('/team_fixture_stats', async (req, res) => {
