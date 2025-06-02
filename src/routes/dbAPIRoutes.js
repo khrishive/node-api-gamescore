@@ -14,12 +14,17 @@ router.get('/competitions', async (req, res) => {
 });
 
 router.get('/fixtures', async (req, res) => {
-  // Lee offset y limit de la query string, con valores por defecto
   const offset = parseInt(req.query.offset) || 0;
   const limit = parseInt(req.query.limit) || 100;
-  
-  // Extrae filtros (excepto offset y limit)
-  const { offset: _offset, limit: _limit, ...filters } = req.query;
+  const { offset: _offset, limit: _limit, today, ...filters } = req.query;
+
+  // Si today=true, calcula rango de hoy en UTC
+  if (today === 'true') {
+    const now = new Date();
+    const startOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1;
+    filters.scheduled_start_time = { from: startOfDay, to: endOfDay };
+  }
 
   try {
     const data = await dbController('fixtures', offset, limit, filters);
