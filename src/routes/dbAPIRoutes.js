@@ -20,13 +20,16 @@ router.get('/fixtures', async (req, res) => {
 
   if (today === 'true') {
     const now = new Date();
-    const startOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    const endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1;
-    filters.todayRange = { from: startOfDay, to: endOfDay };
-    console.log('Filtro today=true OR en fechas:', {
-      startOfDay, endOfDay,
-      startISO: new Date(startOfDay).toISOString(),
-      endISO: new Date(endOfDay).toISOString()
+    // Calcula start_day y end_day en UTC (en milisegundos UNIX)
+    const start_day = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+    const end_day = start_day + (24 * 60 * 60 * 1000) - 1;
+    filters.todayRange = { start_day, end_day };
+    // Log por debug
+    console.log('Filtro today=true:', {
+      start_day,
+      end_day,
+      startISO: new Date(start_day).toISOString(),
+      endISO: new Date(end_day).toISOString()
     });
   }
 
