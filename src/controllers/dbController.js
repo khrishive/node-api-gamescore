@@ -9,14 +9,22 @@ const createConnection = async () => {
   });
 };
 
-// Ahora acepta filtros de tipo rango (from/to)
 const getRecords = async (tableName, offset = 0, limit = 100, filters = {}) => {
   const connection = await createConnection();
   let query = `SELECT * FROM \`${tableName}\``;
   let params = [];
   const filterKeys = Object.keys(filters);
 
-  if (filterKeys.length > 0) {
+  // Manejo especial para filtro today con varios campos de tiempo
+  if (filters.todayRange) {
+    const { from, to } = filters.todayRange;
+    query += ` WHERE (
+      (scheduled_start_time BETWEEN ? AND ?) OR
+      (start_time BETWEEN ? AND ?) OR
+      (end_time BETWEEN ? AND ?)
+    )`;
+    params.push(from, to, from, to, from, to);
+  } else if (filterKeys.length > 0) {
     const filterClauses = filterKeys.map(key => {
       if (!/^[a-zA-Z0-9_]+$/.test(key)) throw new Error('Nombre de columna inválido');
       const value = filters[key];
