@@ -18,12 +18,16 @@ router.get('/fixtures', async (req, res) => {
   const limit = parseInt(req.query.limit) || 100;
   const { offset: _offset, limit: _limit, today, ...filters } = req.query;
 
-  // Si today=true, calcula rango de hoy en UTC
   if (today === 'true') {
     const now = new Date();
     const startOfDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
     const endOfDay = startOfDay + 24 * 60 * 60 * 1000 - 1;
-    filters.scheduled_start_time = { from: startOfDay, to: endOfDay };
+    filters.todayRange = { from: startOfDay, to: endOfDay };
+    console.log('Filtro today=true OR en fechas:', {
+      startOfDay, endOfDay,
+      startISO: new Date(startOfDay).toISOString(),
+      endISO: new Date(endOfDay).toISOString()
+    });
   }
 
   try {
