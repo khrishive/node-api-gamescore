@@ -9,7 +9,7 @@ const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    port: process.env.DB_PORT,
+    port: process.env.DB_PORT
 };
 
 const API_URL = `${process.env.GAME_SCORE_API}/fixtures`;
@@ -118,7 +118,12 @@ async function saveFixturesToDB(fixtures) {
  */
 (async () => {
     console.log('🔄 Generando rangos de fechas...');
-    const dateRanges = generateDateRanges('2022-03-30', '2025-11-03');
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
+    const dd = String(today.getDate()).padStart(2, '0');
+    const currentDate = `${yyyy}-${mm}-${dd}`;
+    const dateRanges = generateDateRanges(currentDate, '2025-11-03');
 
     for (const range of dateRanges) {
         console.log(`🔄 Obteniendo fixtures para el rango: ${range.from} a ${range.to}`);
