@@ -4,11 +4,10 @@ import {getRecords} from '../controllers/dbController.js';
 import {getAllRecords} from '../controllers/dbController.js';
 
 
-let dbController = getRecords()
 // Endpoint para obtener todos los registros de la tabla 'competitions'
 router.get('/competitions', async (req, res) => {
     try {
-        const data = await dbController('competitions');
+        const data = await getRecords('competitions');
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
@@ -39,7 +38,7 @@ router.get('/fixtures', async (req, res) => {
   }
 
   try {
-    const data = await dbController('fixtures', offset, limit, filters);
+    const data = await getRecords('fixtures', offset, limit, filters);
     res.json(data);
   } catch (error) {
     console.error('Error en la conexión:', error);
@@ -59,7 +58,7 @@ router.get('/all_fixture', async (req, res) => {
 
 router.get('/team_fixture_stats', async (req, res) => {
     try {
-        const data = await dbController('team_fixture_stats');
+        const data = await getRecords('team_fixture_stats');
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
@@ -69,7 +68,7 @@ router.get('/team_fixture_stats', async (req, res) => {
 
 router.get('/fixture_links', async (req, res) => {
     try {
-        const data = await dbController('fixture_links');
+        const data = await getRecords('fixture_links');
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
@@ -79,7 +78,7 @@ router.get('/fixture_links', async (req, res) => {
 
 router.get('/participants', async (req, res) => {
     try {
-        const data = await dbController('participants');
+        const data = await getRecords('participants');
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
@@ -89,7 +88,7 @@ router.get('/participants', async (req, res) => {
 
 router.get('/player', async (req, res) => {
     try {
-        const data = await dbController('player');
+        const data = await getRecords('player');
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
@@ -99,7 +98,7 @@ router.get('/player', async (req, res) => {
 
 router.get('/stats_player', async (req, res) => {
     try {
-        const data = await dbController('stats_player');
+        const data = await getRecords('stats_player');
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
@@ -109,7 +108,7 @@ router.get('/stats_player', async (req, res) => {
 
 router.get('/team_info', async (req, res) => {
     try {
-        const data = await dbController('team_info');
+        const data = await getRecords('team_info');
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);

@@ -9,17 +9,34 @@ const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    port: process.env.DB_PORT
 };
+
+const API_URL = `${process.env.GAME_SCORE_API}/competitions`;
+const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 async function fetchCompetitions() {
     try {
-        const response = await axios.get('http://localhost:3000/api/competitions?sport=cs2');
+        const response = await axios.get(API_URL, {
+            headers: {
+                Authorization: AUTH_TOKEN,
+            }
+        });
         return response.data.competitions || [];
     } catch (error) {
-        console.error('❌ Error al obtener datos de la API:', error.message);
+        if (error.response) {
+            console.error('Status:', error.response.status);
+            console.error('Data:', error.response.data);
+        } else if (error.request) {
+            console.error('No response received:', error.request);
+        } else {
+            console.error('Error', error.message);
+        }
+        // Retorna siempre un array vacío si hay error
         return [];
     }
 }
+
 
 async function saveCompetitionsToDB(competitions) {
     const connection = await mysql.createConnection(dbConfig);
@@ -62,7 +79,8 @@ async function saveCompetitionsToDB(competitions) {
     }
 }
 
-(async () => {
+// Exporta una función que obtiene competiciones y las guarda en la base de datos
+export async function getAndSaveCompetitions() {
     console.log('🔄 Obteniendo competiciones...');
     const competitions = await fetchCompetitions();
     
@@ -73,4 +91,6 @@ async function saveCompetitionsToDB(competitions) {
     } else {
         console.log('⚠️ No se encontraron competiciones.');
     }
-})();
+}
+
+await getAndSaveCompetitions()

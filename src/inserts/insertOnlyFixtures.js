@@ -114,16 +114,17 @@ async function saveFixturesToDB(fixtures) {
 }
 
 /**
- * Bucle principal para procesar las fechas y guardar los datos.
+ * Procesa rangos de fechas, obtiene fixtures y los guarda en la base de datos.
+ * @ param {string} [endDate='2025-11-03'] - Fecha de fin para los rangos.
  */
-(async () => {
+export async function processFixtures(endDate = '2025-11-03') {
     console.log('🔄 Generando rangos de fechas...');
     const today = new Date();
     const yyyy = today.getFullYear();
     const mm = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
     const dd = String(today.getDate()).padStart(2, '0');
     const currentDate = `${yyyy}-${mm}-${dd}`;
-    const dateRanges = generateDateRanges(currentDate, '2025-11-03');
+    const dateRanges = generateDateRanges(currentDate, endDate);
 
     for (const range of dateRanges) {
         console.log(`🔄 Obteniendo fixtures para el rango: ${range.from} a ${range.to}`);
@@ -139,4 +140,6 @@ async function saveFixturesToDB(fixtures) {
     }
 
     console.log('✅ Proceso completado.');
-})();
+}
+
+await processFixtures()
