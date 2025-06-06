@@ -9,7 +9,7 @@ const createConnection = async () => {
   });
 };
 
-const getRecords = async (tableName, offset = 0, limit = 100, filters = {}) => {
+export const getRecords = async (tableName, offset = 0, limit = 100, filters = {}) => {
   const connection = await createConnection();
   let query = `SELECT * FROM \`${tableName}\``;
   let params = [];
@@ -25,12 +25,25 @@ const getRecords = async (tableName, offset = 0, limit = 100, filters = {}) => {
     params.push(start_day, end_day, start_day, end_day, start_day, end_day);
   }
 
-  query += ' LIMIT ? OFFSET ?';
-  params.push(Number(limit), Number(offset));
+  // Asegura que limit y offset sean enteros positivos
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
+  const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+
+  query += ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+
+  // Debug
+  //console.log("QUERY:", query, "PARAMS:", params);
 
   const [rows] = await connection.execute(query, params);
   await connection.end();
   return rows;
 };
 
-export default getRecords;
+// Obtener todos los registros de una tablaMore actions
+export const getAllRecords = async (tableName) => {
+  const connection = await createConnection();
+  const [rows] = await connection.execute(`SELECT * FROM ${tableName}`);
+  await connection.end();
+  return rows;
+};
+
