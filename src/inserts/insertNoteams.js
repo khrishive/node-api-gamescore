@@ -1,4 +1,5 @@
-//Este archivo trae directamente de la API los jugadores participanten en cada torneo, los cuenta, y los inserta en el campo "no_participants" de la tabla competitions
+//Este archivo trae directamente de la API los jugadores participantes en cada torneo,
+//los cuenta, y los inserta en el campo "no_participants" de la tabla competitions.
 
 import mysql from 'mysql2/promise';
 import axios from 'axios';
@@ -11,39 +12,58 @@ const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    port: process.env.DB_PORT
 };
 
-const connection = await mysql.createConnection(dbConfig);
+const API_URL = `${process.env.GAME_SCORE_API}/competitions`;
+const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-async function actualizarParticipantes() {
+export async function actualizarParticipantes() {
+  const connection = await mysql.createConnection(dbConfig);
+
   try {
     // Paso 1: Obtener todos los competitionIds de la tabla "competitions"
     const [competitions] = await connection.execute('SELECT id FROM competitions');
 
-    // Paso 2: Iterar sobre cada competitionId
     for (const competition of competitions) {
       const competitionId = competition.id;
+      try {
+        // Hacer la solicitud de los participantes con timeout
+        const { data } = await axios.get(`${API_URL}/${competitionId}/participants`, {
+          headers: {
+            Authorization: AUTH_TOKEN,
+          },
+          timeout: 15000, // 15 segundos
+        });
 
-      // Hacer la solicitud de los participantes
-      const { data } = await axios.get(`http://localhost:3000/api/competitions/${competitionId}/participants`);
+        // Contar los participantes de manera segura
+        const no_participants = Array.isArray(data.participants) ? data.participants.length : 0;
 
-      // Contar los participantes
-      const no_participants = data.participants ? data.participants.length : 0;
+        // Paso 3: Actualizar el campo no_participants en la tabla competitions
+        await connection.execute(
+          'UPDATE competitions SET no_participants = ? WHERE id = ?',
+          [no_participants, competitionId]
+        );
 
-      // Paso 3: Actualizar el campo no_participants en la tabla competitions
-      await connection.execute(
-        'UPDATE competitions SET no_participants = ? WHERE id = ?',
-        [no_participants, competitionId]
-      );
-
-      console.log(`Actualizado competitionId: ${competitionId} con ${no_participants} participantes.`);
+        console.log(`✅ Actualizado competitionId: ${competitionId} con ${no_participants} participantes.`);
+      } catch (error) {
+        if (error.code === 'ECONNRESET') {
+          console.error(`❌ ECONNRESET al consultar participantes de competitionId ${competitionId}.`);
+        } else if (error.code === 'ECONNABORTED') {
+          console.error(`❌ Timeout al consultar participantes de competitionId ${competitionId}.`);
+        } else if (error.response) {
+          console.error(`❌ Error HTTP ${error.response.status} para competitionId ${competitionId}:`, error.response.data);
+        } else {
+          console.error(`❌ Error inesperado para competitionId ${competitionId}:`, error.message);
+        }
+        // Opcional: podrías guardar en la DB que hubo error en ese torneo
+      }
     }
   } catch (error) {
-    console.error('Error al actualizar los participantes:', error);
+    console.error('❌ Error general al actualizar los participantes:', error);
   } finally {
     await connection.end();
   }
 }
 
-// Llamar a la función para actualizar los participantes
-actualizarParticipantes();
+await actualizarParticipantes();

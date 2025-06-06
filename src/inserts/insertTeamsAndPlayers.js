@@ -9,7 +9,13 @@ const dbConfig = {
     user: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
+    port: process.env.DB_PORT
 };
+
+const API_URL = `${process.env.GAME_SCORE_API}`;
+const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
+
+
 
 // Función para obtener los IDs únicos de la tabla participants
 async function fetchParticipantIds() {
@@ -22,24 +28,33 @@ async function fetchParticipantIds() {
 // Función para obtener la información del equipo desde la API
 async function fetchTeamInfo(id) {
     try {
-        const response = await axios.get(`http://localhost:3000/api/teams/${id}`);
-        return response.data;
+        const response = await axios.get(`${API_URL}/teams/${id}`, {
+            headers: {
+                Authorization: AUTH_TOKEN,
+            }
+        });
+        return response.data || [];
     } catch (error) {
-        console.error(`❌ Error al obtener datos del equipo para el ID ${id}:`, error.message);
-        return null;
+        console.error(`❌ Error al obtener datos de la API`, error.message);
+        return [];
     }
 }
 
 // Función para obtener la información del jugador desde la API
 async function fetchPlayerInfo(playerId) {
     try {
-        const response = await axios.get(`http://localhost:3000/api/players/${playerId}`);
-        return response.data;
+        const response = await axios.get(`${API_URL}/players/${playerId}`, {
+            headers: {
+                Authorization: AUTH_TOKEN,
+            }
+        });
+        return response.data || [];
     } catch (error) {
-        console.error(`❌ Error al obtener datos del jugador para el ID ${playerId}:`, error.message);
-        return null;
+        console.error(`❌ Error al obtener datos de la API`, error.message);
+        return [];
     }
 }
+
 
 // Función para sanitizar los datos del jugador
 function sanitizePlayerData(playerInfo, player, teamId) {
@@ -58,21 +73,11 @@ function sanitizePlayerData(playerInfo, player, teamId) {
 
 // Función para guardar la información del equipo y los jugadores en la base de datos
 async function saveTeamInfoToDB(teamInfo) {
+    console.log( `Team Info: ${JSON.stringify(teamInfo)}`);
     const connection = await mysql.createConnection(dbConfig);
 
-    const teamQuery = `
-        INSERT INTO team_info (id, name, sport, country, countryISO, region)
-        VALUES (?, ?, ?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-            name = VALUES(name),
-            sport = VALUES(sport),
-            country = VALUES(country),
-            countryISO = VALUES(countryISO),
-            region = VALUES(region);
-    `;
-
     const playerQuery = `
-        INSERT INTO player (id, team_id, first_name, last_name, nickname, age, country, countryISO, sport)
+        INSERT INTO players (id, team_id, first_name, last_name, nickname, age, country, countryISO, sport)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             first_name = VALUES(first_name),
@@ -85,18 +90,12 @@ async function saveTeamInfoToDB(teamInfo) {
     `;
 
     try {
-        // Guardar información del equipo
-        await connection.execute(teamQuery, [
-            teamInfo.id,
-            teamInfo.name,
-            teamInfo.sport,
-            teamInfo.country,
-            teamInfo.countryISO,
-            teamInfo.region
-        ]);
+        
 
         // Guardar información de los jugadores
         for (const player of teamInfo.most_recent_lineup) {
+            
+            
             console.log(`📥 Guardando información del jugador: ${JSON.stringify(player)}`);
             const playerInfo = await fetchPlayerInfo(player.id);
             const sanitizedPlayer = sanitizePlayerData(playerInfo, player, teamInfo.id);
@@ -126,7 +125,10 @@ async function saveTeamInfoToDB(teamInfo) {
     }
 }
 
-(async () => {
+/**
+ * Obtiene los IDs de los participantes, procesa la información de cada equipo y la guarda en la base de datos.
+ */
+export async function processTeams() {
     console.log('🔄 Obteniendo IDs de participantes...');
     const participantIds = await fetchParticipantIds();
 
@@ -141,4 +143,6 @@ async function saveTeamInfoToDB(teamInfo) {
             console.log(`⚠️ No se encontró información del equipo para el ID: ${id}`);
         }
     }
-})();
+}
+
+await processTeams()
