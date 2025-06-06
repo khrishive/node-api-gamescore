@@ -1,7 +1,10 @@
 import express from 'express';
 const router = express.Router();
-import dbController from '../controllers/dbController.js';
+import {getRecords} from '../controllers/dbController.js';
+import {getAllRecords} from '../controllers/dbController.js';
 
+
+let dbController = getRecords()
 // Endpoint para obtener todos los registros de la tabla 'competitions'
 router.get('/competitions', async (req, res) => {
     try {
@@ -14,17 +17,19 @@ router.get('/competitions', async (req, res) => {
 });
 
 router.get('/fixtures', async (req, res) => {
-  const offset = parseInt(req.query.offset) || 0;
-  const limit = parseInt(req.query.limit) || 100;
-  const { offset: _offset, limit: _limit, today, ...filters } = req.query;
+  let offset = parseInt(req.query.offset, 10);
+  let limit = parseInt(req.query.limit, 10);
+
+  if (isNaN(offset)) offset = 0;
+  if (isNaN(limit)) limit = 100;
+
+  const { today, ...filters } = req.query;
 
   if (today === 'true') {
     const now = new Date();
-    // Calcula start_day y end_day en UTC (en milisegundos UNIX)
     const start_day = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
     const end_day = start_day + (24 * 60 * 60 * 1000) - 1;
     filters.todayRange = { start_day, end_day };
-    // Log por debug
     console.log('Filtro today=true:', {
       start_day,
       end_day,
@@ -40,6 +45,16 @@ router.get('/fixtures', async (req, res) => {
     console.error('Error en la conexión:', error);
     res.status(500).json({ error: 'Error de servidor' });
   }
+});
+
+router.get('/all_fixture', async (req, res) => {
+    try {
+        const data = await getAllRecords('fixtures');
+        res.json(data);
+    } catch (error) {
+        console.error('Error en la conexión:', error);
+        res.status(500).json({ error: 'Error de servidor' });
+    }
 });
 
 router.get('/team_fixture_stats', async (req, res) => {
