@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/.10f2fe151ad0255aaaeff7711955eafaafb066f2-audit.json",
+    "files": [
+        {
+            "date": 1749751761095,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/Kills-2025-06-12.log",
+            "hash": "41566b83730c5ea86f9ae2f8424844632d06b42b4a01687dc04ab31c9a5344bc"
+        }
+    ],
+    "hashType": "sha256"
+}

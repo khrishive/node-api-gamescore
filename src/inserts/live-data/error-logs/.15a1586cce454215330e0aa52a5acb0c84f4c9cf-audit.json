@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/.15a1586cce454215330e0aa52a5acb0c84f4c9cf-audit.json",
+    "files": [
+        {
+            "date": 1749751761226,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/rounds-2025-06-12.log",
+            "hash": "2287313a2f41c5e952a3f6064b9cff09ca78792ef54de310f36b1390c06e735a"
+        }
+    ],
+    "hashType": "sha256"
+}

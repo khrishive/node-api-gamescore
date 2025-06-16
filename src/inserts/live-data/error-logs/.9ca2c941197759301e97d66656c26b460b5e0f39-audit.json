@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 30
+    },
+    "auditLog": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/.9ca2c941197759301e97d66656c26b460b5e0f39-audit.json",
+    "files": [
+        {
+            "date": 1749751761258,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/equipmentState-2025-06-12.log",
+            "hash": "6bd77a3ceca0a2ab3657bc8b6cacb2b6e8c846c099cb1f287ba7ede1684eb6f4"
+        }
+    ],
+    "hashType": "sha256"
+}
