@@ -9,6 +9,11 @@ import playersRoutes from './routes/players.js'
 import dbAPIRoutes from './routes/dbAPIRoutes.js'; // Importar las rutas de la API de la base de datos
 //import geminiRoutes from './routes/gemini.js';
 import { apiKeyAuth } from './middleware/apiKeyAuth.js';
+import fixtureStatsRouter from './routes/fixtureStats.js';
+import fixtureAssistsRouter from './routes/fixtureAssists.js';
+import fixtureEquipmentStateRouter from './routes/fixtureEquipmentStateRouter.js';
+import fixtureEventsRawRouter from './routes/fixtureEventsRawRouter.js';
+import fixtureMapsRouter from './routes/fixtureMapsRouter.js';
 
 dotenv.config();  // ⚠️ Cargar variables de entorno antes de usarlas
 
@@ -28,6 +33,11 @@ app.use(morgan('dev')); // Registra cada solicitud en la consola
 // Rutas protegidas con API Key:
 app.use('/api/competitions', apiKeyAuth, competitionsRoutes);
 app.use('/api/fixtures', apiKeyAuth, fixturesRoutes);
+app.use('/fixtures', apiKeyAuth, fixtureStatsRouter);
+app.use('/fixtures', apiKeyAuth, fixtureAssistsRouter);
+app.use('/fixtures', apiKeyAuth, fixtureEquipmentStateRouter);
+app.use('/fixtures', apiKeyAuth, fixtureEventsRawRouter);
+app.use('/fixtures', apiKeyAuth, fixtureMapsRouter);
 app.use('/api/teams', apiKeyAuth, teamsRoutes);
 app.use('/api/players', apiKeyAuth, playersRoutes);
 app.use('/db', apiKeyAuth, dbAPIRoutes);
