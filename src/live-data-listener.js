@@ -2,7 +2,7 @@ import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import { handleLiveEvent } from './inserts/live-data/index.js'; // Importa tu función central de inserción
-import mainLogger from './loggers/mainLogger.js'; // <-- Logger centralizado
+import mainLogger from './inserts/live-data/loggers/mainLoggers.js'; // <-- Logger centralizado
 
 dotenv.config();
 
@@ -10,7 +10,7 @@ dotenv.config();
 const apiKey = process.env.GAME_SCORE_APIKEY;
 
 // Fixture ID (el número del partido a escuchar). Puedes automatizar esto si lo deseas.
-const FIXTURE_ID = "916070";
+const FIXTURE_ID = "916195";
 const TOKEN = apiKey;
 
 // URL del WebSocket de GameScorekeeper
