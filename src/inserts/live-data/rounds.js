@@ -1,27 +1,28 @@
 import { db } from '../../db.js';
 import roundsLogger from './loggers/roundsLogger.js';
 
-function isValidRoundEvent(roundEvent, mapId) {
+function isValidRoundEvent(roundEvent, mapId, fixtureId) {
   return (
     roundEvent &&
     typeof roundEvent.roundNumber !== 'undefined' &&
     typeof roundEvent.halfNumber !== 'undefined' &&
     typeof roundEvent.winnerId !== 'undefined' &&
     typeof roundEvent.winCondition !== 'undefined' &&
-    mapId
+    mapId &&
+    fixtureId // Ahora también valida fixtureId
   );
 }
 
-export async function insertRound(roundEvent, mapId) {
+export async function insertRound(roundEvent, mapId, fixtureId) {
   roundsLogger.debug({
     msg: '[insertRound] Datos recibidos para insert',
-    roundEvent, mapId
+    roundEvent, mapId, fixtureId
   });
 
-  if (!isValidRoundEvent(roundEvent, mapId)) {
+  if (!isValidRoundEvent(roundEvent, mapId, fixtureId)) {
     roundsLogger.warn({
       msg: '[insertRound] Datos incompletos, se omite insert',
-      roundEvent, mapId
+      roundEvent, mapId, fixtureId
     });
     return null;
   }
@@ -30,21 +31,21 @@ export async function insertRound(roundEvent, mapId) {
   try {
     const [result] = await db.query(`
       INSERT IGNORE INTO rounds (
-        map_id, round_number, half_number, winner_team_id, win_condition
-      ) VALUES (?, ?, ?, ?, ?)
+        fixture_id, map_id, round_number, half_number, winner_team_id, win_condition
+      ) VALUES (?, ?, ?, ?, ?, ?)
     `, [
-      mapId, roundNumber, halfNumber, winnerId, winCondition
+      fixtureId, mapId, roundNumber, halfNumber, winnerId, winCondition
     ]);
     roundsLogger.debug({
       msg: '[insertRound] Ronda insertada',
-      mapId, roundNumber, halfNumber, winnerId, winCondition, insertId: result.insertId
+      fixtureId, mapId, roundNumber, halfNumber, winnerId, winCondition, insertId: result.insertId
     });
     return result.insertId;
   } catch (error) {
     roundsLogger.error({
       msg: '[insertRound] Error al insertar ronda',
       error: error.message,
-      roundEvent, mapId
+      roundEvent, mapId, fixtureId
     });
     return null;
   }
