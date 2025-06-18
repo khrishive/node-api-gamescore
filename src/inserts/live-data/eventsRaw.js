@@ -1,5 +1,5 @@
 import { db } from '../../db.js';
-import eventsRawLogger from './loggers/eventsRawLogger.js';
+import eventsRawLogger from './loggers/evenRawLogger.js';
 
 function isValidRawEvent(event, fixtureId, eventType, timestamp) {
   return (
