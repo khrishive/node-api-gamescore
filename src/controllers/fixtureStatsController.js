@@ -107,7 +107,7 @@ export async function getFixtureStats(fixtureId, mapId = null) {
         (SELECT COUNT(*) FROM kills d WHERE ${deathsWhere}) as deaths,
         (SELECT COUNT(*) FROM assists a WHERE ${assistsWhere}) as assists,
         (SELECT COUNT(*) FROM kills h WHERE ${hsWhere}) as headshots
-      FROM players p
+      FROM player p
       WHERE p.id IN (${placeholders})
       ORDER BY p.team_id, p.id
     `;
