@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const apiKey = process.env.GAME_SCORE_APIKEY;
-const FIXTURE_ID = "910419"; 
+const FIXTURE_ID = "918824"; 
 const TOKEN = apiKey;
 const WS_URL = `wss://api.gamescorekeeper.com/v2/live/${FIXTURE_ID}`;
 
@@ -21,7 +21,7 @@ function connectWebSocket() {
     console.log('✅ Connected to GameScorekeeper Live API');
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send('ping');
+        ws.ping();
       }
     }, 30000);
   });

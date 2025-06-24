@@ -45,6 +45,8 @@ export async function insertAssist(assistEvent, fixtureId, mapId, roundId, type)
       victimId: victim.id,
       killId, type, timestamp
     });
+
+    console('asistencia pricesada')
   } catch (error) {
     assistsLogger.error({
       msg: '[insertAssist] Error al insertar assist',

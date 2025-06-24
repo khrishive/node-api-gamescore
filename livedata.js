@@ -1,5 +1,6 @@
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
+import fs from 'fs';
 
 dotenv.config();
 
@@ -8,7 +9,7 @@ dotenv.config();
 const apiKey = process.env.GAME_SCORE_APIKEY
 
 // Reemplaza con tu Fixture ID y Token
-const FIXTURE_ID = "888609"; // Debes obtenerlo dinámicamente
+const FIXTURE_ID = "908734"; // Debes obtenerlo dinámicamente
 const TOKEN = apiKey; 
 
 // URL de la Live Data API
@@ -29,7 +30,7 @@ function connectWebSocket() {
     // Enviar mensajes de ping cada 30 segundos
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
-        ws.send('ping');
+        ws.ping();
       }
     }, 30000);
   });
@@ -37,6 +38,10 @@ function connectWebSocket() {
   ws.on('message', (data) => {
     try {
       const message = JSON.parse(data);
+
+      // Guarda en un archivo .txt (agrega al final)
+      fs.appendFileSync('output.txt', JSON.stringify(message, null, 2) + '\n');
+
       if (message.type === 'auth') {
         // Responder con el token de autenticación
         ws.send(JSON.stringify({ token: TOKEN }));
@@ -45,7 +50,7 @@ function connectWebSocket() {
       } else if (message.type === 'ended') {
         console.warn('⚠️ Mensaje desconocido:', message);
       } else {
-        console.log('📩 Mensaje recibido:', message);
+        console.dir(message, { depth: null, colors: true });
       }
     } catch (error) {
       console.error('❌ Error al procesar mensaje:', error);

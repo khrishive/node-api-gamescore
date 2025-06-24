@@ -9,6 +9,16 @@
             "date": 1749751761194,
             "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/maps-2025-06-12.log",
             "hash": "c8200b332e3a141895e126c6d72131cd42e3594b1e1b2ea92c42aa65de4e45b5"
+        },
+        {
+            "date": 1750260680990,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/maps-2025-06-18.log",
+            "hash": "e0ccc702d4ff86371195e1c1f09536ccb17305936a71aa272bb4afaba3450dbf"
+        },
+        {
+            "date": 1750693585879,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/maps-2025-06-23.log",
+            "hash": "0fe2f67339c55f3bef91ca8595d8b8962ca0a504759087ec7cab11f3f173dbfd"
         }
     ],
     "hashType": "sha256"
