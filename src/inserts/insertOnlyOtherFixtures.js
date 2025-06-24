@@ -4,6 +4,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const requiredEnv = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT', 'GAME_SCORE_API', 'GAME_SCORE_APIKEY'];
+requiredEnv.forEach(name => {
+  if (!process.env[name]) throw new Error(`❌ Falta la variable de entorno ${name}`);
+});
+
+
 const dbConfig = {
     host: process.env.DB_HOST,
     user: process.env.DB_USER,

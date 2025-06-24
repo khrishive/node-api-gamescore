@@ -9,6 +9,16 @@
             "date": 1749751761095,
             "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/Kills-2025-06-12.log",
             "hash": "41566b83730c5ea86f9ae2f8424844632d06b42b4a01687dc04ab31c9a5344bc"
+        },
+        {
+            "date": 1750260680801,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/Kills-2025-06-18.log",
+            "hash": "33d29f3eb26e8f3daf57f8d78fbf53ad200ccec28526529daa6f054797ce2990"
+        },
+        {
+            "date": 1750693585681,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/Kills-2025-06-23.log",
+            "hash": "4562177cd1f75dbb183c3d28ebb44635696cf31b223b713245220e09dee1e047"
         }
     ],
     "hashType": "sha256"

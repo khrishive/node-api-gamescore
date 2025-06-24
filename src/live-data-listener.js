@@ -10,7 +10,7 @@ dotenv.config();
 const apiKey = process.env.GAME_SCORE_APIKEY;
 
 // Fixture ID (el número del partido a escuchar). Puedes automatizar esto si lo deseas.
-const FIXTURE_ID = "916195";
+const FIXTURE_ID = "917260";
 const TOKEN = apiKey;
 
 // URL del WebSocket de GameScorekeeper
@@ -81,7 +81,10 @@ function connectWebSocket() {
 
       // Llama a la función central para insertar el evento en la base de datos
       if (context.fixtureId) {
+        console.log(`Procesando evento para fixtureId: ${context.fixtureId}`);
         await handleLiveEvent(message, context);
+        console.log(`Evento procesado para fixtureId: ${context.fixtureId}`);
+        
       }
 
       // Procesamiento de otros tipos de mensajes

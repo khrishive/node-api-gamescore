@@ -9,6 +9,16 @@
             "date": 1749751761293,
             "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/eventsRaw-2025-06-12.log",
             "hash": "1b7ece195a87799645deca3e0ca2caf84831eb8fe6f98e879bff41004b200f0c"
+        },
+        {
+            "date": 1750260681112,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/eventsRaw-2025-06-18.log",
+            "hash": "d4bcee73c46f2db5b6ed35903aec070174504f40994eff37aebd44351a7712e4"
+        },
+        {
+            "date": 1750693586017,
+            "name": "/mnt/c/Users/Oinilp/OneDrive/Escritorio/work/api-proyect/node-api-gamescore/src/inserts/live-data/error-logs/eventsRaw-2025-06-23.log",
+            "hash": "793e8ca649853a5e8ed11f563a877e3087a7f00ab5cee7bdd6b9a1affed8801c"
         }
     ],
     "hashType": "sha256"
