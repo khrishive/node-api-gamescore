@@ -31,8 +31,8 @@ export async function getFixtureAssists(fixtureId) {
       a.type,
       a.timestamp
     FROM assists a
-    LEFT JOIN players p ON a.assister_id = p.id
-    LEFT JOIN players pv ON a.victim_id = pv.id
+    LEFT JOIN player p ON a.assister_id = p.id
+    LEFT JOIN player pv ON a.victim_id = pv.id
     WHERE a.fixture_id = ?
     ORDER BY a.timestamp ASC
   `, [fixtureId]);
