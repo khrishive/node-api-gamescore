@@ -32,7 +32,7 @@ export async function getFixtureEquipmentState(fixtureId) {
     e.defuse_kit,
     e.money
   FROM equipment_state e
-  LEFT JOIN players p ON e.player_id = p.id
+  LEFT JOIN player p ON e.player_id = p.id
   LEFT JOIN participants t ON e.team_id = t.id
   WHERE e.fixture_id = ?
   ORDER BY e.round_id, e.timestamp, e.player_id
