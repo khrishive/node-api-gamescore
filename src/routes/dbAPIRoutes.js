@@ -15,14 +15,14 @@ router.get('/competitions', async (req, res) => {
     }
 });
 
-router.get('/fixtures', async (req, res) => {
+router.get('/fixtures', async (req, res) => { 
   let offset = parseInt(req.query.offset, 10);
   let limit = parseInt(req.query.limit, 10);
 
   if (isNaN(offset)) offset = 0;
   if (isNaN(limit)) limit = 100;
 
-  const { today, ...filters } = req.query;
+  const { today, from, to, ...filters } = req.query;
 
   if (today === 'true') {
     const now = new Date();
@@ -35,9 +35,27 @@ router.get('/fixtures', async (req, res) => {
       startISO: new Date(start_day).toISOString(),
       endISO: new Date(end_day).toISOString()
     });
+  } else if (from && to) {
+    try {
+      const fromDate = new Date(from);
+      const toDate = new Date(to);
+
+      if (isNaN(fromDate) || isNaN(toDate)) {
+        return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD' });
+      }
+
+      const fromMs = Date.UTC(fromDate.getUTCFullYear(), fromDate.getUTCMonth(), fromDate.getUTCDate());
+      const toMs = Date.UTC(toDate.getUTCFullYear(), toDate.getUTCMonth(), toDate.getUTCDate()) + (24 * 60 * 60 * 1000) - 1;
+
+      filters.customRange = { from: fromMs, to: toMs };
+      console.log('🎯 Filtro por rango:', filters.customRange);
+    } catch (err) {
+      return res.status(400).json({ error: 'Error al convertir fechas' });
+    }
   }
 
   try {
+    console.log('📥 Filtros recibidos:', filters);
     const data = await getRecords('fixtures', offset, limit, filters);
     res.json(data);
   } catch (error) {
@@ -45,6 +63,7 @@ router.get('/fixtures', async (req, res) => {
     res.status(500).json({ error: 'Error de servidor' });
   }
 });
+
 
 router.get('/all_fixture', async (req, res) => {
     try {
