@@ -9,41 +9,39 @@ const createConnection = async () => {
   });
 };
 
-export const getRecords = async (tableName, offset = 0, limit = 100, filters = {}) => {
+export const getRecords = async (tableName, offset , limit , filters = {}) => {
   const connection = await createConnection();
   let query = `SELECT * FROM \`${tableName}\``;
   let params = [];
   const conditions = [];
 
-  if (filters.todayRange || filters.customRange) {
-    const range = filters.todayRange || filters.customRange;
-    const { from, to } = range;
+  // Filtros por rango de fechas para competitions
+  if (tableName === 'competitions' && filters.from && filters.to) {
+    const fromTimestamp = new Date(filters.from).getTime();
+    const toTimestamp = new Date(filters.to).getTime();
 
-    // Agregamos condiciones OR basadas en el status
-    const statusCondition = `
-      (
-        (status = 'Scheduled' AND scheduled_start_time BETWEEN ? AND ?)
-        OR
-        ((status = 'Started' OR status = 'Ended') AND start_time BETWEEN ? AND ?)
-      )
-    `;
-    conditions.push(statusCondition);
-    params.push(from, to, from, to);
+    conditions.push('(start_date BETWEEN ? AND ? OR end_date BETWEEN ? AND ?)');
+    params.push(fromTimestamp, toTimestamp, fromTimestamp, toTimestamp);
   }
+
+
+  // Puedes agregar más filtros aquí si quieres
 
   if (conditions.length > 0) {
     query += ` WHERE ` + conditions.join(' AND ');
   }
 
+  query += ` ORDER BY updated_at DESC`;
+
   const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
-
   query += ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
 
   const [rows] = await connection.execute(query, params);
   await connection.end();
   return rows;
 };
+
 
 
 // Obtener todos los registros de una tablaMore actions

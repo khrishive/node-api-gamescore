@@ -2,18 +2,28 @@ import express from 'express';
 const router = express.Router();
 import {getRecords} from '../controllers/dbController.js';
 import {getAllRecords} from '../controllers/dbController.js';
-
+import { getFixtures } from '../controllers/fixturesController.js';
+import { getCompetitions } from '../controllers/competitionsController.js';
 
 // Endpoint para obtener todos los registros de la tabla 'competitions'
 router.get('/competitions', async (req, res) => {
-    try {
-        const data = await getRecords('competitions');
-        res.json(data);
-    } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
+  try {
+    const { from, to, offset = 0, limit = 100 } = req.query;
+
+    const filters = {};
+    if (from && to) {
+      filters.from = from;
+      filters.to = to;
     }
+
+    const data = await getCompetitions('competitions', parseInt(offset), parseInt(limit), filters);
+    res.json(data);
+  } catch (error) {
+    console.error('Error en la conexión:', error);
+    res.status(500).json({ error: 'Error de servidor' });
+  }
 });
+
 
 router.get('/fixtures', async (req, res) => { 
   let offset = parseInt(req.query.offset, 10);
@@ -56,7 +66,7 @@ router.get('/fixtures', async (req, res) => {
 
   try {
     console.log('📥 Filtros recibidos:', filters);
-    const data = await getRecords('fixtures', offset, limit, filters);
+    const data = await getFixtures('fixtures', offset, limit, filters);
     res.json(data);
   } catch (error) {
     console.error('Error en la conexión:', error);
