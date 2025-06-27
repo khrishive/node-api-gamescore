@@ -77,7 +77,7 @@ async function saveTeamInfoToDB(teamInfo) {
     const connection = await mysql.createConnection(dbConfig);
 
     const playerQuery = `
-        INSERT INTO players (id, team_id, first_name, last_name, nickname, age, country, countryISO, sport)
+        INSERT INTO player (id, team_id, first_name, last_name, nickname, age, country, countryISO, sport)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
             first_name = VALUES(first_name),
