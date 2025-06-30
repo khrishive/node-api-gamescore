@@ -57,6 +57,12 @@ router.get('/fixtures', async (req, res) => {
       const fromMs = Date.UTC(fromDate.getUTCFullYear(), fromDate.getUTCMonth(), fromDate.getUTCDate());
       const toMs = Date.UTC(toDate.getUTCFullYear(), toDate.getUTCMonth(), toDate.getUTCDate()) + (24 * 60 * 60 * 1000) - 1;
 
+      console.log('🎯 Filtro por rango :v:', {
+        from: new Date(fromMs).toISOString(),
+        to: new Date(toMs).toISOString()
+      });
+
+
       filters.customRange = { from: fromMs, to: toMs };
       console.log('🎯 Filtro por rango:', filters.customRange);
     } catch (err) {
@@ -66,7 +72,7 @@ router.get('/fixtures', async (req, res) => {
 
   try {
     console.log('📥 Filtros recibidos:', filters);
-    const data = await getFixtures('fixtures', offset, limit, filters);
+    const data = await getFixtures(offset, limit, filters);
     res.json(data);
   } catch (error) {
     console.error('Error en la conexión:', error);
