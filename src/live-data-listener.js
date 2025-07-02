@@ -9,24 +9,25 @@ dotenv.config();
 // Lee la API Key desde tus variables de entorno
 const apiKey = process.env.GAME_SCORE_APIKEY;
 
-// Fixture ID (el número del partido a escuchar). Puedes automatizar esto si lo deseas.
-const FIXTURE_ID = "917260";
+
+
 const TOKEN = apiKey;
 
-// URL del WebSocket de GameScorekeeper
-const WS_URL = `wss://api.gamescorekeeper.com/v2/live/${FIXTURE_ID}`;
-
-// Contexto para guardar los IDs actuales de fixture, mapa y ronda
-let context = {
-  fixtureId: FIXTURE_ID,
-  mapNumber: null,
-  roundNumber: null,
-  // Puedes agregar más campos si necesitas
-};
 
 let reconnectAttempts = 0;
 
-function connectWebSocket() {
+export function connectWebSocket(fixture_id) {
+
+  // Contexto para guardar los IDs actuales de fixture, mapa y ronda
+  let context = {
+    fixtureId: fixture_id,
+    mapNumber: null,
+    roundNumber: null,
+    // Puedes agregar más campos si necesitas
+  };
+
+  // URL del WebSocket de GameScorekeeper
+  const WS_URL = `wss://api.gamescorekeeper.com/v2/live/${fixture_id}`;
   // Crea la conexión al WebSocket con el header de autenticación
   const ws = new WebSocket(WS_URL, {
     headers: {
