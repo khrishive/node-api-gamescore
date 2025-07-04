@@ -17,116 +17,120 @@ const dbConfig = {
 const API_BASE_URL = "https://api.gamescorekeeper.com/v2/live/historic/";
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
+// 🧠 Extrae los campos estandarizados según el evento
+function extractEventData(payload, fixtureId, event) {
+  const name = payload.name || null;
+  const actor = payload.killer || payload.planter || payload.assister || payload.defuser || null;
+
+  return {
+    fixture_id: fixtureId,
+    snapshot_number: payload.snapshotNumber || null,
+    sort_index: event.sortIndex || null,
+    event_type: event.type || null,
+    name: name,
+    map_name: payload.mapName || null,
+    map_number: payload.mapNumber || null,
+    half_number: payload.halfNumber || null,
+    round_number: payload.roundNumber || null,
+    event_timestamp: payload.timestamp || null,
+
+    actor_id: actor?.id || null,
+    actor_name: actor?.name || null,
+    actor_team_id: actor?.teamId || null,
+    actor_side: actor?.side || null,
+
+    victim_id: payload.victim?.id || null,
+    victim_name: payload.victim?.name || null,
+    victim_team_id: payload.victim?.teamId || null,
+    victim_side: payload.victim?.side || null,
+
+    weapon: payload.weapon || null,
+    kill_id: payload.killId || null,
+    headshot: payload.headshot || null,
+    penetrated: payload.penetrated || null,
+    no_scope: payload.noScope || null,
+    through_smoke: payload.throughSmoke || null,
+    while_blinded: payload.whileBlinded || null
+  };
+}
+
 async function fetchAndStoreFixtureEvents() {
-  const connection = await mysql.createConnection(dbConfig);
+  const mainConnection = await mysql.createConnection(dbConfig);
 
   try {
-    const [fixtures] = await connection.query("SELECT id FROM fixtures");
+    const from = 1735689600000; // 2025-01-01
+    const to = 1767225599000;   // 2025-12-31 23:59:59
+
+    const [fixtures] = await mainConnection.query(
+      "SELECT id FROM fixtures WHERE start_time BETWEEN ? AND ?",
+      [from, to]
+    );
 
     for (const fixture of fixtures) {
       const fixtureId = fixture.id;
       console.log(`🔍 Procesando fixture ${fixtureId}`);
 
+      const connection = await mysql.createConnection(dbConfig);
+
       try {
-        // 🛰️ Llamada a la API
+        // Validar si ya fue registrado
+        const [existing] = await connection.query(
+          "SELECT COUNT(*) AS total FROM cs_match_events WHERE fixture_id = ?",
+          [fixtureId]
+        );
+
+        if (existing[0].total > 0) {
+          console.log(`⏩ Fixture ${fixtureId} ya procesado. Se omite.`);
+          await connection.end();
+          continue;
+        }
+
+        // 📡 Llamada a la API
         const response = await axios.get(`${API_BASE_URL}${fixtureId}`, {
-          headers: {
-            Authorization: AUTH_TOKEN
-          }
+          headers: { Authorization: AUTH_TOKEN }
         });
 
         const events = response.data.events;
 
-        if (!Array.isArray(events)) {
+        if (!Array.isArray(events) || events.length === 0) {
           console.warn(`⚠️ Fixture ${fixtureId} no tiene eventos válidos.`);
+          await connection.end();
           continue;
         }
 
-          for (const event of events) {
-              const payload = event.payload || {};
+        // 🔁 Insertar eventos
+        for (const event of events) {
+          const payload = event.payload || {};
+          const values = extractEventData(payload, fixtureId, event);
 
-              // Extraer campos relevantes
-              const values = {
-                  fixture_id: fixtureId,
-                  snapshot_number: payload.snapshotNumber || null,
-                  sort_index: event.sortIndex || null,
-                  event_type: event.type || null,
-                  name: payload.name || null,
-                  map_number: payload.mapNumber || null,
-                  half_number: payload.halfNumber || null,
-                  round_number: payload.roundNumber || null,
-                  team_id: payload.teamId || null,
-                  player_id: payload.playerId || null,
-                  side: payload.side || null,
-                  weapon: payload.weapon || null,
-                  headshot: payload.headshot || null,
-                  penetrated: payload.penetrated || null,
-                  no_scope: payload.noScope || null,
-                  through_smoke: payload.throughSmoke || null,
-                  while_blinded: payload.whileBlinded || null,
-                  event_timestamp: payload.timestamp || null
+          await connection.query(
+            `INSERT INTO cs_match_events (
+              fixture_id, snapshot_number, sort_index, event_type, name,
+              map_name, map_number, half_number, round_number, event_timestamp,
+              actor_id, actor_name, actor_team_id, actor_side,
+              victim_id, victim_name, victim_team_id, victim_side,
+              weapon, kill_id, headshot, penetrated, no_scope,
+              through_smoke, while_blinded
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            Object.values(values)
+          );
+        }
 
-              };
-
-              
-              // Insertar evento en la base de datos
-              await connection.query(
-                `INSERT INTO cs_match_events (
-                    fixture_id,
-                    snapshot_number,
-                    sort_index,
-                    event_type,
-                    name,
-                    map_number,
-                    half_number,
-                    round_number,
-                    team_id,
-                    player_id,
-                    side,
-                    weapon,
-                    headshot,
-                    penetrated,
-                    no_scope,
-                    through_smoke,
-                    while_blinded,
-                    event_timestamp
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    values.fixture_id,
-                    values.snapshot_number,
-                    values.sort_index,
-                    values.event_type,
-                    values.name,
-                    values.map_number,
-                    values.half_number,
-                    values.round_number,
-                    values.team_id,
-                    values.player_id,
-                    values.side,
-                    values.weapon,
-                    values.headshot,
-                    values.penetrated,
-                    values.no_scope,
-                    values.through_smoke,
-                    values.while_blinded,
-                    values.event_timestamp
-                ]
-                );
-
-
-
-          }
-
-        console.log(`✅ Eventos del fixture ${fixtureId} insertados correctamente.`);
+        console.log(`✅ Fixture ${fixtureId} procesado con ${events.length} eventos.`);
       } catch (apiErr) {
-        console.error(`❌ Error con fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
+        console.error(`❌ Error en fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
+      } finally {
+        await connection.end();
       }
     }
+
   } catch (dbErr) {
-    console.error('❌ Error en la base de datos:', dbErr.message);
+    console.error('❌ Error al obtener fixtures:', dbErr.message);
   } finally {
-    await connection.end();
+    await mainConnection.end();
   }
 }
+
+
 
 fetchAndStoreFixtureEvents();
