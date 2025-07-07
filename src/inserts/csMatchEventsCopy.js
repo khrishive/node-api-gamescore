@@ -107,13 +107,14 @@ async function fetchAndStoreFixtureEvents() {
 
           await connection.query(
             `INSERT INTO cs_match_events (
-              fixture_id, snapshot_number, sort_index, event_type, name,
-              map_name, map_number, half_number, round_number, event_timestamp,
-              actor_id, actor_name, actor_team_id, actor_side,
-              victim_id, victim_name, victim_team_id, victim_side,
-              weapon, kill_id, headshot, penetrated, no_scope,
-              through_smoke, while_blinded, winner_team_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  fixture_id, snapshot_number, sort_index, event_type, name,
+  map_name, map_number, half_number, round_number, event_timestamp,
+  actor_id, actor_name, actor_team_id, actor_side,
+  victim_id, victim_name, victim_team_id, victim_side,
+  weapon, kill_id, headshot, penetrated, no_scope,
+  through_smoke, while_blinded, winner_team_id
+) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`,
             Object.values(values)
           );
         }
