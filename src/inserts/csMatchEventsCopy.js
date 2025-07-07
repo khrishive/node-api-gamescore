@@ -113,7 +113,7 @@ async function fetchAndStoreFixtureEvents() {
               victim_id, victim_name, victim_team_id, victim_side,
               weapon, kill_id, headshot, penetrated, no_scope,
               through_smoke, while_blinded, winner_team_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             Object.values(values)
           );
         }
