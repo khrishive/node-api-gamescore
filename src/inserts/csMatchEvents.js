@@ -50,7 +50,9 @@ function extractEventData(payload, fixtureId, event) {
     penetrated: payload.penetrated || null,
     no_scope: payload.noScope || null,
     through_smoke: payload.throughSmoke || null,
-    while_blinded: payload.whileBlinded || null
+    while_blinded: payload.whileBlinded || null,
+
+    winner_team_id: payload.winnerId || null // 🆕 nuevo campo agregado
   };
 }
 
@@ -110,8 +112,8 @@ async function fetchAndStoreFixtureEvents() {
               actor_id, actor_name, actor_team_id, actor_side,
               victim_id, victim_name, victim_team_id, victim_side,
               weapon, kill_id, headshot, penetrated, no_scope,
-              through_smoke, while_blinded
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              through_smoke, while_blinded, winner_team_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             Object.values(values)
           );
         }
