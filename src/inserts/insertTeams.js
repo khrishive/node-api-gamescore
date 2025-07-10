@@ -45,36 +45,53 @@ async function fetchTeamInfo(id) {
  * @ returns {Promise<string[]>} - Retorna un array de IDs únicos de participantes.
  */
 async function fetchUniqueParticipants() {
-    console.log('trayendo fixtures de esport-data.com');
-    try {
-        const response = await axios.get('https://esport-data.com/db/all_fixture', {
-            headers: {
-                'x-api-key' : DB_SERVER_TOKEN,
-            }
-        });
-        console.log(`${response} :v`);
-        const data = response.data;
-        console.log(data);
-        const participantIds = [];
+    console.log('🔄 Trayendo fixtures desde API local (con paginación)...');
 
-        // Itera sobre cada fixture para extraer los IDs de los participantes (si existen)
-        for (const fixture of data) {
-            if ('participants0_id' in fixture) {
-                participantIds.push(fixture.participants0_id);
+    const allParticipantIds = new Set();
+    const limit = 500;
+    let offset = 0;
+    let totalFetched = 0;
+
+    try {
+        while (true) {
+            const response = await axios.get('https://esport-data.com/db/fixtures', {
+                params: { offset, limit },
+                headers: { 'x-api-key': DB_SERVER_TOKEN }
+            });
+
+            const fixtures = response.data;
+
+            // Validación: asegurar que la respuesta sea un arreglo
+            if (!Array.isArray(fixtures)) {
+                console.error(`❌ Respuesta inválida en offset ${offset}. Esperado un arreglo.`);
+                break;
             }
-            if ('participants1_id' in fixture) {
-                participantIds.push(fixture.participants1_id);
+
+            if (fixtures.length === 0) {
+                console.log(`✅ Finalizado: no hay más fixtures en offset ${offset}.`);
+                break;
             }
+
+            console.log(`📦 Procesando ${fixtures.length} fixtures desde offset ${offset}...`);
+
+            for (const fixture of fixtures) {
+                if (fixture.participants0_id) allParticipantIds.add(fixture.participants0_id);
+                if (fixture.participants1_id) allParticipantIds.add(fixture.participants1_id);
+            }
+
+            totalFetched += fixtures.length;
+            offset += limit;
         }
 
-        // Elimina IDs duplicados usando un Set
-        const uniqueParticipantIds = Array.from(new Set(participantIds));
-        return uniqueParticipantIds;
+        const uniqueIds = Array.from(allParticipantIds);
+        console.log(`🎯 ${uniqueIds.length} participantes únicos encontrados tras procesar ${totalFetched} fixtures.`);
+        return uniqueIds;
     } catch (error) {
-        console.error('Error fetching fixtures:', error.message);
+        console.error('❌ Error trayendo fixtures desde API local:', error.message);
         return [];
     }
 }
+
 
 /**
  * Extrae los IDs y nombres de los jugadores del lineup de un equipo.
