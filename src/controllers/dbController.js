@@ -9,29 +9,30 @@ const createConnection = async () => {
   });
 };
 
-export const getRecords = async (tableName, offset , limit , filters = {}) => {
+export const getRecords = async (tableName, offset, limit, filters = {}, orderBy = '') => {
   const connection = await createConnection();
   let query = `SELECT * FROM \`${tableName}\``;
   let params = [];
   const conditions = [];
 
-  // Filtros por rango de fechas para competitions
+  // Filtros por rango de fechas (solo para competitions)
   if (tableName === 'competitions' && filters.from && filters.to) {
     const fromTimestamp = new Date(filters.from).getTime();
     const toTimestamp = new Date(filters.to).getTime();
-
     conditions.push('(start_date BETWEEN ? AND ? OR end_date BETWEEN ? AND ?)');
     params.push(fromTimestamp, toTimestamp, fromTimestamp, toTimestamp);
   }
 
-
-  // Puedes agregar más filtros aquí si quieres
-
   if (conditions.length > 0) {
-    query += ` WHERE ` + conditions.join(' AND ');
+    query += ' WHERE ' + conditions.join(' AND ');
   }
 
-  query += ` ORDER BY updated_at DESC`;
+  // Orden condicional
+  if (orderBy) {
+    query += ` ORDER BY ${orderBy}`;
+  } else if (tableName === 'competitions') {
+    query += ' ORDER BY updated_at DESC';
+  }
 
   const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
@@ -41,6 +42,7 @@ export const getRecords = async (tableName, offset , limit , filters = {}) => {
   await connection.end();
   return rows;
 };
+
 
 
 

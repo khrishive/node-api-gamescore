@@ -112,14 +112,19 @@ router.get('/fixture_links', async (req, res) => {
 });
 
 router.get('/participants', async (req, res) => {
-    try {
-        const data = await getRecords('participants');
-        res.json(data);
-    } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
-    }
+  try {
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 100;
+
+    const data = await getRecords('participants', offset, limit, {}, 'id DESC'); // usa 'id' o lo que exista
+    res.json(data);
+  } catch (error) {
+    console.error('Error en la conexión:', error.message);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Error de servidor' });
+  }
 });
+
 
 router.get('/player', async (req, res) => {
     try {
