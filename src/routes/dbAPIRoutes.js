@@ -126,6 +126,7 @@ router.get('/participants', async (req, res) => {
 });
 
 
+
 router.get('/player', async (req, res) => {
     try {
         const data = await getRecords('player');

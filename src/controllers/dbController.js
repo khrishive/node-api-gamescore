@@ -46,6 +46,7 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
 
 
 
+
 // Obtener todos los registros de una tablaMore actions
 export const getAllRecords = async (tableName) => {
   const connection = await createConnection();
