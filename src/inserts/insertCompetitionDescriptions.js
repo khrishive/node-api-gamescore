@@ -18,7 +18,7 @@ const dbConfig = {
 
 // Prompt para Gemini
 const buildPrompt = (name) => `
-Describe briefly what the "${name}" tournament is about. Return only a JSON object with a single key 'description' and avoid explanations.
+Describe briefly what the "${name}" tournament is about, emphasizing that it is a Counter-Strike competition. Return only a JSON object with a single key 'description' and avoid explanations.
 `;
 
 async function fetchDescriptionFromGemini(name, retries = 3, delay = 3000) {
