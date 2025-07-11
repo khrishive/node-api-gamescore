@@ -1,6 +1,7 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import {getTournamentsInARangeOfDates} from '../../test4.js';
 
 dotenv.config();
 
@@ -26,7 +27,17 @@ async function fetchCompetitions() {
                 Authorization: AUTH_TOKEN,
             }
         });
-        return response.data.competitions || [];
+
+        const startDate = '2025-01-01';
+        const endDate = '2025-12-31';
+
+        const filtered = getTournamentsInARangeOfDates(
+            response.data.competitions,
+            startDate,
+            endDate
+        );
+
+        return filtered; // <-- Retornar solo los filtrados
     } catch (error) {
         if (error.response) {
             console.error('Status:', error.response.status);
@@ -39,6 +50,7 @@ async function fetchCompetitions() {
         return [];
     }
 }
+
 
 // Paso 2: Guardar en la DB
 async function saveCompetitionsToDB(competitions) {
