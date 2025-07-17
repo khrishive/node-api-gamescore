@@ -1,6 +1,7 @@
 // controllers/matchEventController.js
 
 import { db } from '../db.js';
+import { getMatchMapResults } from '../services/getMatchMapResults.js';
 
 const allowedFields = [
   'id', 'fixture_id', 'snapshot_number', 'sort_index', 'event_type', 'name',
@@ -32,5 +33,24 @@ export const getMatchEvents = async (req, res) => {
   } catch (err) {
     console.error('❌ Error al obtener los eventos:', err.message);
     res.status(500).json({ error: 'Error al obtener los eventos' });
+  }
+};
+
+
+
+// GET /api/mapscores/:fixtureId
+export const getMatchMapScores = async (req, res) => {
+  const { fixtureId } = req.params;
+
+  if (!fixtureId || isNaN(fixtureId)) {
+    return res.status(400).json({ error: 'Invalid or missing fixtureId parameter' });
+  }
+
+  try {
+    const result = await getMatchMapResults(Number(fixtureId));
+    res.json(result);
+  } catch (error) {
+    console.error('❌ Error fetching map scores:', error.message);
+    res.status(500).json({ error: 'Error fetching map scores' });
   }
 };
