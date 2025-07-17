@@ -25,15 +25,16 @@ export async function getMatchMapResults(fixtureId) {
   }
 
   // 2. Traer datos desde MySQL
-  const [rows] = await db.query(`
-    SELECT map_number, map_name, winner_team_id, COUNT(*) as rounds_won
+    const [rows] = await db.query(`
+    SELECT map_number, MAX(map_name) AS map_name, winner_team_id, COUNT(*) as rounds_won
     FROM cs_match_events
     WHERE fixture_id = ?
-      AND name = 'round_ended'
-      AND winner_team_id IS NOT NULL
-    GROUP BY map_number, map_name, winner_team_id
+        AND name = 'round_ended'
+        AND winner_team_id IS NOT NULL
+    GROUP BY map_number, winner_team_id
     ORDER BY map_number ASC
-  `, [fixtureId]);
+    `, [fixtureId]);
+
 
   // 3. Agrupar resultados
   const mapResults = {};
