@@ -1,38 +1,44 @@
 import { db } from '../db.js';
 
-export async function getMapBreakdownByTeam(teamId, batchSize = 100) {
+export async function getMapBreakdownByTeam(teamId, batchSize = 100, competitionId = null) {
   const teamIdNum = parseInt(teamId, 10);
   const batch = parseInt(batchSize, 10);
+  const competitionIdNum = parseInt(competitionId, 10);
+
   if (isNaN(teamIdNum)) throw new Error('Invalid teamId provided');
+  if (isNaN(competitionIdNum)) throw new Error('Invalid competitionId provided');
 
   const safeBatchSize = !isNaN(batch) && batch > 0 ? batch : 100;
-
-  // Verifica que LIMIT y OFFSET sean válidos
   if (isNaN(safeBatchSize)) throw new Error('Invalid batch size');
 
-  // Obtener total de fixtures
+  // ✅ Obtener total de fixtures del equipo en la competencia específica
   const [[{ total }]] = await db.execute(
     `SELECT COUNT(*) AS total
      FROM fixtures
-     WHERE participants0_id = ? OR participants1_id = ?`,
-    [teamIdNum, teamIdNum]
+     WHERE competition_id = ?
+       AND (participants0_id = ? OR participants1_id = ?)`,
+    [competitionIdNum, teamIdNum, teamIdNum]
   );
 
   const mapStats = {};
 
+  // ✅ Loop en lotes filtrando también por competition_id
   for (let offset = 0; offset < total; offset += safeBatchSize) {
     const [fixtures] = await db.execute(
       `SELECT id, winner_id
        FROM fixtures
-       WHERE participants0_id = ? OR participants1_id = ?
+       WHERE competition_id = ?
+         AND (participants0_id = ? OR participants1_id = ?)
        ORDER BY start_time DESC
-       LIMIT ${safeBatchSize} OFFSET ${offset}` // ⚠️ OJO: interpolamos directamente
-    , [teamIdNum, teamIdNum]);
+       LIMIT ${safeBatchSize} OFFSET ${offset}`,
+      [competitionIdNum, teamIdNum, teamIdNum]
+    );
 
     for (const fixture of fixtures) {
       const fixtureId = fixture.id;
       const winnerId = fixture.winner_id;
 
+      // 👇 Obtener mapas que se jugaron en el fixture
       const [maps] = await db.execute(
         `SELECT DISTINCT map_number, map_name
          FROM cs_match_events
@@ -45,6 +51,7 @@ export async function getMapBreakdownByTeam(teamId, batchSize = 100) {
       for (const map of maps) {
         const { map_number, map_name } = map;
 
+        // 👇 Verificar si el equipo participó en ese mapa
         const [participation] = await db.execute(
           `SELECT 1 FROM cs_match_events
            WHERE fixture_id = ?
@@ -56,6 +63,7 @@ export async function getMapBreakdownByTeam(teamId, batchSize = 100) {
 
         if (participation.length === 0) continue;
 
+        // 👇 Inicializar estructura de stats si no existe
         if (!mapStats[map_name]) {
           mapStats[map_name] = { played: 0, wins: 0, losses: 0 };
         }
@@ -71,6 +79,7 @@ export async function getMapBreakdownByTeam(teamId, batchSize = 100) {
     }
   }
 
+  // ✅ Convertir stats en array con porcentaje de victoria
   const breakdown = Object.entries(mapStats).map(([map, stats]) => {
     const { played, wins, losses } = stats;
     const winPct = wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(2) : '0.00';
