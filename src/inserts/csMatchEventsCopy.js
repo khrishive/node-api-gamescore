@@ -57,11 +57,28 @@ function extractEventData(payload, fixtureId, event) {
 }
 
 async function fetchAndStoreFixtureEvents() {
+  // Obtener la fecha de hoy
+  const now = new Date();
+
+  // 🟡 Inicio de ayer (00:00:00)
+  const startOfYesterday = new Date(now);
+  startOfYesterday.setDate(now.getDate() - 1);
+  startOfYesterday.setHours(0, 0, 0, 0);
+  const startOfYesterdayUnix = Math.floor(startOfYesterday.getTime() / 1000);
+
+  // 🟢 Final de hoy (23:59:59)
+  const endOfToday = new Date(now);
+  endOfToday.setHours(23, 59, 59, 999);
+  const endOfTodayUnix = Math.floor(endOfToday.getTime() / 1000);
+
+  //console.log('🔙 Inicio de ayer (Unix):', startOfYesterdayUnix);
+  //console.log('⏳ Final de hoy  (Unix):', endOfTodayUnix);
+
   const mainConnection = await mysql.createConnection(dbConfig);
 
   try {
-    const from = 1751328000000; // 2025-01-01
-    const to = 1753919999000;   // 2025-12-31 23:59:59
+    const from = startOfYesterdayUnix; // 2025-01-01
+    const to = endOfTodayUnix;   // 2025-12-31 23:59:59
 
     const [fixtures] = await mainConnection.query(
       "SELECT id FROM fixtures WHERE start_time BETWEEN ? AND ?",
