@@ -3,12 +3,16 @@ import { getMapBreakdownByTeam } from '../middleware/mapBreakdownDataProcess.js'
 export async function mapBreakdownController(req, res) {
   try {
     const teamId = parseInt(req.params.teamId, 10);
-    if (isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
+    const competitionId = parseInt(req.params.competitionId, 10);
 
-    const result = await getMapBreakdownByTeam(teamId);
+    if (isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
+    if (isNaN(competitionId)) return res.status(400).json({ error: 'Invalid competition ID' });
+
+    const result = await getMapBreakdownByTeam(teamId, 100, competitionId); // ahora pasamos competitionId
 
     return res.json({
       teamId,
+      competitionId,
       totalFixtures: result.totalFixtures,
       breakdown: result.breakdown
     });
