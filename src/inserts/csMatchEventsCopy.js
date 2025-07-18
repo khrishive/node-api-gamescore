@@ -60,8 +60,8 @@ async function fetchAndStoreFixtureEvents() {
   const mainConnection = await mysql.createConnection(dbConfig);
 
   try {
-    const from = 1735689600000; // 2025-01-01
-    const to = 1767225599000;   // 2025-12-31 23:59:59
+    const from = 1751328000000; // 2025-01-01
+    const to = 1753919999000;   // 2025-12-31 23:59:59
 
     const [fixtures] = await mainConnection.query(
       "SELECT id FROM fixtures WHERE start_time BETWEEN ? AND ?",
