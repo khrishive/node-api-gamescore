@@ -16,6 +16,7 @@ import fixtureEventsRawRouter from './routes/fixtureEventsRawRouter.js';
 import fixtureMapsRouter from './routes/fixtureMapsRouter.js';
 import matchEventRoute from './routes/matchEventRoute.js';
 import mapBreakdownRoute from './routes/mapBreakdownRoute.js';
+import fixturesByComp from './routes/fixtureByCompetitionRoute.js';
 
 dotenv.config();  // ⚠️ Cargar variables de entorno antes de usarlas
 
@@ -35,6 +36,7 @@ app.use(morgan('dev')); // Registra cada solicitud en la consola
 // Rutas protegidas con API Key:
 app.use('/api/competitions', apiKeyAuth, competitionsRoutes);
 app.use('/api/fixtures', apiKeyAuth, fixturesRoutes);
+app.use('/fixtures-by-comp', apiKeyAuth, fixturesByComp);
 app.use('/api', apiKeyAuth, mapBreakdownRoute);
 app.use('/historic-events', apiKeyAuth, matchEventRoute);
 app.use('/fixtures', apiKeyAuth, fixtureStatsRouter);
