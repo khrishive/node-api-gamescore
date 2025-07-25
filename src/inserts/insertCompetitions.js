@@ -2,6 +2,7 @@ import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
 import {getTournamentsInARangeOfDates} from '../../test4.js';
+import {getParticipantsByTournamentId} from '../services/getNoParticipantsFromTournaments.js';
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ const API_BASE = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 // Filtros por año y deporte
-const API_URL = `${API_BASE}/competitions?sport=cs2&from=2025-01-01&to=2025-12-31`;
+const API_URL = `${API_BASE}/competitions?sport=cs2`;
 
 // Paso 1: Obtener competiciones
 async function fetchCompetitions() {
@@ -96,14 +97,10 @@ async function saveCompetitionsToDB(competitions) {
             console.log(`✅ Guardado torneo: ${comp.name}`);
 
             // Luego, obtener y guardar los participantes
-            const participantRes = await axios.get(`${API_BASE}/competitions/${comp.id}/participants`, {
-                headers: { Authorization: AUTH_TOKEN },
-                timeout: 15000,
-            });
+            const participantRes = await getParticipantsByTournamentId(comp.id);
 
-            const no_participants = Array.isArray(participantRes.data.participants)
-                ? participantRes.data.participants.length
-                : 0;
+            const no_participants = participantRes.uniqueParticipantCount;
+
 
             await connection.execute(updateParticipantsQuery, [no_participants, comp.id]);
             console.log(`👥 Participantes actualizados: ${no_participants}`);
