@@ -67,17 +67,18 @@ async function fetchAndStoreFixtureEvents() {
   startOfYesterday.setHours(0, 0, 0, 0);
   const startOfYesterdayUnix = Math.floor(startOfYesterday.getTime() / 1000); */
 
-  // 🟢 Inicio del 1 de junio (00:00:00)
+// 🟢 Inicio del 1 de junio de 2025 (00:00:00) en milisegundos
   const startOfJuneFirst = new Date();
-  startOfJuneFirst.setFullYear(2025, 5, 1); // Mes 5 = junio (los meses van de 0 a 11)
+  startOfJuneFirst.setFullYear(2025, 5, 1); // Junio (mes 5 porque empieza desde 0)
   startOfJuneFirst.setHours(0, 0, 0, 0);
-  const startOfYesterdayUnix = Math.floor(startOfJuneFirst.getTime() / 1000);
+  const startOfYesterdayUnix = startOfJuneFirst.getTime();
 
 
   // 🟢 Hoy 23:59:59
-  const endOfToday = new Date(now);
+  const hoy = new Date(); // Asegúrate de tener esta línea si no está antes
+  const endOfToday = new Date(hoy);
   endOfToday.setHours(23, 59, 59, 999);
-  const endOfTodayUnix = Math.floor(endOfToday.getTime() / 1000);
+  const endOfTodayUnix = endOfToday.getTime();
 
   try {
     console.log(`🕒 Buscando fixtures entre ${startOfYesterdayUnix} y ${endOfTodayUnix}...`);
