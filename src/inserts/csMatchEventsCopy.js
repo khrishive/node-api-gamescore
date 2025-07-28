@@ -61,17 +61,19 @@ function extractEventData(payload, fixtureId, event) {
 async function fetchAndStoreFixtureEvents() {
   const now = new Date();
 
-/**  // 🟡 Ayer 00:00:00
+  //🟡 Ayer 00:00:00
   const startOfYesterday = new Date(now);
   startOfYesterday.setDate(now.getDate() - 1);
   startOfYesterday.setHours(0, 0, 0, 0);
-  const startOfYesterdayUnix = Math.floor(startOfYesterday.getTime() / 1000); */
+  const startOfYesterdayUnix = startOfYesterday.getTime();
 
-// 🟢 Inicio del 1 de junio de 2025 (00:00:00) en milisegundos
+/**
+ * // 🟢 Inicio del 1 de junio de 2025 (00:00:00) en milisegundos
   const startOfJuneFirst = new Date();
   startOfJuneFirst.setFullYear(2025, 5, 1); // Junio (mes 5 porque empieza desde 0)
   startOfJuneFirst.setHours(0, 0, 0, 0);
   const startOfYesterdayUnix = startOfJuneFirst.getTime();
+ */
 
 
   // 🟢 Hoy 23:59:59
