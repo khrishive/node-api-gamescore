@@ -1,107 +1,111 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { db } from '../db.js'; // Reutilizar pool de conexiones
 
 dotenv.config();
-
-// 🔌 Configuración de base de datos
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT
-};
 
 // 🔐 Configuración de API
 const API_BASE_URL = "https://api.gamescorekeeper.com/v2/live/historic/";
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-// 🧠 Extrae los campos estandarizados según el evento
+// 🧠 Formatea valores según tipo
+function normalize(value, type) {
+  if (value === null || value === undefined) {
+    if (type === 'text') return 'TBD';
+    if (type === 'number') return 0;
+    if (type === 'timestamp') return 9999999999999;
+  }
+  return value;
+}
+
+// 🧠 Extrae y normaliza los campos del evento
 function extractEventData(payload, fixtureId, event) {
   const name = payload.name ?? null;
   const actor = payload.killer ?? payload.planter ?? payload.assister ?? payload.defuser ?? null;
 
   return {
-    fixture_id: fixtureId ?? null,
-    snapshot_number: payload.snapshotNumber ?? null,
-    sort_index: event.sortIndex ?? null,
-    event_type: event.type ?? null,
-    name: name ?? null,
-    map_name: payload.mapName ?? null,
-    map_number: payload.mapNumber ?? null,
-    half_number: payload.halfNumber ?? null,
-    round_number: payload.roundNumber ?? null,
-    event_timestamp: payload.timestamp ?? null,
+    fixture_id: normalize(fixtureId, 'number'),
+    snapshot_number: normalize(payload.snapshotNumber, 'number'),
+    sort_index: normalize(event.sortIndex, 'number'),
+    event_type: normalize(event.type, 'text'),
+    name: normalize(name, 'text'),
+    map_name: normalize(payload.mapName, 'text'),
+    map_number: normalize(payload.mapNumber, 'number'),
+    half_number: normalize(payload.halfNumber, 'number'),
+    round_number: normalize(payload.roundNumber, 'number'),
+    event_timestamp: normalize(payload.timestamp, 'timestamp'),
 
-    actor_id: actor?.id ?? null,
-    actor_name: actor?.name ?? null,
-    actor_team_id: actor?.teamId ?? null,
-    actor_side: actor?.side ?? null,
+    actor_id: normalize(actor?.id, 'text'),
+    actor_name: normalize(actor?.name, 'text'),
+    actor_team_id: normalize(actor?.teamId, 'text'),
+    actor_side: normalize(actor?.side, 'text'),
 
-    victim_id: payload.victim?.id ?? null,
-    victim_name: payload.victim?.name ?? null,
-    victim_team_id: payload.victim?.teamId ?? null,
-    victim_side: payload.victim?.side ?? null,
+    victim_id: normalize(payload.victim?.id, 'text'),
+    victim_name: normalize(payload.victim?.name, 'text'),
+    victim_team_id: normalize(payload.victim?.teamId, 'text'),
+    victim_side: normalize(payload.victim?.side, 'text'),
 
-    weapon: payload.weapon ?? null,
-    kill_id: payload.killId ?? null,
-    headshot: payload.headshot ?? null,
-    penetrated: payload.penetrated ?? null,
-    no_scope: payload.noScope ?? null,
-    through_smoke: payload.throughSmoke ?? null,
-    while_blinded: payload.whileBlinded ?? null,
+    weapon: normalize(payload.weapon, 'text'),
+    kill_id: normalize(payload.killId, 'text'),
+    headshot: normalize(payload.headshot, 'number'),
+    penetrated: normalize(payload.penetrated, 'number'),
+    no_scope: normalize(payload.noScope, 'number'),
+    through_smoke: normalize(payload.throughSmoke, 'number'),
+    while_blinded: normalize(payload.whileBlinded, 'number'),
 
-    winner_team_id: payload.winnerId ?? null
+    winner_team_id: normalize(payload.winnerId, 'text')
   };
 }
 
 async function fetchAndStoreFixtureEvents() {
-  // Obtener la fecha de hoy
   const now = new Date();
 
-  // 🟡 Inicio de ayer (00:00:00)
+/**  // 🟡 Ayer 00:00:00
   const startOfYesterday = new Date(now);
   startOfYesterday.setDate(now.getDate() - 1);
   startOfYesterday.setHours(0, 0, 0, 0);
-  const startOfYesterdayUnix = Math.floor(startOfYesterday.getTime() / 1000);
+  const startOfYesterdayUnix = Math.floor(startOfYesterday.getTime() / 1000); */
 
-  // 🟢 Final de hoy (23:59:59)
+  // 🟢 Inicio del 1 de junio (00:00:00)
+  const startOfJuneFirst = new Date();
+  startOfJuneFirst.setFullYear(2025, 5, 1); // Mes 5 = junio (los meses van de 0 a 11)
+  startOfJuneFirst.setHours(0, 0, 0, 0);
+  const startOfYesterdayUnix = Math.floor(startOfJuneFirst.getTime() / 1000);
+
+
+  // 🟢 Hoy 23:59:59
   const endOfToday = new Date(now);
   endOfToday.setHours(23, 59, 59, 999);
   const endOfTodayUnix = Math.floor(endOfToday.getTime() / 1000);
 
-  //console.log('🔙 Inicio de ayer (Unix):', startOfYesterdayUnix);
-  //console.log('⏳ Final de hoy  (Unix):', endOfTodayUnix);
-
-  const mainConnection = await mysql.createConnection(dbConfig);
-
   try {
-    const from = startOfYesterdayUnix; // 2025-01-01
-    const to = endOfTodayUnix;   // 2025-12-31 23:59:59
+    console.log(`🕒 Buscando fixtures entre ${startOfYesterdayUnix} y ${endOfTodayUnix}...`);
 
-    const [fixtures] = await mainConnection.query(
+    const [fixtures] = await db.query(
       "SELECT id FROM fixtures WHERE start_time BETWEEN ? AND ?",
-      [from, to]
+      [startOfYesterdayUnix, endOfTodayUnix]
     );
 
-    const connection = await mysql.createConnection(dbConfig);
+    console.log(`🔍 Se encontraron ${fixtures.length} fixtures.`);
+
+    let fixturesProcesados = 0;
 
     for (const fixture of fixtures) {
       const fixtureId = fixture.id;
-      console.log(`🔍 Procesando fixture ${fixtureId}`);
+      console.log(`🧩 Procesando fixture ID: ${fixtureId}`);
+
+      const [existing] = await db.query(
+        "SELECT COUNT(*) AS total FROM cs_match_events WHERE fixture_id = ?",
+        [fixtureId]
+      );
+
+      if (existing[0].total > 0) {
+        console.log(`⏭️  Ya existe info para fixture ${fixtureId}. Saltando.`);
+        continue;
+      }
 
       try {
-        const [existing] = await connection.query(
-          "SELECT COUNT(*) AS total FROM cs_match_events WHERE fixture_id = ?",
-          [fixtureId]
-        );
-
-        if (existing[0].total > 0) {
-          console.log(`⏩ Fixture ${fixtureId} ya procesado. Se omite.`);
-          continue;
-        }
-
         const response = await axios.get(`${API_BASE_URL}${fixtureId}`, {
           headers: { Authorization: AUTH_TOKEN }
         });
@@ -109,9 +113,11 @@ async function fetchAndStoreFixtureEvents() {
         const events = response.data.events;
 
         if (!Array.isArray(events) || events.length === 0) {
-          console.warn(`⚠️ Fixture ${fixtureId} no tiene eventos válidos.`);
+          console.warn(`⚠️  Fixture ${fixtureId} no tiene eventos.`);
           continue;
         }
+
+        let insertados = 0;
 
         for (const event of events) {
           const payload = event.payload ?? {};
@@ -119,11 +125,11 @@ async function fetchAndStoreFixtureEvents() {
           const insertValues = Object.values(valuesObj);
 
           if (insertValues.length !== 26) {
-            console.error(`❌ Fixture ${fixtureId} - Cantidad inesperada de valores (${insertValues.length}):`, insertValues);
+            console.error(`❌ Fixture ${fixtureId}: cantidad de valores inesperada (${insertValues.length})`);
             continue;
           }
 
-          await connection.query(
+          await db.query(
             `INSERT INTO cs_match_events (
               fixture_id, snapshot_number, sort_index, event_type, name,
               map_name, map_number, half_number, round_number, event_timestamp,
@@ -134,19 +140,23 @@ async function fetchAndStoreFixtureEvents() {
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
             insertValues
           );
+
+          insertados++;
         }
 
-        console.log(`✅ Fixture ${fixtureId} procesado con ${events.length} eventos.`);
+        console.log(`✅ Fixture ${fixtureId} insertado con ${insertados} eventos.`);
+        fixturesProcesados++;
       } catch (apiErr) {
-        console.error(`❌ Error en fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
+        console.error(`❌ Error al obtener eventos para fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
       }
     }
 
-    await connection.end();
-  } catch (dbErr) {
-    console.error('❌ Error al obtener fixtures:', dbErr.message);
+    console.log(`🎯 Proceso finalizado. Fixtures procesados: ${fixturesProcesados} de ${fixtures.length}.`);
+  } catch (err) {
+    console.error('❌ Error general:', err.message);
   } finally {
-    await mainConnection.end();
+    await db.end();
+    console.log('🔌 Conexión cerrada.');
   }
 }
 
