@@ -10,7 +10,7 @@ const TOKEN = process.env.GAME_SCORE_APIKEY;
 const API_URL = 'https://api.gamescorekeeper.com/v2/live/historic/';
 
 async function getAllFixtureIds() {
-  const [rows] = await db.query('SELECT fixture_id FROM fixtures WHERE fixture_id IS NOT NULL');
+  const [rows] = await db.query('SELECT id FROM fixtures WHERE id IS NOT NULL');
   return rows.map(row => row.fixture_id);
 }
 
