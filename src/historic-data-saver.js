@@ -11,7 +11,7 @@ const API_URL = 'https://api.gamescorekeeper.com/v2/live/historic/';
 
 async function getAllFixtureIds() {
   const [rows] = await db.query('SELECT id FROM fixtures WHERE id IS NOT NULL');
-  return rows.map(row => row.fixture_id);
+  return rows.map(row => row.id);
 }
 
 async function processFixtureFromAPI(fixtureId) {
@@ -26,20 +26,18 @@ async function processFixtureFromAPI(fixtureId) {
     const events = response.data.events;
 
     if (!Array.isArray(events)) {
-      mainLogger.warn({ msg: 'No events found in API response', fixtureId });
+      mainLogger.warn(`[API] No events found in API response for fixture ${fixtureId}`);
       return;
     }
 
-    // Crear contexto inicial
     let context = {
-      fixtureId: fixtureId,
+      fixtureId,
       mapNumber: null,
       roundNumber: null,
     };
 
     for (const message of events) {
       try {
-        // Actualiza contexto
         if (message.type === 'occurrence' && message.payload) {
           const name = message.payload.name;
           if (name === 'map_started') {
@@ -51,28 +49,18 @@ async function processFixtureFromAPI(fixtureId) {
           }
         }
 
-        mainLogger.debug({ msg: '[API] Procesando evento', fixtureId, eventType: message.type });
+        mainLogger.debug(`[API] Procesando evento ${message.type} para fixture ${fixtureId}`);
         await handleLiveEvent(message, context);
 
       } catch (err) {
-        mainLogger.error({
-          msg: '[API] Error procesando evento',
-          error: err.message,
-          stack: err.stack,
-          fixtureId,
-          snapshotNumber: message?.payload?.snapshotNumber,
-        });
+        mainLogger.error(`[API] Error procesando evento en fixture ${fixtureId}, snapshot ${message?.payload?.snapshotNumber}: ${err.message}\n${err.stack}`);
       }
     }
 
-    mainLogger.info({ msg: '[API] Procesamiento completo', fixtureId });
+    mainLogger.info(`[API] Procesamiento completo para fixture ${fixtureId}`);
 
   } catch (err) {
-    mainLogger.error({
-      msg: '[API] Error obteniendo datos de fixture',
-      fixtureId,
-      error: err.message,
-    });
+    mainLogger.error(`[API] Error obteniendo datos de fixture ${fixtureId}: ${err.message}\n${err.stack}`);
   }
 }
 
