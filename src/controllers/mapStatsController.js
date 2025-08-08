@@ -9,7 +9,7 @@ export async function getMapStats(req, res) {
 
   try {
     const [rows] = await db.query(
-      `SELECT player_id, player_name, kills, deaths, assists, plus_minus, adr, headshot_percent 
+      `SELECT player_id, player_name, team_id, kills, deaths, assists, plus_minus, adr, headshot_percent 
        FROM map_team_players 
        WHERE fixture_id = ?`,
       [fixtureId]
@@ -21,6 +21,7 @@ export async function getMapStats(req, res) {
       const {
         player_id,
         player_name,
+        team_id,
         kills,
         deaths,
         assists,
@@ -29,10 +30,12 @@ export async function getMapStats(req, res) {
         headshot_percent,
       } = row;
 
+      // Usar player_id como clave (suponiendo un único team_id por jugador en este fixture)
       if (!playerStats[player_id]) {
         playerStats[player_id] = {
           player_id,
           player_name,
+          team_id,
           total_kills: 0,
           total_deaths: 0,
           total_assists: 0,
@@ -64,6 +67,7 @@ export async function getMapStats(req, res) {
       return {
         player_id: stats.player_id,
         player_name: stats.player_name,
+        team_id: stats.team_id,
         kills: stats.total_kills,
         deaths: stats.total_deaths,
         assists: stats.total_assists,
@@ -79,6 +83,7 @@ export async function getMapStats(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
 
 
 export async function getMapRoundScores(req, res) {
