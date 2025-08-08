@@ -28,10 +28,10 @@ async function fetchMapTeamPlayers(fixtureId) {
     const result = [];
 
     for (const map of fixtureData.maps) {
-      const mapNumber = map.map_number;
+      const mapNumber = map.mapNumber;
 
-      for (const team of map.teams || []) {
-        const teamId = team.team?.id;
+      for (const team of map.teamStats || []) {
+        const teamId = team.teamId? team.teamId : 0;
 
         for (const player of team.players || []) {
           const kills = player.kills ?? 0;
@@ -45,8 +45,8 @@ async function fetchMapTeamPlayers(fixtureId) {
             fixtureId,
             mapNumber,
             teamId,
-            player.player_id,
-            player.player_name,
+            player.playerId,
+            player.name,
             kills,
             deaths,
             player.assists ?? 0,
