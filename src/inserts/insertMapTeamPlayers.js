@@ -1,4 +1,3 @@
-// src/inserts/insertMapTeamPlayers.js
 import dotenv from 'dotenv';
 import { db } from '../db.js';
 import axios from 'axios';
@@ -24,14 +23,27 @@ async function getFixtureIds() {
 async function fetchMapTeamPlayers(fixtureId) {
   try {
     const response = await axios.get(`${API_URL}/fixtures/${fixtureId}`, {
-      headers: {
-        Authorization: AUTH_TOKEN
-      }
+      headers: { Authorization: AUTH_TOKEN }
+    });
+
+    const pickBan = await axios.get(`${API_URL}/pickban/${fixtureId}/maps`, {
+      headers: { Authorization: AUTH_TOKEN }
     });
 
     const fixtureData = response.data;
+    const pickBanData = pickBan.data;
 
-    if (!fixtureData?.maps) return { teamStatsResult: [], teamRoundScores: [] };
+    if (!fixtureData?.maps || !Array.isArray(fixtureData.maps)) {
+      return { teamStatsResult: [], teamRoundScores: [] };
+    }
+
+    // Crear mapa de picks { mapNameLower: teamId }
+    const pickMap = {};
+    for (const item of pickBanData.pickBan || []) {
+      if (item.pickOrBan === 'pick' && item.teamId) {
+        pickMap[item.mapName.toLowerCase()] = item.teamId;
+      }
+    }
 
     const teamStatsResult = [];
     const teamRoundScores = [];
@@ -54,7 +66,7 @@ async function fetchMapTeamPlayers(fixtureId) {
           teamStatsResult.push([
             fixtureId,
             mapNumber,
-            mapName,                // <- FALTA ESTE
+            mapName,
             teamId,
             player.playerId,
             player.name,
@@ -74,14 +86,22 @@ async function fetchMapTeamPlayers(fixtureId) {
         const half1 = team.halfScores?.[0] ?? 0;
         const half2 = team.halfScores?.[1] ?? 0;
 
+        // Verificar si este equipo hizo el pick del mapa
+        const normalizeMapName = name => name.toLowerCase().replace(/^de_/, '');
+        const mapKey = normalizeMapName(mapName);
+        const pickTeamId = pickMap[mapKey] ?? null;
+        const isPick = pickTeamId === teamId;
+
+
         teamRoundScores.push([
           fixtureId,
           mapNumber,
-          mapName,                // <- FALTA ESTE
+          mapName,
           teamId,
           roundsWon,
           half1,
-          half2
+          half2,
+          isPick ? 1 : 0
         ]);
       }
     }
@@ -124,12 +144,13 @@ async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
     if (teamRoundScores.length > 0) {
       const roundQuery = `
         INSERT INTO map_team_round_scores (
-          fixture_id, map_number, map_name, team_id, rounds_won, half1_score, half2_score
+          fixture_id, map_number, map_name, team_id, rounds_won, half1_score, half2_score, is_pick
         ) VALUES ?
         ON DUPLICATE KEY UPDATE
           rounds_won = VALUES(rounds_won),
           half1_score = VALUES(half1_score),
-          half2_score = VALUES(half2_score)
+          half2_score = VALUES(half2_score),
+          is_pick = VALUES(is_pick)
       `;
 
       await db.query(roundQuery, [teamRoundScores]);
