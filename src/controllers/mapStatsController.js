@@ -104,6 +104,7 @@ export async function getMapRoundScores(req, res) {
         rounds_won,
         half1_score,
         half2_score,
+        is_pick,
         created_at
        FROM map_team_round_scores
        WHERE fixture_id = ?`,
@@ -116,4 +117,5 @@ export async function getMapRoundScores(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
 
