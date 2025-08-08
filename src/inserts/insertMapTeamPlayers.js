@@ -22,16 +22,26 @@ async function getFixtureIds() {
 
 async function fetchMapTeamPlayers(fixtureId) {
   try {
+    // 1️⃣ Obtener fixture principal (esto sí es obligatorio)
     const response = await axios.get(`${API_URL}/fixtures/${fixtureId}`, {
       headers: { Authorization: AUTH_TOKEN }
     });
-
-    const pickBan = await axios.get(`${API_URL}/pickban/${fixtureId}/maps`, {
-      headers: { Authorization: AUTH_TOKEN }
-    });
-
     const fixtureData = response.data;
-    const pickBanData = pickBan.data;
+
+    // 2️⃣ Intentar obtener pickBan (si falla, seguimos con vacío)
+    let pickBanData = { pickBan: [] };
+    try {
+      const pickBan = await axios.get(`${API_URL}/pickban/${fixtureId}/maps`, {
+        headers: { Authorization: AUTH_TOKEN }
+      });
+      pickBanData = pickBan.data;
+    } catch (err) {
+      if (err.response?.status === 404) {
+        console.warn(`[INFO] Pick/Ban no encontrado para fixture ${fixtureId}, continuando...`);
+      } else {
+        console.error(`[ERROR] Pick/Ban para fixture ${fixtureId}:`, err.message);
+      }
+    }
 
     if (!fixtureData?.maps || !Array.isArray(fixtureData.maps)) {
       return { teamStatsResult: [], teamRoundScores: [] };
@@ -52,6 +62,7 @@ async function fetchMapTeamPlayers(fixtureId) {
       const mapNumber = map.mapNumber;
       const mapName = map.mapName;
 
+      // ---- Stats de jugadores ----
       for (const team of map.teamStats || []) {
         const teamId = team.teamId ?? 0;
 
@@ -59,7 +70,6 @@ async function fetchMapTeamPlayers(fixtureId) {
           const kills = player.kills ?? 0;
           const deaths = player.deaths ?? 0;
           const headshots = player.headshots ?? 0;
-
           const plusMinus = kills - deaths;
           const headshotPercent = kills > 0 ? (headshots / kills) * 100 : 0;
 
@@ -80,18 +90,18 @@ async function fetchMapTeamPlayers(fixtureId) {
         }
       }
 
+      // ---- Rondas de equipos ----
       for (const team of map.roundScores || []) {
         const teamId = team.id ?? 0;
         const roundsWon = team.roundsWon ?? 0;
         const half1 = team.halfScores?.[0] ?? 0;
         const half2 = team.halfScores?.[1] ?? 0;
 
-        // Verificar si este equipo hizo el pick del mapa
+        // Normalizar nombre de mapa para comparar picks
         const normalizeMapName = name => name.toLowerCase().replace(/^de_/, '');
         const mapKey = normalizeMapName(mapName);
         const pickTeamId = pickMap[mapKey] ?? null;
         const isPick = pickTeamId === teamId;
-
 
         teamRoundScores.push([
           fixtureId,
@@ -116,6 +126,7 @@ async function fetchMapTeamPlayers(fixtureId) {
     return { teamStatsResult: [], teamRoundScores: [] };
   }
 }
+
 
 async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
   try {
