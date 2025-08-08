@@ -9,7 +9,15 @@ const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 async function getFixtureIds() {
-  const [rows] = await db.query('SELECT id FROM fixtures');
+  const [rows] = await db.query(`
+    SELECT id 
+    FROM fixtures 
+    WHERE 
+      (start_time BETWEEN 1735689600000 AND 1767225599000)
+      OR 
+      (scheduled_start_time BETWEEN 1735689600000 AND 1767225599000)
+  `);
+
   return rows.map(row => row.id);
 }
 
