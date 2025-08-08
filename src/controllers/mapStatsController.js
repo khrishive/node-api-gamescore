@@ -79,3 +79,35 @@ export async function getMapStats(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
+
+export async function getMapRoundScores(req, res) {
+  const { fixture_id } = req.query;
+
+  if (!fixture_id) {
+    return res.status(400).json({ error: 'fixture_id parameter is required' });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT 
+        id,
+        fixture_id,
+        map_number,
+        map_name,
+        team_id,
+        rounds_won,
+        half1_score,
+        half2_score,
+        created_at
+       FROM map_team_round_scores
+       WHERE fixture_id = ?`,
+      [fixture_id]
+    );
+
+    res.json({ data: rows });
+  } catch (error) {
+    console.error('Error fetching map_team_round_scores:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
