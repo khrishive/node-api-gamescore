@@ -6,6 +6,6 @@ const router = express.Router();
 // Ruta: /api/map-stats/:fixtureId
 router.get('/map-stats/:fixtureId', getMapStats);
 
-router.get('/map-round-scores', getMapRoundScores);
+router.get('/map-round-scores/:fixtureId', getMapRoundScores);
 
 export default router;

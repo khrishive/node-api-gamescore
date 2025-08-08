@@ -82,10 +82,10 @@ export async function getMapStats(req, res) {
 
 
 export async function getMapRoundScores(req, res) {
-  const { fixture_id } = req.query;
+  const fixtureId = req.params.fixtureId;
 
-  if (!fixture_id) {
-    return res.status(400).json({ error: 'fixture_id parameter is required' });
+  if (!fixtureId) {
+    return res.status(400).json({ error: 'fixtureId parameter is required' });
   }
 
   try {
@@ -102,7 +102,7 @@ export async function getMapRoundScores(req, res) {
         created_at
        FROM map_team_round_scores
        WHERE fixture_id = ?`,
-      [fixture_id]
+      [fixtureId]
     );
 
     res.json({ data: rows });
@@ -111,3 +111,4 @@ export async function getMapRoundScores(req, res) {
     res.status(500).json({ error: 'Internal server error' });
   }
 }
+
