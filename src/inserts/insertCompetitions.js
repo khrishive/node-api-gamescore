@@ -60,9 +60,11 @@ async function saveCompetitionsToDB(competitions) {
     const insertQuery = `
         INSERT INTO competitions (
             id, name, sport_alias, start_date, end_date, prize_pool_usd,
-            location, organizer, type, fixture_count, updated_at
+            location, organizer, type, fixture_count,
+            stage, time_of_year, year, series, tier,
+            updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
         ON DUPLICATE KEY UPDATE
             name = VALUES(name),
             sport_alias = VALUES(sport_alias),
@@ -73,6 +75,11 @@ async function saveCompetitionsToDB(competitions) {
             organizer = VALUES(organizer),
             type = VALUES(type),
             fixture_count = VALUES(fixture_count),
+            stage = VALUES(stage),
+            time_of_year = VALUES(time_of_year),
+            year = VALUES(year),
+            series = VALUES(series),
+            tier = VALUES(tier),
             updated_at = NOW();
     `;
 
@@ -82,25 +89,32 @@ async function saveCompetitionsToDB(competitions) {
 
     for (const comp of competitions) {
         try {
+            const derivatives = comp.derivatives || {};
+            const metadata = comp.metadata || {};
+
             await connection.execute(insertQuery, [
                 comp.id,
-                comp.name,
-                comp.sportAlias,
-                comp.startDate,
-                comp.endDate,
-                comp.prizePoolUSD,
-                comp.location,
-                comp.organizer,
-                comp.type,
-                comp.fixtureCount
+                comp.name || null,
+                comp.sportAlias || null,
+                comp.startDate || null,
+                comp.endDate || null,
+                comp.prizePoolUSD || null,
+                comp.location || null,
+                comp.organizer || null,
+                comp.type || null,
+                comp.fixtureCount || null,
+                derivatives.stage || 'Waiting for information',
+                derivatives.time_of_year || 'Waiting for information',
+                derivatives.year || 'Waiting for information',
+                derivatives.series || 'Waiting for information',
+                metadata.liquipediaTier || 'Waiting for information'
             ]);
+
             console.log(`✅ Guardado torneo: ${comp.name}`);
 
-            // Luego, obtener y guardar los participantes
+            // Obtener y guardar participantes
             const participantRes = await getParticipantsByTournamentId(comp.id);
-
-            const no_participants = participantRes.uniqueParticipantCount;
-
+            const no_participants = participantRes?.uniqueParticipantCount || 0;
 
             await connection.execute(updateParticipantsQuery, [no_participants, comp.id]);
             console.log(`👥 Participantes actualizados: ${no_participants}`);
@@ -119,6 +133,7 @@ async function saveCompetitionsToDB(competitions) {
 
     await connection.end();
 }
+
 
 // Función principal
 export async function getAndSaveCompetitions() {
