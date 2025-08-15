@@ -8,17 +8,33 @@ const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 async function getFixtureIds() {
-  const [rows] = await db.query(`
-    SELECT id 
-    FROM fixtures 
-    WHERE 
-      (start_time BETWEEN 1735689600000 AND 1767225599000)
-      OR 
-      (scheduled_start_time BETWEEN 1735689600000 AND 1767225599000)
-  `);
+  // 📅 Hoy 00:00:00
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
+  // 📅 Mañana 00:00:00
+  const startOfTomorrow = new Date(startOfToday);
+  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+
+  // 🔢 Convertimos a timestamp en milisegundos
+  const startTimestamp = startOfToday.getTime();
+  const endTimestamp = startOfTomorrow.getTime();
+
+  const [rows] = await db.query(
+    `
+      SELECT id 
+      FROM fixtures 
+      WHERE 
+        (start_time BETWEEN ? AND ?)
+        OR 
+        (scheduled_start_time BETWEEN ? AND ?)
+    `,
+    [startTimestamp, endTimestamp, startTimestamp, endTimestamp]
+  );
 
   return rows.map(row => row.id);
 }
+
 
 async function fetchMapTeamPlayers(fixtureId) {
   try {
