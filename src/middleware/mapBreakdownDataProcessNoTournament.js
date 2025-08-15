@@ -1,3 +1,5 @@
+import { db } from '../db.js';
+
 export async function getMapBreakdownByTeamNoTournament(teamId, batchSize = 100, competitionId = null) {
   const teamIdNum = parseInt(teamId, 10);
   const batch = parseInt(batchSize, 10);
