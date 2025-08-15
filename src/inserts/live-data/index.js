@@ -1,37 +1,50 @@
-import { insertKill } from './Kills.js';
-import { insertAssist } from './assists.js';
-import { insertMap } from './maps.js';
-import { insertRound } from './rounds.js';
-import { insertEquipmentState } from './equipmentState.js';
+// import { insertKill } from './Kills.js';
+// import { insertAssist } from './assists.js';
+// import { insertMap } from './maps.js';
+// import { insertRound } from './rounds.js';
+// import { insertEquipmentState } from './equipmentState.js';
 import { insertRawEvent } from './eventsRaw.js';
-import { ensurePlayerExists, ensureTeamExists } from './utils.js';
-import indexLogger from './loggers/indexLogger.js';
+// import { ensurePlayerExists, ensureTeamExists } from './utils.js';
+// import indexLogger from './loggers/indexLogger.js';
 
 // Este archivo recibe un evento y lo despacha a la función adecuada según el tipo
 export async function handleLiveEvent(event, context) {
-  const { fixtureId, mapNumber, roundNumber } = context;
+  const { fixtureId/*, mapNumber, roundNumber*/ } = context;
 
-  // Log de debug con los datos recibidos
+  // 🔹 [LOGGER OPCIONAL]
+  /** 
   indexLogger.debug({
     msg: '[handleLiveEvent] Evento recibido',
     event, context
   });
+  **/
 
-  // Guarda el evento crudo (opcional)
+  // Guarda el evento crudo
   try {
     await insertRawEvent(event, fixtureId, event.type, event.payload?.timestamp ?? Date.now());
+    /** 
     indexLogger.debug({
       msg: '[handleLiveEvent] Evento crudo guardado',
       fixtureId, eventType: event.type, timestamp: event.payload?.timestamp ?? Date.now()
     });
+    **/
   } catch (error) {
+    /** 
     indexLogger.error({
       msg: '[handleLiveEvent] Error al guardar evento crudo',
       error: error.message,
       fixtureId, eventType: event.type
     });
+    **/
+   return {
+    success: false,
+    message: 'Error to insert raw event',
+    error: error.message
+  };
   }
 
+  /** 
+  // 🔹 El resto de eventos está comentado por ahora
   if (event.type === 'occurrence' && event.payload) {
     const { name } = event.payload;
 
@@ -128,4 +141,5 @@ export async function handleLiveEvent(event, context) {
       });
     }
   }
+  **/
 }

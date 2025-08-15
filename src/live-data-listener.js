@@ -63,7 +63,7 @@ export function connectWebSocket(fixture_id) {
       });
 
       // Guarda el evento en un archivo para auditoría/debug (opcional)
-      fs.appendFileSync('output.txt', JSON.stringify(message, null, 2) + '\n');
+      //fs.appendFileSync('output.txt', JSON.stringify(message, null, 2) + '\n');
 
       // Actualiza el contexto según el tipo de evento recibido
       if (message.type === 'occurrence' && message.payload) {

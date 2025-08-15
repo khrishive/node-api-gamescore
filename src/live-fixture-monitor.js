@@ -12,8 +12,7 @@ const API = `${API_URL}/fixtures?status=started&from=${dateStr}&sport=cs2&to=${d
 
 const trackedFixtures = new Set(); // Fixture IDs a los que ya se les abrió WebSocket
 
-const POLL_INTERVAL = 30 * 1000; // 30 segundos
-
+const POLL_INTERVAL = 3600 * 1000; // 1 hora en milisegundos
 async function fetchStartedFixtures() {
   
 
