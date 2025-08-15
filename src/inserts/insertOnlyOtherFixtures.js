@@ -123,14 +123,29 @@ async function saveFixturesToDB(fixtures) {
  * Procesa rangos de fechas, obtiene fixtures y los guarda en la base de datos.
  * @ param {string} [endDate='2025-11-03'] - Fecha de fin para los rangos.
  */
-export async function processFixtures(endDate = '2025-06-17') {
+export async function processFixtures() {
     console.log('🔄 Generando rangos de fechas...');
-    const today = new Date(2023, 1, 1);
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
-    const dd = String(today.getDate()).padStart(2, '0');
-    const currentDate = `${yyyy}-${mm}-${dd}`;
-    const dateRanges = generateDateRanges(currentDate, endDate);
+
+    // 📅 Calcula ayer y mañana
+    const now = new Date();
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0); // inicio del día
+
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999); // fin del día
+
+    // 🗓 Formatea a YYYY-MM-DD
+    const formatDate = (date) => date.toISOString().split('T')[0];
+    const fromDate = formatDate(yesterday);
+    const toDate = formatDate(tomorrow);
+
+    console.log(`📅 Rango calculado: ${fromDate} → ${toDate}`);
+
+    // 📌 Genera rangos con las fechas calculadas
+    const dateRanges = generateDateRanges(fromDate, toDate);
 
     for (const range of dateRanges) {
         console.log(`🔄 Obteniendo fixtures para el rango: ${range.from} a ${range.to}`);
@@ -147,5 +162,6 @@ export async function processFixtures(endDate = '2025-06-17') {
 
     console.log('✅ Proceso completado.');
 }
+
 
 await processFixtures()
