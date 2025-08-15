@@ -1,5 +1,5 @@
 import { getMapBreakdownByTeam } from '../middleware/mapBreakdownDataProcess.js';
-import { getMapBreakdownByTeamNoTournament } from '../middleware/mapBreakdownDataProcessNoTournament.js';
+//import { getMapBreakdownByTeamNoTournament } from '../middleware/mapBreakdownDataProcessNoTournament.js';
 
 export async function mapBreakdownController(req, res) {
   try {
@@ -23,7 +23,7 @@ export async function mapBreakdownController(req, res) {
   }
 }
 
-export async function mapBreakdownControllerNoTournament(req, res) {
+/**export async function mapBreakdownControllerNoTournament(req, res) {
   try {
     const teamId = parseInt(req.params.teamId, 10);
 
@@ -42,4 +42,4 @@ export async function mapBreakdownControllerNoTournament(req, res) {
     console.error('Error in mapBreakdownControllerNoTournament:', error);
     return res.status(500).json({ error: 'Internal server error' });
   }
-}
+} */
