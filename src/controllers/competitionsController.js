@@ -21,6 +21,11 @@ export const getCompetitions = async (offset = 0, limit = 100, filters = {}) => 
     params.push(from, to);
   }
 
+  if (filters.id) {
+    conditions.push(`id = ?`);
+    params.push(filters.id);
+  }
+
   if (conditions.length > 0) {
     query += ` WHERE ` + conditions.join(' AND ');
   }
