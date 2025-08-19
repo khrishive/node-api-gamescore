@@ -55,7 +55,7 @@ async function fetchDescriptionFromGemini(name, retries = 3, delay = 3000) {
 
 async function countRemainingTournaments(connection) {
   const [rows] = await connection.execute(
-    `SELECT COUNT(*) AS remaining FROM competitions WHERE description IS NULL`
+    `SELECT COUNT(*) FROM competitions WHERE description = 'Waiting for information';`
   );
   return rows[0].remaining;
 }
