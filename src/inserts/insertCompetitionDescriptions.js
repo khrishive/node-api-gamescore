@@ -55,7 +55,9 @@ async function fetchDescriptionFromGemini(name, retries = 3, delay = 3000) {
 
 async function countRemainingTournaments(connection) {
   const [rows] = await connection.execute(
-    `SELECT COUNT(*) FROM competitions WHERE description = 'Waiting for information';`
+    `SELECT COUNT(*) AS remaining 
+     FROM competitions 
+     WHERE description = 'Waiting for information' OR description IS NULL;`
   );
   return rows[0].remaining;
 }
@@ -76,10 +78,12 @@ async function updateTournamentDescriptions() {
 
       const [rows] = await connection.execute(
         `SELECT id, name FROM competitions 
-         WHERE description IS NULL 
-         ORDER BY id ASC 
-         LIMIT ${BATCH_SIZE}`
+          WHERE description IS NULL OR description = 'Waiting for information'
+          ORDER BY id ASC 
+          LIMIT ${BATCH_SIZE}
+        `
       );
+
 
       for (const { id, name } of rows) {
         console.log(`\n🎯 Procesando torneo [${id}] ${name}...`);
