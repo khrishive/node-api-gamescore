@@ -8,21 +8,24 @@ import { getCompetitions } from '../controllers/competitionsController.js';
 // Endpoint para obtener todos los registros de la tabla 'competitions'
 router.get('/competitions', async (req, res) => {
   try {
-    const { from, to, offset = 0, limit = 100 } = req.query;
+    const { from, to, id, offset = 0, limit = 100 } = req.query;
 
     const filters = {};
     if (from && to) {
-      filters.from = from;
-      filters.to = to;
+      filters.customRange = { from, to };
+    }
+    if (id) {
+      filters.id = parseInt(id, 10);
     }
 
-    const data = await getCompetitions('competitions', parseInt(offset), parseInt(limit), filters);
+    const data = await getCompetitions(parseInt(offset), parseInt(limit), filters);
     res.json(data);
   } catch (error) {
     console.error('Error en la conexión:', error);
     res.status(500).json({ error: 'Error de servidor' });
   }
 });
+
 
 
 router.get('/fixtures', async (req, res) => { 
