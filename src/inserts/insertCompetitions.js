@@ -72,28 +72,30 @@ async function saveCompetitionsToDB(competitions) {
 
     const insertQuery = `
         INSERT INTO competitions (
-            id, name, sport_alias, start_date, end_date, prize_pool_usd,
-            location, organizer, type, fixture_count,
-            stage, time_of_year, year, series, tier,
-            updated_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
-        ON DUPLICATE KEY UPDATE
-            name = VALUES(name),
-            sport_alias = VALUES(sport_alias),
-            start_date = VALUES(start_date),
-            end_date = VALUES(end_date),
-            prize_pool_usd = VALUES(prize_pool_usd),
-            location = VALUES(location),
-            organizer = VALUES(organizer),
-            type = VALUES(type),
-            fixture_count = VALUES(fixture_count),
-            stage = VALUES(stage),
-            time_of_year = VALUES(time_of_year),
-            year = VALUES(year),
-            series = VALUES(series),
-            tier = VALUES(tier),
-            updated_at = NOW();
+    id, name, sport_alias, start_date, end_date, prize_pool_usd,
+    location, organizer, type, fixture_count,
+    stage, time_of_year, year, series, tier, description,
+    updated_at
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())
+    ON DUPLICATE KEY UPDATE
+        name = VALUES(name),
+        sport_alias = VALUES(sport_alias),
+        start_date = VALUES(start_date),
+        end_date = VALUES(end_date),
+        prize_pool_usd = VALUES(prize_pool_usd),
+        location = VALUES(location),
+        organizer = VALUES(organizer),
+        type = VALUES(type),
+        fixture_count = VALUES(fixture_count),
+        stage = VALUES(stage),
+        time_of_year = VALUES(time_of_year),
+        year = VALUES(year),
+        series = VALUES(series),
+        tier = VALUES(tier),
+        description = VALUES(description),
+        updated_at = NOW();
+
     `;
 
     const updateParticipantsQuery = `
@@ -120,7 +122,8 @@ async function saveCompetitionsToDB(competitions) {
                 derivatives.time_of_year || 'Waiting for information',
                 derivatives.year || 'Waiting for information',
                 derivatives.series || 'Waiting for information',
-                metadata.liquipediaTier || 'Waiting for information'
+                metadata.liquipediaTier || 'Waiting for information',
+                comp.description || 'Waiting for information'
             ]);
 
             console.log(`✅ Guardado torneo: ${comp.name}`);
