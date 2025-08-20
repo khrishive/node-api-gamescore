@@ -22,7 +22,7 @@ const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 // Paso 1: Obtener competiciones
 async function fetchCompetitions() {
     try {
-        console.log(API_URL, AUTH_TOKEN);
+      
         
         const response = await axios.get(API_URL, {
               headers: {
