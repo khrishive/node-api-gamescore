@@ -14,31 +14,44 @@ const dbConfig = {
     port: process.env.DB_PORT
 };
 
-const API_BASE = process.env.GAME_SCORE_API;
+const API_URL = 'https://api.gamescorekeeper.com/v1/competitions?sport=cs2';
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-// Filtros por año y deporte
-const API_URL = `${API_BASE}/competitions?sport=cs2`;
+
 
 // Paso 1: Obtener competiciones
 async function fetchCompetitions() {
     try {
+        console.log(API_URL, AUTH_TOKEN);
+        
         const response = await axios.get(API_URL, {
-            headers: {
-                Authorization: AUTH_TOKEN,
-            }
-        });
+              headers: {
+                Authorization: AUTH_TOKEN
+              }
+            });
 
         const startDate = '2025-01-01';
         const endDate = '2025-12-31';
 
-        const filtered = getTournamentsInARangeOfDates(
+        try {
+            const filtered = getTournamentsInARangeOfDates(
             response.data.competitions,
-            startDate,
-            endDate
-        );
+                startDate,
+                endDate
+            );
 
-        return filtered; // <-- Retornar solo los filtrados
+            return filtered; // <-- Retornar solo los filtrados
+        } catch (error) {
+            if (error.response) {
+                console.error('Statuss:', error.response.status);
+                console.error('Dataa:', error.response.data);
+            } else if (error.request) {
+                console.error('No response receivedd:', error.request);
+            } else {
+                console.error('Errorr', error.message);
+            }
+            return [];
+        }
     } catch (error) {
         if (error.response) {
             console.error('Status:', error.response.status);

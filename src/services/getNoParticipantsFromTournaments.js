@@ -1,4 +1,7 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const API_BASE = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
@@ -32,12 +35,12 @@ export async function getParticipantsByTournamentId(tournamentId) {
 
     } catch (error) {
         if (error.response) {
-            console.error('Status:', error.response.status);
-            console.error('Data:', error.response.data);
+            console.error('Statusss:', error.response.status);
+            console.error('Dataaa:', error.response.data);
         } else if (error.request) {
-            console.error('No response received:', error.request);
+            console.error('No response receiveddd:', error.request);
         } else {
-            console.error('Error:', error.message);
+            console.error('Errorrr:', error.message);
         }
         return {
             totalFixtures: 0,
@@ -49,4 +52,4 @@ export async function getParticipantsByTournamentId(tournamentId) {
 }
 
 // Ejecuta la función correctamente usando await
-getParticipantsByTournamentId(28941).then(console.log).catch(console.error);
+//getParticipantsByTournamentId(28941).then(console.log).catch(console.error);
