@@ -119,25 +119,57 @@ router.get('/participants', async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
-    const data = await getRecords('participants', offset, limit, {}, 'id DESC'); // usa 'id' o lo que exista
+    // Campos válidos para la tabla participants
+    const filters = {};
+    const validFields = [
+      'id', 'name', 'sport', 'country', 'countryISO', 'region',
+      'player_id_0', 'player_name_0',
+      'player_id_1', 'player_name_1',
+      'player_id_2', 'player_name_2',
+      'player_id_3', 'player_name_3',
+      'player_id_4', 'player_name_4'
+    ];
+
+    for (const field of validFields) {
+      if (req.query[field] !== undefined) {
+        filters[field] = req.query[field];
+      }
+    }
+
+    const data = await getRecords('participants', offset, limit, filters, 'id DESC');
     res.json(data);
   } catch (error) {
-    console.error('Error en la conexión:', error.message);
-    console.error(error.stack);
+    console.error('❌ Error en la conexión:', error.message);
     res.status(500).json({ error: 'Error de servidor' });
   }
 });
 
 
 
-router.get('/player', async (req, res) => {
-    try {
-        const data = await getRecords('player');
-        res.json(data);
-    } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
+router.get('/players', async (req, res) => {
+  try {
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 100;
+
+    // Mapear solo los campos válidos de la tabla
+    const filters = {};
+    const validFields = [
+      'id', 'team_id', 'first_name', 'last_name', 
+      'nickname', 'age', 'country', 'countryISO', 'sport'
+    ];
+
+    for (const field of validFields) {
+      if (req.query[field] !== undefined) {
+        filters[field] = req.query[field];
+      }
     }
+
+    const data = await getRecords('player', offset, limit, filters, 'id DESC');
+    res.json(data);
+  } catch (error) {
+    console.error('❌ Error en la conexión:', error.message);
+    res.status(500).json({ error: 'Error de servidor' });
+  }
 });
 
 router.get('/stats_player', async (req, res) => {
