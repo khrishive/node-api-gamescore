@@ -1,62 +1,53 @@
-import mysql from 'mysql2/promise';
+import { db } from '../db.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT
-};
-
 const API_URL = `${process.env.GAME_SCORE_API}`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-
-
-// Función para obtener los IDs únicos de la tabla participants
+/**
+ * Obtiene los IDs únicos de participantes desde la DB.
+ */
 async function fetchParticipantIds() {
-    const connection = await mysql.createConnection(dbConfig);
-    const [rows] = await connection.execute('SELECT DISTINCT id FROM participants');
-    await connection.end();
+    const [rows] = await db.execute('SELECT DISTINCT id FROM participants');
     return rows.map(row => row.id);
 }
 
-// Función para obtener la información del equipo desde la API
+/**
+ * Obtiene información del equipo desde la API.
+ */
 async function fetchTeamInfo(id) {
     try {
         const response = await axios.get(`${API_URL}/teams/${id}`, {
-            headers: {
-                Authorization: AUTH_TOKEN,
-            }
+            headers: { Authorization: AUTH_TOKEN }
         });
-        return response.data || [];
+        return response.data || null;
     } catch (error) {
-        console.error(`❌ Error al obtener datos de la API`, error.message);
-        return [];
+        console.error(`❌ Error al obtener equipo ID ${id}:`, error.message);
+        return null;
     }
 }
 
-// Función para obtener la información del jugador desde la API
+/**
+ * Obtiene información del jugador desde la API.
+ */
 async function fetchPlayerInfo(playerId) {
     try {
         const response = await axios.get(`${API_URL}/players/${playerId}`, {
-            headers: {
-                Authorization: AUTH_TOKEN,
-            }
+            headers: { Authorization: AUTH_TOKEN }
         });
-        return response.data || [];
+        return response.data || null;
     } catch (error) {
-        console.error(`❌ Error al obtener datos de la API`, error.message);
-        return [];
+        console.error(`❌ Error al obtener jugador ID ${playerId}:`, error.message);
+        return null;
     }
 }
 
-
-// Función para sanitizar los datos del jugador
+/**
+ * Limpia y estructura los datos del jugador.
+ */
 function sanitizePlayerData(playerInfo, player, teamId) {
     return {
         id: player.id || null,
@@ -71,11 +62,10 @@ function sanitizePlayerData(playerInfo, player, teamId) {
     };
 }
 
-// Función para guardar la información del equipo y los jugadores en la base de datos
+/**
+ * Guarda la información de los jugadores de un equipo en la DB.
+ */
 async function saveTeamInfoToDB(teamInfo) {
-    console.log( `Team Info: ${JSON.stringify(teamInfo)}`);
-    const connection = await mysql.createConnection(dbConfig);
-
     const playerQuery = `
         INSERT INTO player (id, team_id, first_name, last_name, nickname, age, country, countryISO, sport)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -90,59 +80,71 @@ async function saveTeamInfoToDB(teamInfo) {
     `;
 
     try {
-        
-
-        // Guardar información de los jugadores
-        for (const player of teamInfo.most_recent_lineup) {
-            
-            
-            console.log(`📥 Guardando información del jugador: ${JSON.stringify(player)}`);
-            const playerInfo = await fetchPlayerInfo(player.id);
-            const sanitizedPlayer = sanitizePlayerData(playerInfo, player, teamInfo.id);
-
-            if (playerInfo) {
-                await connection.execute(playerQuery, [
-                    sanitizedPlayer.id,
-                    sanitizedPlayer.team_id,
-                    sanitizedPlayer.first_name,
-                    sanitizedPlayer.last_name,
-                    sanitizedPlayer.nickname,
-                    sanitizedPlayer.age,
-                    sanitizedPlayer.country,
-                    sanitizedPlayer.countryISO,
-                    sanitizedPlayer.sport
-                ]);
-            } else {
-                console.log(`⚠️ No se encontró información del jugador para el ID: ${player.id}`);
-            }
+        if (!teamInfo.most_recent_lineup || !Array.isArray(teamInfo.most_recent_lineup) || teamInfo.most_recent_lineup.length === 0) {
+            console.log(`⚠️ El equipo ${teamInfo.id} (${teamInfo.name}) no tiene lineup registrado`);
+            return;
         }
 
-        console.log(`✅ Información guardada para el equipo: ${teamInfo.name}`);
+        const playerPromises = teamInfo.most_recent_lineup.map(async (player) => {
+            const playerInfo = await fetchPlayerInfo(player.id);
+            if (!playerInfo) {
+                console.log(`⚠️ Sin info del jugador ID: ${player.id}`);
+                return;
+            }
+
+            const sanitized = sanitizePlayerData(playerInfo, player, teamInfo.id);
+
+            await db.execute(playerQuery, [
+                sanitized.id,
+                sanitized.team_id,
+                sanitized.first_name,
+                sanitized.last_name,
+                sanitized.nickname,
+                sanitized.age,
+                sanitized.country,
+                sanitized.countryISO,
+                sanitized.sport
+            ]);
+
+            console.log(`✅ Guardado jugador ${sanitized.nickname} (${sanitized.id})`);
+        });
+
+        await Promise.all(playerPromises);
+
+        console.log(`✅ Equipo procesado: ${teamInfo.name} (ID: ${teamInfo.id})`);
     } catch (error) {
-        console.error('❌ Error al guardar en la base de datos:', error.message);
-    } finally {
-        await connection.end();
+        console.error(`❌ Error al guardar equipo ${teamInfo.id}:`, error.message);
     }
 }
 
+
 /**
- * Obtiene los IDs de los participantes, procesa la información de cada equipo y la guarda en la base de datos.
+ * Flujo principal: obtiene participantes, procesa cada equipo y guarda en DB.
  */
 export async function processTeams() {
     console.log('🔄 Obteniendo IDs de participantes...');
     const participantIds = await fetchParticipantIds();
 
     for (const id of participantIds) {
-        console.log(`🔄 Obteniendo información del equipo para el ID: ${id}`);
+        console.log(`🔄 Procesando equipo ID: ${id}`);
         const teamInfo = await fetchTeamInfo(id);
 
         if (teamInfo) {
-            console.log(`📥 Guardando información del equipo para el ID: ${id}`);
             await saveTeamInfoToDB(teamInfo);
         } else {
-            console.log(`⚠️ No se encontró información del equipo para el ID: ${id}`);
+            console.log(`⚠️ No se encontró información del equipo ID: ${id}`);
         }
     }
 }
 
-await processTeams()
+/**
+ * Ejecución principal con control global de errores.
+ */
+try {
+    await processTeams();
+    console.log("🎉 Proceso terminado correctamente");
+    process.exit(0);
+} catch (err) {
+    console.error("❌ Error crítico en ejecución:", err);
+    process.exit(1);
+}
