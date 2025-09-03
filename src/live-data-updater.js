@@ -10,6 +10,7 @@ const TOKEN = apiKey;
 const WP_API_KEY = process.env.POST_SYNC_API_KEY; // Tu API Key para WP
 const WP_DEV_URL = 'https://wordpressmu-1372681-5818581.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_STAGING_URL = 'https://wordpressmu-1301114-4845462.cloudwaysapps.com/wp-json/fixtures/v1/update';
+const RR_DEV_URL = 'https://wordpress-1372681-5668655.cloudwaysapps.com/wp-json/fixtures/v1/update';
 
 let reconnectAttempts = 0;
 
@@ -94,6 +95,28 @@ export function connectWebSocket(fixture_id) {
           console.log('[POST -> WP STAGING] Respuesta:', result);
         } catch (err) {
           console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+        }
+
+        try {
+          const res = await fetch(RR_DEV_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${WP_API_KEY}`
+            },
+            body: JSON.stringify({
+              external_id: fixtureId,
+              participants0_id: scores[0]?.id || null,
+              participants0_score: scores[0]?.score ?? null,
+              participants1_id: scores[1]?.id || null,
+              participants1_score: scores[1]?.score ?? null
+            })
+          });
+
+          const result = await res.json();
+          console.log('[POST -> RR DEV] Respuesta:', result);
+        } catch (err) {
+          console.error('[POST -> RR DEV] Error al enviar:', err.message);
         }
       }
 
