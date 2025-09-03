@@ -1,5 +1,4 @@
 import { db } from '../../db.js';
-//import eventsRawLogger from './loggers/evenRawLogger.js';
 
 function isValidRawEvent(event, fixtureId, eventType, timestamp) {
   return (
@@ -11,16 +10,8 @@ function isValidRawEvent(event, fixtureId, eventType, timestamp) {
 }
 
 export async function insertRawEvent(event, fixtureId, eventType, timestamp) {
-  /**eventsRawLogger.debug({
-    msg: '[insertRawEvent] Datos recibidos para insert',
-    event, fixtureId, eventType, timestamp
-  }); */
-
-  if (!isValidRawEvent(event, fixtureId, eventType, timestamp)) {
-    /**eventsRawLogger.warn({
-      msg: '[insertRawEvent] Datos incompletos, se omite insert',
-      event, fixtureId, eventType, timestamp
-    }); */
+  console.log('Inserting raw event:', { fixtureId, eventType, timestamp });
+  if (!isValidRawEvent(event, fixtureId, eventType, timestamp)) {    
     return;
   }
   try {
@@ -31,21 +22,11 @@ export async function insertRawEvent(event, fixtureId, eventType, timestamp) {
     `, [
       fixtureId, eventType, JSON.stringify(event), timestamp
     ]);
-    /**eventsRawLogger.debug({
-      msg: '[insertRawEvent] Raw event insertado',
-      fixtureId, eventType, timestamp
-    }); */
   } catch (error) {
-    /**eventsRawLogger.error({
-      msg: '[insertRawEvent] Error al insertar raw event',
-      error: error.message,
-      event, fixtureId, eventType, timestamp
-    }); */
-
     return {
-    success: false,
-    message: 'Error to insert raw event',
-    error: error.message
-  };
+      success: false,
+      message: 'Error to insert raw event',
+      error: error.message
+    };
   }
 }

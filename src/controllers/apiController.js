@@ -15,6 +15,7 @@ export const fetchFromApi = async (endpoint, params = {}) => {
         if (!API_URL || !API_KEY) {
             throw new Error("API_URL o API_KEY no están definidos en config.json");
         }
+        console.log("🔍 Parámetros recibidos para la API:", params);
 
         const queryString = new URLSearchParams(params).toString();
         const fullUrl = `${API_URL}/${endpoint}?${queryString}`;
@@ -28,6 +29,8 @@ export const fetchFromApi = async (endpoint, params = {}) => {
                 Accept: "application/json",
             },
         });
+
+        console.log(response);
 
         console.log("✅ Respuesta de la API: :v", response.data);
         return response.data;
