@@ -14,8 +14,6 @@ const trackedFixtures = new Set(); // Fixture IDs a los que ya se les abrió Web
 
 const POLL_INTERVAL = 3600 * 1000; // 1 hora en milisegundos
 async function fetchStartedFixtures() {
-  
-
   try {
     const response = await axios.get(API, {
       headers: {
