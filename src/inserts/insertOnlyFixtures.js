@@ -36,25 +36,6 @@ const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 const FIXTURES_TABLE = `fixtures`;
 
 /**
- * Generar rangos de fechas día por día entre dos fechas.
- */
-function generateDateRanges(startDate, endDate) {
-    const ranges = [];
-    let currentDate = new Date(startDate);
-
-    while (currentDate <= new Date(endDate)) {
-        const from = currentDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-        const to = from; // El mismo día para from y to
-        ranges.push({ from, to });
-
-        // Incrementar en un día
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return ranges;
-}
-
-/**
  * Llamada a la API para obtener los fixtures de una fecha específica.
  */
 async function fetchFixtures(from, to, page = 1) {
@@ -139,15 +120,22 @@ async function saveFixturesToDB(fixtures) {
 /**
  * Procesa rangos de fechas, obtiene fixtures y los guarda en la base de datos.
  */
-export async function processFixtures(endDate = '2025-12-31') {
+export async function processFixtures(endDate) {
     console.log(`🔄 Generando rangos de fechas para el deporte: ${SPORT}...`);
     const currentDate = new Date().toISOString().slice(0, 10);
 
-    let page = 1;
-        let allFixtures = [];
-        let keepPaging = true;
+    // If endDate is not provided, set it to the last day of the current year
+    if (!endDate) {
+        const now = new Date();
+        const lastDayOfYear = new Date(now.getFullYear(), 11, 31); // December is month 11
+        endDate = lastDayOfYear.toISOString().slice(0, 10);
+    }
 
-        while (keepPaging) {
+    let page = 1;
+    let allFixtures = [];
+    let keepPaging = true;
+
+    while (keepPaging) {
         console.log(
             `🔄 Obteniendo fixtures para el rango: ${currentDate} a ${endDate}, página ${page}`
         );
@@ -174,7 +162,7 @@ export async function processFixtures(endDate = '2025-12-31') {
         await saveFixturesToDB(allFixtures);
     } else {
         console.log(
-        `⚠️ No se encontraron fixtures para la fecha: ${range.from}`
+            `⚠️ No se encontraron fixtures para el rango: ${currentDate} a ${endDate}`
         );
     }
 
