@@ -1,6 +1,6 @@
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
-import fetch from 'node-fetch';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -53,68 +53,62 @@ export function connectWebSocket(fixture_id) {
 
         console.log('[WebSocket] Evento score_changed detectado:', { fixtureId, scores });
 
+        // --- Envío a WP DEV ---
         try {
-          const res = await fetch(WP_DEV_URL, {
-            method: 'POST',
+          const res = await axios.post(WP_DEV_URL, {
+            external_id: fixtureId,
+            participants0_id: scores[0]?.id || null,
+            participants0_score: scores[0]?.score ?? null,
+            participants1_id: scores[1]?.id || null,
+            participants1_score: scores[1]?.score ?? null
+          }, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${WP_API_KEY}`
-            },
-            body: JSON.stringify({
-              external_id: fixtureId,
-              participants0_id: scores[0]?.id || null,
-              participants0_score: scores[0]?.score ?? null,
-              participants1_id: scores[1]?.id || null,
-              participants1_score: scores[1]?.score ?? null
-            })
+            }
           });
 
-          const result = await res.json();
-          console.log('[POST -> WP DEV] Respuesta:', result);
+          console.log('[POST -> WP DEV] Respuesta:', res.data);
         } catch (err) {
           console.error('[POST -> WP DEV] Error al enviar:', err.message);
         }
 
+        // --- Envío a WP STAGING ---
         try {
-          const res = await fetch(WP_STAGING_URL, {
-            method: 'POST',
+          const res = await axios.post(WP_STAGING_URL, {
+            external_id: fixtureId,
+            participants0_id: scores[0]?.id || null,
+            participants0_score: scores[0]?.score ?? null,
+            participants1_id: scores[1]?.id || null,
+            participants1_score: scores[1]?.score ?? null
+          }, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${WP_API_KEY}`
-            },
-            body: JSON.stringify({
-              external_id: fixtureId,
-              participants0_id: scores[0]?.id || null,
-              participants0_score: scores[0]?.score ?? null,
-              participants1_id: scores[1]?.id || null,
-              participants1_score: scores[1]?.score ?? null
-            })
+            }
           });
 
-          const result = await res.json();
-          console.log('[POST -> WP STAGING] Respuesta:', result);
+          console.log('[POST -> WP STAGING] Respuesta:', res.data);
         } catch (err) {
           console.error('[POST -> WP STAGING] Error al enviar:', err.message);
         }
 
+        // --- Envío a RR DEV ---
         try {
-          const res = await fetch(RR_DEV_URL, {
-            method: 'POST',
+          const res = await axios.post(RR_DEV_URL, {
+            external_id: fixtureId,
+            participants0_id: scores[0]?.id || null,
+            participants0_score: scores[0]?.score ?? null,
+            participants1_id: scores[1]?.id || null,
+            participants1_score: scores[1]?.score ?? null
+          }, {
             headers: {
               'Content-Type': 'application/json',
               'Authorization': `Bearer ${WP_API_KEY}`
-            },
-            body: JSON.stringify({
-              external_id: fixtureId,
-              participants0_id: scores[0]?.id || null,
-              participants0_score: scores[0]?.score ?? null,
-              participants1_id: scores[1]?.id || null,
-              participants1_score: scores[1]?.score ?? null
-            })
+            }
           });
 
-          const result = await res.json();
-          console.log('[POST -> RR DEV] Respuesta:', result);
+          console.log('[POST -> RR DEV] Respuesta:', res.data);
         } catch (err) {
           console.error('[POST -> RR DEV] Error al enviar:', err.message);
         }
