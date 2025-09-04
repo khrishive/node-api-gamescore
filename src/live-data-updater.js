@@ -46,6 +46,118 @@ export function connectWebSocket(fixture_id) {
     try {
       const message = JSON.parse(data);
 
+      // --- Detectar inicio del partido ---
+      if (message.type === 'fixture_started') {
+        const fixtureId = message.payload.fixtureId;
+
+        console.log('[WebSocket] Evento fixture_started detectado:', { fixtureId });
+
+        const payload = {
+          external_id: fixtureId,
+          status: 'Started'
+        };
+
+        // --- Envío a WP DEV ---
+        try {
+          const res = await axios.post(WP_DEV_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+          console.log('[POST -> WP DEV] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> WP DEV] Error al enviar:', err.message);
+        }
+
+        // --- Envío a WP STAGING ---
+        try {
+          const res = await axios.post(WP_STAGING_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            },
+            auth: {
+              username: 'fpmpuvheeq',
+              password: 'ENPK9JE57j'
+            }
+          });
+          console.log('[POST -> WP STAGING] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+        }
+
+        // --- Envío a RR DEV ---
+        try {
+          const res = await axios.post(RR_DEV_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+          console.log('[POST -> RR DEV] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> RR DEV] Error al enviar:', err.message);
+        }
+      }
+
+      // --- Detectar final del partido ---
+      if (message.type === 'fixture_ended') {
+        const fixtureId = message.payload.fixtureId;
+
+        console.log('[WebSocket] Evento fixture_started detectado:', { fixtureId });
+
+        const payload = {
+          external_id: fixtureId,
+          status: 'Ended'
+        };
+
+        // --- Envío a WP DEV ---
+        try {
+          const res = await axios.post(WP_DEV_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+          console.log('[POST -> WP DEV] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> WP DEV] Error al enviar:', err.message);
+        }
+
+        // --- Envío a WP STAGING ---
+        try {
+          const res = await axios.post(WP_STAGING_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            },
+            auth: {
+              username: 'fpmpuvheeq',
+              password: 'ENPK9JE57j'
+            }
+          });
+          console.log('[POST -> WP STAGING] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+        }
+
+        // --- Envío a RR DEV ---
+        try {
+          const res = await axios.post(RR_DEV_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+          console.log('[POST -> RR DEV] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> RR DEV] Error al enviar:', err.message);
+        }
+      }
+
+
+
       // --- Detectar score_changed ---
       if (message.type === 'score_changed') {
         const fixtureId = message.payload.fixtureId;
