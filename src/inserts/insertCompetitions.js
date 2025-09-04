@@ -1,7 +1,7 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { getParticipantsByTournamentId } from '../services/getNoParticipantsFromTournaments.js';
+//import { getParticipantsByTournamentId } from '../services/getNoParticipantsFromTournaments.js';
 
 dotenv.config();
 
@@ -30,7 +30,8 @@ const dbConfigs = {
 
 const dbConfig = dbConfigs[SPORT];
 
-const API_URL = 'https://api.gamescorekeeper.com/v1/competitions';
+//const API_URL = 'https://api.gamescorekeeper.com/v1/competitions';
+const API_URL = `${process.env.GAME_SCORE_API}/competitions`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 // Choose table name based on sport
@@ -129,6 +130,7 @@ async function saveCompetitionsToDB(competitions) {
         await pool.query(insertCompetitionsQuery, [competitionValues]);
         console.log(`✅ Inserted/updated ${competitionValues.length} competitions in table ${COMPETITIONS_TABLE}`);
 
+        /*
         for (const comp of competitions) {
             try {
                 const participantRes = await getParticipantsByTournamentId(comp.id);
@@ -139,6 +141,7 @@ async function saveCompetitionsToDB(competitions) {
                 console.error(`❌ Failed to update participants for ${comp.id}:`, err.message);
             }
         }
+        */
 
     } catch (error) {
         console.error("❌ saveCompetitionsToDB failed:", error.message);

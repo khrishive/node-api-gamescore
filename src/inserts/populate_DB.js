@@ -1,5 +1,5 @@
 import { getAndSaveCompetitions } from "./insertCompetitions.js";
-import {actualizarParticipantes} from "./insertNoteams.js";
+import {actualizarParticipantes} from "./updateNumberOfParticipantsInCompetitions.js";
 import {processFixtures} from "./insertOnlyFixtures.js";
 import { main } from "./insertTeams.js";
 import { processTeams } from "./insertTeamsAndPlayers.js";
