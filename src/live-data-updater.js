@@ -64,7 +64,7 @@ export function connectWebSocket(fixture_id) {
           }, {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${WP_API_KEY}`
+              'X-Api-Key': WP_API_KEY
             }
           });
 
@@ -75,6 +75,8 @@ export function connectWebSocket(fixture_id) {
 
         // --- Envío a WP STAGING ---
         try {
+          
+
           const res = await axios.post(WP_STAGING_URL, {
             external_id: fixtureId,
             participants0_id: scores[0]?.id || null,
@@ -84,7 +86,11 @@ export function connectWebSocket(fixture_id) {
           }, {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${WP_API_KEY}`
+              'X-Api-Key': WP_API_KEY
+            },
+            auth: {
+              username: 'fpmpuvheeq',
+              password: 'ENPK9JE57j'
             }
           });
 
@@ -104,7 +110,7 @@ export function connectWebSocket(fixture_id) {
           }, {
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${WP_API_KEY}`
+              'X-Api-Key': WP_API_KEY
             }
           });
 
