@@ -6,13 +6,30 @@ import mysql from 'mysql2/promise';  // Cliente MySQL con soporte para promesas
 // Carga las variables de entorno definidas en el archivo .env
 dotenv.config();
 
-// Configuración de la conexión a la base de datos MySQL usando variables de entorno
-const dbConfig = {
-    host: process.env.DB_HOST,         // Host de la base de datos
-    user: process.env.DB_USER,         // Usuario de la base de datos
-    password: process.env.DB_PASSWORD, // Contraseña de la base de datos
-    database: process.env.DB_NAME,     // Nombre de la base de datos
+// Get sport from command line argument, default to 'cs2'
+const sportArg = process.argv[2] || 'cs2';
+const SUPPORTED_SPORTS = ['cs2', 'lol'];
+const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
+
+// Select DB config based on sport
+const dbConfigs = {
+    cs2: {
+        host: process.env.DB_CS2_HOST,
+        user: process.env.DB_CS2_USER,
+        password: process.env.DB_CS2_PASSWORD,
+        database: process.env.DB_CS2_NAME,
+        port: process.env.DB_CS2_PORT || 3306
+    },
+    lol: {
+        host: process.env.DB_LOL_HOST,
+        user: process.env.DB_LOL_USER,
+        password: process.env.DB_LOL_PASSWORD,
+        database: process.env.DB_LOL_NAME,
+        port: process.env.DB_LOL_PORT || 3306
+    }
 };
+
+const dbConfig = dbConfigs[SPORT];
 
 // Constantes para la API de equipos
 const API_URL = `${process.env.GAME_SCORE_API}/teams`;         // URL base de la API de equipos
@@ -44,50 +61,23 @@ async function fetchTeamInfo(id) {
  * Obtiene los IDs únicos de participantes de la API de fixtures.
  * @ returns {Promise<string[]>} - Retorna un array de IDs únicos de participantes.
  */
-async function fetchUniqueParticipants() {
-    console.log('🔄 Trayendo fixtures desde API local (con paginación)...');
-
-    const allParticipantIds = new Set();
-    const limit = 500;
-    let offset = 0;
-    let totalFetched = 0;
-
+async function fetchUniqueParticipants(connection) {
+    console.log('🔄 Trayendo participantes únicos desde la tabla fixtures...');
     try {
-        while (true) {
-            const response = await axios.get('https://esport-data.com/db/fixtures', {
-                params: { offset, limit },
-                headers: { 'x-api-key': DB_SERVER_TOKEN }
-            });
-
-            const fixtures = response.data;
-
-            // Validación: asegurar que la respuesta sea un arreglo
-            if (!Array.isArray(fixtures)) {
-                console.error(`❌ Respuesta inválida en offset ${offset}. Esperado un arreglo.`);
-                break;
-            }
-
-            if (fixtures.length === 0) {
-                console.log(`✅ Finalizado: no hay más fixtures en offset ${offset}.`);
-                break;
-            }
-
-            console.log(`📦 Procesando ${fixtures.length} fixtures desde offset ${offset}...`);
-
-            for (const fixture of fixtures) {
-                if (fixture.participants0_id) allParticipantIds.add(fixture.participants0_id);
-                if (fixture.participants1_id) allParticipantIds.add(fixture.participants1_id);
-            }
-
-            totalFetched += fixtures.length;
-            offset += limit;
-        }
-
-        const uniqueIds = Array.from(allParticipantIds);
-        console.log(`🎯 ${uniqueIds.length} participantes únicos encontrados tras procesar ${totalFetched} fixtures.`);
+        const [rows] = await connection.execute(
+            'SELECT participants0_id, participants1_id FROM fixtures'
+        );
+        // Flatten and filter unique IDs
+        const uniqueIds = [
+            ...new Set(
+                rows.flatMap(row => [row.participants0_id, row.participants1_id])
+                    .filter(id => !!id)
+            )
+        ];
+        console.log(`🎯 ${uniqueIds.length} participantes únicos encontrados.`);
         return uniqueIds;
     } catch (error) {
-        console.error('❌ Error trayendo fixtures desde API local:', error.message);
+        console.error('❌ Error trayendo participantes desde la tabla fixtures:', error.message);
         return [];
     }
 }
@@ -157,8 +147,8 @@ async function saveParticipant(connection, team) {
  * y la guarda en la base de datos.
  */
 export async function main() {
-    const uniqueIds = await fetchUniqueParticipants();                // 1. Obtener IDs únicos de participantes
-    const connection = await mysql.createConnection(dbConfig);        // 2. Conectarse a la base de datos
+    const connection = await mysql.createConnection(dbConfig);        // 1. Conectarse a la base de datos
+    const uniqueIds = await fetchUniqueParticipants(connection);                // 2. Obtener IDs únicos de participantes
 
     // 3. Para cada equipo, obtener info y guardar en la base de datos
     for (const id of uniqueIds) {
