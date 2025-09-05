@@ -18,6 +18,7 @@ import matchEventRoute from './routes/matchEventRoute.js';
 import mapBreakdownRoute from './routes/mapBreakdownRoute.js';
 import fixturesByComp from './routes/fixtureByCompetitionRoute.js';
 import mapStatsRoute from './routes/mapStatsRoute.js';
+import populateRoutes from './routes/populateRoutes.js';
 
 dotenv.config();  // ⚠️ Cargar variables de entorno antes de usarlas
 
@@ -48,8 +49,10 @@ app.use('/fixtures', apiKeyAuth, fixtureMapsRouter);
 app.use('/api/teams', apiKeyAuth, teamsRoutes);
 app.use('/api/players', apiKeyAuth, playersRoutes);
 app.use('/db', apiKeyAuth, dbAPIRoutes);
+app.use("/db/populate", populateRoutes);
 app.use('/map-stats', apiKeyAuth, mapStatsRoute);
 //app.use('/api/gemini', geminiRoutes);
+
 
 
 // Manejo de errores global

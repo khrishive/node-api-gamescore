@@ -5,19 +5,23 @@ import { processTeams as insertTeamsAndPlayers } from "./insertTeamsAndPlayers.j
 import { actualizarParticipantes as updateNumberOfParticipantsInCompetitions } from "./updateNumberOfParticipantsInCompetitions.js";
 import { updateTournamentDescriptions } from "./insertCompetitionDescriptions.js";
 
-async function runAll() {
-    console.log('🚀 Iniciando población completa de DB...');
-    await getAndSaveCompetitions();
-    await processFixtures();
-    await insertTeams();
-    await insertTeamsAndPlayers();
-    await updateNumberOfParticipantsInCompetitions();
-    await updateTournamentDescriptions();
+// Export runAll so it can be used by your endpoint
+export async function runAll(sport = 'cs2') {
+    console.log('🚀 Iniciando población completa de DB...');s
+    await getAndSaveCompetitions(sport);
+    await processFixtures(sport);
+    await insertTeams(sport);
+    await insertTeamsAndPlayers(sport);
+    await updateNumberOfParticipantsInCompetitions(sport);
+    await updateTournamentDescriptions(sport);
 }
 
-runAll()
-    .then(() => console.log('✅ Todos los procesos completados.'))
-    .catch(err => {
-        console.error('❌ Error en la ejecución:', err);
-        process.exit(1);
-    });
+// Optional: keep CLI usage for direct script execution
+if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/'))) {
+    runAll(process.argv[2])
+        .then(() => console.log('✅ Todos los procesos completados.'))
+        .catch(err => {
+            console.error('❌ Error en la ejecución:', err);
+            process.exit(1);
+        });
+}
