@@ -30,7 +30,6 @@ const dbConfigs = {
 
 const dbConfig = dbConfigs[SPORT];
 
-//const API_URL = 'https://api.gamescorekeeper.com/v1/competitions';
 const API_URL = `${process.env.GAME_SCORE_API}/competitions`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 

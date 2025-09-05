@@ -1,8 +1,34 @@
 import dotenv from 'dotenv';
-import { db } from '../db.js';
+import mysql from 'mysql2/promise';
 import axios from 'axios';
 
 dotenv.config();
+
+// Get sport from command line argument, default to 'cs2'
+const sportArg = process.argv[2] || 'cs2';
+const SUPPORTED_SPORTS = ['cs2', 'lol'];
+const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
+
+// Select DB config based on sport
+const dbConfigs = {
+    cs2: {
+        host: process.env.DB_CS2_HOST,
+        user: process.env.DB_CS2_USER,
+        password: process.env.DB_CS2_PASSWORD,
+        database: process.env.DB_CS2_NAME,
+        port: process.env.DB_CS2_PORT || 3306
+    },
+    lol: {
+        host: process.env.DB_LOL_HOST,
+        user: process.env.DB_LOL_USER,
+        password: process.env.DB_LOL_PASSWORD,
+        database: process.env.DB_LOL_NAME,
+        port: process.env.DB_LOL_PORT || 3306
+    }
+};
+
+const dbConfig = dbConfigs[SPORT];
+const db = await mysql.createPool(dbConfig);
 
 const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;

@@ -4,17 +4,34 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Get sport from command line argument, default to 'cs2'
+const sportArg = process.argv[2] || 'cs2';
+const SUPPORTED_SPORTS = ['cs2', 'lol'];
+const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
+
+// Select DB config based on sport
+const dbConfigs = {
+  cs2: {
+    host: process.env.DB_CS2_HOST,
+    user: process.env.DB_CS2_USER,
+    password: process.env.DB_CS2_PASSWORD,
+    database: process.env.DB_CS2_NAME,
+    port: process.env.DB_CS2_PORT || 3306
+  },
+  lol: {
+    host: process.env.DB_LOL_HOST,
+    user: process.env.DB_LOL_USER,
+    password: process.env.DB_LOL_PASSWORD,
+    database: process.env.DB_LOL_NAME,
+    port: process.env.DB_LOL_PORT || 3306
+  }
+};
+
+const dbConfig = dbConfigs[SPORT];
+
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 const BATCH_SIZE = 50;
-
-// Configuración de la base de datos
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-};
 
 // Prompt para Gemini
 const buildPrompt = (name) => `
@@ -62,7 +79,7 @@ async function countRemainingTournaments(connection) {
   return rows[0].remaining;
 }
 
-async function updateTournamentDescriptions() {
+export async function updateTournamentDescriptions() {
   const connection = await mysql.createConnection(dbConfig);
   let batchNumber = 1;
 

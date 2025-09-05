@@ -142,24 +142,31 @@ async function saveParticipant(connection, team) {
     }
 }
 
+const pool = mysql.createPool(dbConfig);
+
 /**
  * Función principal: obtiene los IDs de equipos únicos, consulta la info de cada equipo,
  * y la guarda en la base de datos.
  */
 export async function main() {
-    const connection = await mysql.createConnection(dbConfig);        // 1. Conectarse a la base de datos
-    const uniqueIds = await fetchUniqueParticipants(connection);                // 2. Obtener IDs únicos de participantes
+    let connection;
+    try {
+        connection = await pool.getConnection();
+        const uniqueIds = await fetchUniqueParticipants(connection);
 
-    // 3. Para cada equipo, obtener info y guardar en la base de datos
-    for (const id of uniqueIds) {
-        const teamInfo = await fetchTeamInfo(id);
-        if (teamInfo && teamInfo.id) {
-            await saveParticipant(connection, teamInfo);
+        for (const id of uniqueIds) {
+            const teamInfo = await fetchTeamInfo(id);
+            if (teamInfo && teamInfo.id) {
+                await saveParticipant(connection, teamInfo);
+            }
         }
+        console.log('✅ Proceso completado.');
+    } catch (error) {
+        console.error('❌ Error en el proceso principal:', error);
+    } finally {
+        if (connection) await connection.release();
+        await pool.end();
     }
-
-    await connection.end();                                           // 4. Cerrar conexión a la base de datos
-    console.log('✅ Proceso completado.');
 }
 
 // Ejecuta el script principal
