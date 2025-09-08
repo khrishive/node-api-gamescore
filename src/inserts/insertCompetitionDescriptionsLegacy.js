@@ -10,6 +10,9 @@ const sportArg = process.argv[2] || 'cs2';
 const SUPPORTED_SPORTS = ['cs2', 'lol'];
 const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
 
+// Get flag from .env to enable file saving
+const SAVE_TO_FILE = process.env.SAVE_TOURNAMENTS_TO_FILE === 1;
+
 // Select DB config based on sport
 const dbConfigs = {
   cs2: {
@@ -43,8 +46,10 @@ Do not use placeholders like [Game Name], [Tournament Name], or similar; always 
 // Legacy output file
 const outputFile = `legacy_tournament_descriptions_${SPORT}.json`;
 
-// Create/overwrite the file at the beginning with an empty array
-fs.writeFileSync(outputFile, '[\n', 'utf8');
+// Create/overwrite the file at the beginning with an empty array if enabled
+if (SAVE_TO_FILE) {
+  fs.writeFileSync(outputFile, '[\n', 'utf8');
+}
 
 async function fetchDescriptionFromGemini(name, retries = 3, delay = 3000) {
   while (retries > 0) {
@@ -87,7 +92,6 @@ async function countRemainingTournaments(connection) {
   return rows[0].remaining;
 }
 
-
 export async function updateTournamentDescriptions() {
   const connection = await mysql.createConnection(dbConfig);
   let batchNumber = 1;
@@ -116,7 +120,6 @@ export async function updateTournamentDescriptions() {
 
         const description = await fetchDescriptionFromGemini(name);
 
-        // Save tournament data and description to file as we go
         const record = {
           id,
           name,
@@ -125,12 +128,15 @@ export async function updateTournamentDescriptions() {
           legacy: true // Prefix/flag indicating legacy script
         };
 
-        const jsonRecord = JSON.stringify(record, null, 2);
-        if (!firstRecord) {
-          fs.appendFileSync(outputFile, ',\n' + jsonRecord, 'utf8');
-        } else {
-          fs.appendFileSync(outputFile, jsonRecord, 'utf8');
-          firstRecord = false;
+        // Save tournament data and description to file as we go, if enabled
+        if (SAVE_TO_FILE) {
+          const jsonRecord = JSON.stringify(record, null, 2);
+          if (!firstRecord) {
+            fs.appendFileSync(outputFile, ',\n' + jsonRecord, 'utf8');
+          } else {
+            fs.appendFileSync(outputFile, jsonRecord, 'utf8');
+            firstRecord = false;
+          }
         }
 
         if (description) {
@@ -149,9 +155,11 @@ export async function updateTournamentDescriptions() {
       batchNumber++;
     }
 
-    // Close the JSON array
-    fs.appendFileSync(outputFile, '\n]\n', 'utf8');
-    console.log(`📝 Archivo ${outputFile} guardado con todas las descripciones.`);
+    // Close the JSON array if enabled
+    if (SAVE_TO_FILE) {
+      fs.appendFileSync(outputFile, '\n]\n', 'utf8');
+      console.log(`📝 Archivo ${outputFile} guardado con todas las descripciones.`);
+    }
   } catch (err) {
     console.error('💥 Error crítico:', err.message);
   } finally {

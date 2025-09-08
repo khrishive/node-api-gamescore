@@ -10,6 +10,9 @@ const sportArg = process.argv[2] || 'cs2';
 const SUPPORTED_SPORTS = ['cs2', 'lol'];
 const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
 
+// Get flag from .env to enable file saving
+const SAVE_TO_FILE = process.env.SAVE_TOURNAMENTS_TO_FILE === 1;
+
 // Select DB config based on sport
 const dbConfigs = {
   cs2: {
@@ -92,8 +95,10 @@ async function countRemainingTournaments(connection) {
 
 const outputFile = `tournament_descriptions_${SPORT}.json`;
 
-// Create/overwrite the file at the beginning with an empty array
-fs.writeFileSync(outputFile, '[\n', 'utf8');
+// Create/overwrite the file at the beginning with an empty array if enabled
+if (SAVE_TO_FILE) {
+  fs.writeFileSync(outputFile, '[\n', 'utf8');
+}
 
 export async function updateTournamentDescriptions() {
   const connection = await mysql.createConnection(dbConfig);
@@ -129,13 +134,15 @@ export async function updateTournamentDescriptions() {
           description: description || 'No description generated'
         };
 
-        // Append each record to the file, handling commas for valid JSON array
-        const jsonRecord = JSON.stringify(record, null, 2);
-        if (!firstRecord) {
-          fs.appendFileSync(outputFile, ',\n' + jsonRecord, 'utf8');
-        } else {
-          fs.appendFileSync(outputFile, jsonRecord, 'utf8');
-          firstRecord = false;
+        // Append each record to the file, handling commas for valid JSON array if enabled
+        if (SAVE_TO_FILE) {
+          const jsonRecord = JSON.stringify(record, null, 2);
+          if (!firstRecord) {
+            fs.appendFileSync(outputFile, ',\n' + jsonRecord, 'utf8');
+          } else {
+            fs.appendFileSync(outputFile, jsonRecord, 'utf8');
+            firstRecord = false;
+          }
         }
 
         if (description) {
@@ -154,9 +161,11 @@ export async function updateTournamentDescriptions() {
       batchNumber++;
     }
 
-    // Close the JSON array
-    fs.appendFileSync(outputFile, '\n]\n', 'utf8');
-    console.log(`📝 Archivo ${outputFile} guardado con todas las descripciones.`);
+    // Close the JSON array if enabled
+    if (SAVE_TO_FILE) {
+      fs.appendFileSync(outputFile, '\n]\n', 'utf8');
+      console.log(`📝 Archivo ${outputFile} guardado con todas las descripciones.`);
+    }
   } catch (err) {
     console.error('💥 Error crítico:', err.message);
   } finally {
