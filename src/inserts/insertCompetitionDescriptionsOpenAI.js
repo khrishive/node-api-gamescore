@@ -30,7 +30,6 @@ const dbConfigs = {
 const dbConfig = dbConfigs[SPORT];
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-//const OPENAI_API_KEY = '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';
 console.log(`🔐 Using OpenAI API Key: ${OPENAI_API_KEY}...`);
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const BATCH_SIZE = 50;
