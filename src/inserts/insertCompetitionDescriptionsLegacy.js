@@ -35,29 +35,24 @@ const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/
 const BATCH_SIZE = 50;
 
 // Prompt para Gemini
-const buildPrompt = (name, sport) => {
-  let sportName = '';
-  if (sport === 'cs2') {
-    sportName = 'Counter-Strike 2';
-  } else if (sport === 'lol') {
-    sportName = 'League of Legends';
-  } else {
-    sportName = sport;
-  }
-  return `
-You are an expert esports analyst. Write a concise, informative, and engaging description for the tournament "${name}", focusing on its relevance and format in ${sportName}. 
-Return only a JSON object with a single key 'description' and avoid any explanations or extra text.
+const buildPrompt = (name) => `
+Describe briefly what the "${name}" tournament is about, emphasizing that it is a Counter-Strike competition. Return only a JSON object with a single key 'description' and avoid explanations.
 Do not use placeholders like [Game Name], [Tournament Name], or similar; always use the actual tournament and game names.
 `;
-};
 
-async function fetchDescriptionFromGemini(name, sport, retries = 3, delay = 3000) {
+// Legacy output file
+const outputFile = `legacy_tournament_descriptions_${SPORT}.json`;
+
+// Create/overwrite the file at the beginning with an empty array
+fs.writeFileSync(outputFile, '[\n', 'utf8');
+
+async function fetchDescriptionFromGemini(name, retries = 3, delay = 3000) {
   while (retries > 0) {
     try {
       const res = await axios.post(
         GEMINI_API_URL,
         {
-          contents: [{ parts: [{ text: buildPrompt(name, sport) }] }]
+          contents: [{ parts: [{ text: buildPrompt(name) }] }]
         },
         { headers: { 'Content-Type': 'application/json' } }
       );
@@ -65,6 +60,7 @@ async function fetchDescriptionFromGemini(name, sport, retries = 3, delay = 3000
       const raw = res.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
       const jsonMatch = raw.match(/```json\s*([\s\S]+?)\s*```/);
       const parsed = jsonMatch ? JSON.parse(jsonMatch[1]) : null;
+
       return parsed?.description?.trim() || null;
     } catch (err) {
       if (err.response?.status === 429) {
@@ -78,6 +74,7 @@ async function fetchDescriptionFromGemini(name, sport, retries = 3, delay = 3000
       }
     }
   }
+
   return null;
 }
 
@@ -90,10 +87,6 @@ async function countRemainingTournaments(connection) {
   return rows[0].remaining;
 }
 
-const outputFile = `tournament_descriptions_${SPORT}.json`;
-
-// Create/overwrite the file at the beginning with an empty array
-fs.writeFileSync(outputFile, '[\n', 'utf8');
 
 export async function updateTournamentDescriptions() {
   const connection = await mysql.createConnection(dbConfig);
@@ -109,6 +102,7 @@ export async function updateTournamentDescriptions() {
       }
 
       console.log(`📦 Lote #${batchNumber} | Torneos pendientes: ${remaining}`);
+
       const [rows] = await connection.execute(
         `SELECT id, name FROM competitions 
           WHERE description IS NULL OR description = 'Waiting for information'
@@ -120,16 +114,17 @@ export async function updateTournamentDescriptions() {
       for (const { id, name } of rows) {
         console.log(`\n🎯 Procesando torneo [${id}] ${name}...`);
 
-        const description = await fetchDescriptionFromGemini(name, SPORT);
+        const description = await fetchDescriptionFromGemini(name);
 
+        // Save tournament data and description to file as we go
         const record = {
           id,
           name,
           sport: SPORT,
-          description: description || 'No description generated'
+          description: description || 'No description generated',
+          legacy: true // Prefix/flag indicating legacy script
         };
 
-        // Append each record to the file, handling commas for valid JSON array
         const jsonRecord = JSON.stringify(record, null, 2);
         if (!firstRecord) {
           fs.appendFileSync(outputFile, ',\n' + jsonRecord, 'utf8');
@@ -148,7 +143,7 @@ export async function updateTournamentDescriptions() {
           console.warn(`⚠️ No se pudo generar descripción para ${name}`);
         }
 
-        await new Promise(res => setTimeout(res, 3000)); // delay entre peticiones
+        await new Promise(res => setTimeout(res, 1000)); // delay entre peticiones
       }
 
       batchNumber++;
