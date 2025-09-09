@@ -12,7 +12,7 @@ const SUPPORTED_SPORTS = ['cs2', 'lol'];
 const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
 
 // Get flag from .env to enable file saving
-const SAVE_TO_FILE = process.env.SAVE_TOURNAMENTS_TO_FILE === 1;
+const SAVE_TO_FILE = process.env.SAVE_TOURNAMENTS_TO_FILE === '1' || process.env.SAVE_TOURNAMENTS_TO_FILE === 'true';
 
 // Select DB config based on sport
 const dbConfigs = {
@@ -50,10 +50,9 @@ const buildPrompt = (name, sport) => {
     else sportName = sport;
 
     return `
-        You are an expert esports analyst. Write a concise, informative, and engaging description for the tournament "${name}", focusing on its relevance and format in the game "${sportName}".
-        The tournament name is "${name}" and the game name is "${sportName}".
-        Return only a JSON object with a single key 'description' and avoid any explanations or extra text.
-        Do not use placeholders like [Game Name], [Tournament Name], or similar; always use the actual tournament and game names.
+       You are an expert esports analyst. Write a concise, informative, and engaging description for the tournament "${name}", focusing on its relevance and format in ${sportName}. 
+      Return only a JSON object with a single key 'description' and avoid any explanations or extra text.
+      Do not use placeholders like [Game Name], [Tournament Name], or similar; always use the actual tournament and game names.
     `;
 };
 
