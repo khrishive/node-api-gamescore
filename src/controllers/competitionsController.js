@@ -1,4 +1,11 @@
+import { dbCS2, dbLOL } from '../db.js'; // Use your updated db.js
 import mysql from 'mysql2/promise';
+
+// Helper to get the correct DB pool based on sport
+function getDbPoolBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2; // default to cs2
+}
 
 const createConnection = async () => {
   return await mysql.createConnection({
@@ -9,8 +16,8 @@ const createConnection = async () => {
   });
 };
 
-export const getCompetitions = async (offset = 0, limit = 100, filters = {}) => {
-  const connection = await createConnection();
+export const getCompetitions = async (offset = 0, limit = 100, filters = {}, sport = 'cs2') => {
+  const db = getDbPoolBySport(sport);
   let query = `SELECT * FROM competitions`;
   const params = [];
   const conditions = [];
@@ -37,7 +44,6 @@ export const getCompetitions = async (offset = 0, limit = 100, filters = {}) => 
 
   query += ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
 
-  const [rows] = await connection.execute(query, params);
-  await connection.end();
+  const [rows] = await db.execute(query, params);
   return rows;
 };

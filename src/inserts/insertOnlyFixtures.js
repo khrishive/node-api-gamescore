@@ -4,51 +4,55 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT
+// Get sport from command line argument, default to 'cs2'
+const sportArg = process.argv[2] || 'cs2';
+const SUPPORTED_SPORTS = ['cs2', 'lol'];
+const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
+
+// Select DB config based on sport
+const dbConfigs = {
+    cs2: {
+        host: process.env.DB_CS2_HOST,
+        user: process.env.DB_CS2_USER,
+        password: process.env.DB_CS2_PASSWORD,
+        database: process.env.DB_CS2_NAME,
+        port: process.env.DB_CS2_PORT || 3306
+    },
+    lol: {
+        host: process.env.DB_LOL_HOST,
+        user: process.env.DB_LOL_USER,
+        password: process.env.DB_LOL_PASSWORD,
+        database: process.env.DB_LOL_NAME,
+        port: process.env.DB_LOL_PORT || 3306
+    }
 };
+
+const dbConfig = dbConfigs[SPORT];
 
 const API_URL = `${process.env.GAME_SCORE_API}/fixtures`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-/**
- * Generar rangos de fechas día por día entre dos fechas.
- */
-function generateDateRanges(startDate, endDate) {
-    const ranges = [];
-    let currentDate = new Date(startDate);
-
-    while (currentDate <= new Date(endDate)) {
-        const from = currentDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-        const to = from; // El mismo día para from y to
-        ranges.push({ from, to });
-
-        // Incrementar en un día
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-
-    return ranges;
-}
+// Use sport-specific table if desired
+const FIXTURES_TABLE = `fixtures`;
 
 /**
  * Llamada a la API para obtener los fixtures de una fecha específica.
  */
-async function fetchFixtures(from, to) {
+async function fetchFixtures(from, to, page = 1) {
     try {
         const response = await axios.get(API_URL, {
             headers: {
                 Authorization: AUTH_TOKEN,
             },
-            params: { sport: 'cs2', from, to },
+            params: { sport: SPORT, from, to, page },
         });
-        return response.data.fixtures || [];
+        return {
+            fixtures: response.data.fixtures || [],
+            totalCount: response.data.totalCount || 0
+        };
     } catch (error) {
-        console.error(`❌ Error al obtener datos de la API para el rango ${from} a ${to}:`, error.message);
-        return [];
+        console.error(`❌ Error al obtener datos de la API para el rango ${from} a ${to}, página ${page}:`, error.message);
+        return { fixtures: [], totalCount: 0 };
     }
 }
 
@@ -59,7 +63,7 @@ async function saveFixturesToDB(fixtures) {
     const connection = await mysql.createConnection(dbConfig);
 
     const fixtureQuery = `
-        INSERT INTO fixtures (
+        INSERT INTO ${FIXTURES_TABLE} (
             id, competition_id, competition_name, end_time, scheduled_start_time, sport_alias, sport_name, start_time, status, tie, winner_id,
             participants0_id, participants0_name, participants0_score, participants1_id, participants1_name, participants1_score
         )
@@ -115,31 +119,54 @@ async function saveFixturesToDB(fixtures) {
 
 /**
  * Procesa rangos de fechas, obtiene fixtures y los guarda en la base de datos.
- * @ param {string} [endDate='2025-11-03'] - Fecha de fin para los rangos.
  */
-export async function processFixtures(endDate = '2025-11-03') {
-    console.log('🔄 Generando rangos de fechas...');
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0'); // Los meses son 0-indexados
-    const dd = String(today.getDate()).padStart(2, '0');
-    const currentDate = `${yyyy}-${mm}-${dd}`;
-    const dateRanges = generateDateRanges(currentDate, endDate);
+export async function processFixtures(endDate) {
+    console.log(`🔄 Generando rangos de fechas para el deporte: ${SPORT}...`);
+    const currentDate = new Date().toISOString().slice(0, 10);
 
-    for (const range of dateRanges) {
-        console.log(`🔄 Obteniendo fixtures para el rango: ${range.from} a ${range.to}`);
+    // If endDate is not provided, set it to the last day of the current year
+    if (!endDate) {
+        const now = new Date();
+        const lastDayOfYear = new Date(now.getFullYear(), 11, 31); // December is month 11
+        endDate = lastDayOfYear.toISOString().slice(0, 10);
+    }
 
-        const fixtures = await fetchFixtures(range.from, range.to);
+    let page = 1;
+    let allFixtures = [];
+    let keepPaging = true;
+
+    while (keepPaging) {
+        console.log(
+            `🔄 Obteniendo fixtures para el rango: ${currentDate} a ${endDate}, página ${page}`
+        );
+        const { fixtures, totalCount } = await fetchFixtures(
+            currentDate,
+            endDate,
+            page
+        );
 
         if (fixtures.length > 0) {
-            console.log(`📥 ${fixtures.length} fixtures encontrados, guardando en la base de datos...`);
-            await saveFixturesToDB(fixtures);
+            allFixtures = allFixtures.concat(fixtures);
+        }
+
+        // If totalCount is 50, there may be more pages
+        if (totalCount === 50) {
+            page += 1;
         } else {
-            console.log(`⚠️ No se encontraron fixtures para la fecha: ${range.from}`);
+            keepPaging = false;
         }
     }
 
-    console.log('✅ Proceso completado.');
+    if (allFixtures.length > 0) {
+        console.log(`📥 ${allFixtures.length} fixtures encontrados, guardando en la base de datos...`);
+        await saveFixturesToDB(allFixtures);
+    } else {
+        console.log(
+            `⚠️ No se encontraron fixtures para el rango: ${currentDate} a ${endDate}`
+        );
+    }
+
+    console.log("✅ Proceso completado.");
 }
 
-await processFixtures()
+await processFixtures();

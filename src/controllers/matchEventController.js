@@ -1,6 +1,6 @@
 // controllers/matchEventController.js
 
-import { db } from '../db.js';
+import { dbCS2, dbLOL } from '../db.js';
 import { getMatchMapResults } from '../services/getMatchMapResults.js';
 
 const allowedFields = [
@@ -12,11 +12,19 @@ const allowedFields = [
   'through_smoke', 'while_blinded', 'winner_team_id'
 ];
 
+// Helper to get the correct DB pool based on sport
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
+}
+
 // GET /api/events
 export const getMatchEvents = async (req, res) => {
   try {
     const filters = [];
     const values = [];
+    const sport = req.query.sport || 'cs2';
+    const db = getDbBySport(sport);
 
     for (const [key, value] of Object.entries(req.query)) {
       if (allowedFields.includes(key)) {
@@ -36,18 +44,17 @@ export const getMatchEvents = async (req, res) => {
   }
 };
 
-
-
 // GET /api/mapscores/:fixtureId
 export const getMatchMapScores = async (req, res) => {
   const { fixtureId } = req.params;
+  const sport = req.query.sport || 'cs2';
 
   if (!fixtureId || isNaN(fixtureId)) {
     return res.status(400).json({ error: 'Invalid or missing fixtureId parameter' });
   }
 
   try {
-    const result = await getMatchMapResults(Number(fixtureId));
+    const result = await getMatchMapResults(Number(fixtureId), sport);
     res.json(result);
   } catch (error) {
     console.error('❌ Error fetching map scores:', error.message);
