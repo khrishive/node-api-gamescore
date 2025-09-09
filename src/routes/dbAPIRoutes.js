@@ -9,6 +9,7 @@ import { getCompetitions } from '../controllers/competitionsController.js';
 router.get('/competitions', async (req, res) => {
   try {
     const { from, to, id, offset = 0, limit = 100 } = req.query;
+    const sport = req.query.sport || 'cs2';
 
     const filters = {};
     if (from && to) {
@@ -18,7 +19,8 @@ router.get('/competitions', async (req, res) => {
       filters.id = parseInt(id, 10);
     }
 
-    const data = await getCompetitions(parseInt(offset), parseInt(limit), filters);
+    // Pass sport to the controller
+    const data = await getCompetitions(parseInt(offset), parseInt(limit), filters, sport);
     res.json(data);
   } catch (error) {
     console.error('Error en la conexión:', error);

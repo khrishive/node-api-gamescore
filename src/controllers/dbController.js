@@ -1,9 +1,19 @@
-import { db } from '../db.js';
+import { dbCS2, dbLOL } from '../db.js'; // <-- Update your db.js to export these
+
+/**
+ * Helper to get the correct DB connection based on sport
+ */
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2; // default to cs2
+}
 
 /**
  * Obtener registros con paginación, filtros y orden.
  */
-export const getRecords = async (tableName, offset, limit, filters = {}, orderBy = '') => {
+export const getRecords = async (tableName, offset, limit, filters = {}, orderBy = '', sport = 'cs2') => {
+  const db = getDbBySport(sport);
+
   let query = `SELECT * FROM \`${tableName}\``;
   let params = [];
   const conditions = [];
@@ -50,7 +60,8 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
 /**
  * Obtener todos los registros de una tabla.
  */
-export const getAllRecords = async (tableName) => {
+export const getAllRecords = async (tableName, sport = 'cs2') => {
+  const db = getDbBySport(sport);
   const [rows] = await db.execute(`SELECT * FROM \`${tableName}\``);
   return rows;
 };
