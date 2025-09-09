@@ -3,17 +3,17 @@ import { processFixtures } from "./insertOnlyFixtures.js";
 import { main as insertTeams } from "./insertTeams.js";
 import { processTeams as insertTeamsAndPlayers } from "./insertTeamsAndPlayers.js";
 import { actualizarParticipantes as updateNumberOfParticipantsInCompetitions } from "./updateNumberOfParticipantsInCompetitions.js";
-import { updateTournamentDescriptions } from "./insertCompetitionDescriptions.js";
+import { updateTournamentDescriptionsGeneralAI } from "./insertCompetitionDescriptionsGeneralAI.js"; // <-- updated import
 
 // Export runAll so it can be used by your endpoint
 export async function runAll(sport = 'cs2') {
-    console.log('🚀 Iniciando población completa de DB...');s
+    console.log('🚀 Iniciando población completa de DB...');
     await getAndSaveCompetitions(sport);
     await processFixtures(sport);
     await insertTeams(sport);
     await insertTeamsAndPlayers(sport);
     await updateNumberOfParticipantsInCompetitions(sport);
-    await updateTournamentDescriptions(sport);
+    await updateTournamentDescriptionsGeneralAI(sport); // <-- updated function call
 }
 
 // Optional: keep CLI usage for direct script execution
