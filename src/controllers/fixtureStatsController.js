@@ -1,10 +1,12 @@
-import {db} from '../db.js';
+import { dbCS2, dbLOL } from '../db.js';
 
 /**
  * Obtiene las estadísticas completas de un fixture, o filtradas por mapa si se pasa mapId.
  * Si mapId es null/undefined, devuelve el global del fixture.
  */
-export async function getFixtureStats(fixtureId, mapId = null) {
+export async function getFixtureStats(fixtureId, mapId = null, sport = 'cs2') {
+  const db = getDbBySport(sport);
+
   // 1. Equipos participantes
   const [fixtureRows] = await db.query(`
     SELECT 
@@ -162,4 +164,9 @@ export async function getFixtureStats(fixtureId, mapId = null) {
     teams: teamStats,
     maps: mapBreakdown
   };
+}
+
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
 }

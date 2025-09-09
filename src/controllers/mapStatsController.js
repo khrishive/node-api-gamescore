@@ -1,7 +1,15 @@
-import { db } from '../db.js';
+import { dbCS2, dbLOL } from '../db.js';
+
+// Helper to get the correct DB pool based on sport
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
+}
 
 export async function getMapStats(req, res) {
   const fixtureId = req.params.fixtureId;
+  const sport = req.query.sport || 'cs2';
+  const db = getDbBySport(sport);
 
   if (!fixtureId) {
     return res.status(400).json({ error: 'Missing fixtureId parameter' });
@@ -84,10 +92,10 @@ export async function getMapStats(req, res) {
   }
 }
 
-
-
 export async function getMapRoundScores(req, res) {
   const fixtureId = req.params.fixtureId;
+  const sport = req.query.sport || 'cs2';
+  const db = getDbBySport(sport);
 
   if (!fixtureId) {
     return res.status(400).json({ error: 'fixtureId parameter is required' });

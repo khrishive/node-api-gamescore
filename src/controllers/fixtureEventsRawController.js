@@ -1,6 +1,14 @@
-import { db } from '../db.js';
+import { dbCS2, dbLOL } from '../db.js';
 
-export async function getFixtureEventsRaw(fixtureId) {
+// Helper to get the correct DB pool based on sport
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
+}
+
+export async function getFixtureEventsRaw(fixtureId, sport = 'cs2') {
+  const db = getDbBySport(sport);
+
   // 1. Obtener los eventos crudos
   const [eventsRaw] = await db.query(`
     SELECT 
