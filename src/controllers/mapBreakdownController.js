@@ -1,9 +1,17 @@
-import { db } from '../db.js';
+import { dbCS2, dbLOL } from '../db.js';
+
+// Helper to get the correct DB pool based on sport
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
+}
 
 export async function mapBreakdownController(req, res) {
   try {
     const teamId = parseInt(req.params.teamId, 10);
     const competitionId = parseInt(req.params.competitionId, 10);
+    const sport = req.query.sport || 'cs2';
+    const db = getDbBySport(sport);
 
     if (isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
     if (isNaN(competitionId)) return res.status(400).json({ error: 'Invalid competition ID' });
@@ -32,7 +40,6 @@ export async function mapBreakdownController(req, res) {
       [teamStatsId]
     );
 
-
     return res.json({
       teamId,
       competitionId,
@@ -49,6 +56,9 @@ export async function mapBreakdownController(req, res) {
 export async function mapBreakdownControllerNoTournament(req, res) {
   try {
     const teamId = parseInt(req.params.teamId, 10);
+    const sport = req.query.sport || 'cs2';
+    const db = getDbBySport(sport);
+
     if (isNaN(teamId)) return res.status(400).json({ error: 'Invalid team ID' });
 
     // ✅ Buscar stats del equipo (sin torneo específico)

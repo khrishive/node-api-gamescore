@@ -1,4 +1,4 @@
-import { db } from '../db.js';
+import { dbCS2, dbLOL } from '../db.js';
 import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -6,7 +6,15 @@ dotenv.config();
 const API_BASE_URL = "https://api.gamescorekeeper.com/v1/";
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-export async function getMatchMapResults(fixtureId) {
+// Helper to get the correct DB pool based on sport
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
+}
+
+export async function getMatchMapResults(fixtureId, sport = 'cs2') {
+  const db = getDbBySport(sport);
+
   // 1. Obtener pick/ban de API
   const pickRes = await axios.get(`${API_BASE_URL}pickban/${fixtureId}/maps`, {
     headers: { Authorization: AUTH_TOKEN }
