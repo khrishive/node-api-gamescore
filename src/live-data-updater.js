@@ -10,6 +10,7 @@ const TOKEN = apiKey;
 const WP_API_KEY = process.env.POST_SYNC_API_KEY; // Tu API Key para WP
 const WP_DEV_URL = 'https://wordpressmu-1372681-5818581.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_STAGING_URL = 'https://wordpressmu-1301114-4845462.cloudwaysapps.com/wp-json/fixtures/v1/update';
+const WP_PROD_URL = 'https://www.hotspawn.com/wp-json/fixtures/v1/update';
 const RR_DEV_URL = 'https://wordpress-1372681-5668655.cloudwaysapps.com/wp-json/fixtures/v1/update';
 
 let reconnectAttempts = 0;
@@ -87,6 +88,19 @@ export function connectWebSocket(fixture_id) {
           console.error('[POST -> WP STAGING] Error al enviar:', err.message);
         }
 
+        // --- Envío a WP PROD ---
+        try {
+          const res = await axios.post(WP_PROD_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+          console.log('[POST -> WP PROD] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> WP PROD] Error al enviar:', err.message);
+        }
+
         // --- Envío a RR DEV ---
         try {
           const res = await axios.post(RR_DEV_URL, payload, {
@@ -140,6 +154,19 @@ export function connectWebSocket(fixture_id) {
           console.log('[POST -> WP STAGING] Respuesta:', res.data);
         } catch (err) {
           console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+        }
+
+        // --- Envío a WP PROD ---
+        try {
+          const res = await axios.post(WP_PROD_URL, payload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+          console.log('[POST -> WP PROD] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> WP PROD] Error al enviar:', err.message);
         }
 
         // --- Envío a RR DEV ---
@@ -209,6 +236,29 @@ export function connectWebSocket(fixture_id) {
           console.log('[POST -> WP STAGING] Respuesta:', res.data);
         } catch (err) {
           console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+        }
+
+        // --- Envío a WP PROD ---
+
+        try {
+          
+
+          const res = await axios.post(WP_PROD_URL, {
+            external_id: fixtureId,
+            participants0_id: scores[0]?.id || null,
+            participants0_score: scores[0]?.score ?? null,
+            participants1_id: scores[1]?.id || null,
+            participants1_score: scores[1]?.score ?? null
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+
+          console.log('[POST -> WP PROD] Respuesta:', res.data);
+        } catch (err) {
+          console.error('[POST -> WP PROD] Error al enviar:', err.message);
         }
 
         // --- Envío a RR DEV ---
