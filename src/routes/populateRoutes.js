@@ -4,15 +4,9 @@ import path from 'path';
 
 const router = express.Router();
 
-router.post('/general', (req, res) => {
-    const sport = req.body.sport || req.query.sport;
-
-    if (!sport || sport.trim() === '') {
-        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
-    }
-
-    const worker = new Worker(path.resolve("src/inserts/populateDataInDB.js"), {
-      workerData: { sport },
+const createWorker = (res, scriptPath, sport) => {
+    const worker = new Worker(path.resolve(scriptPath), {
+        workerData: { sport },
     });
 
     worker.on('message', (msg) => {
@@ -29,6 +23,70 @@ router.post('/general', (req, res) => {
             console.error(`❌ Worker stopped with code ${code}`);
         }
     });
+};
+
+router.post('/general', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/populateDataInDB.js", sport);
+});
+
+router.post('/create-tables', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/createTables.js", sport);
+});
+
+router.post('/insert-competitions', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/insertCompetitions.js", sport);
+});
+
+router.post('/insert-fixtures', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/insertOnlyFixtures.js", sport);
+});
+
+router.post('/insert-teams', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/insertTeams.js", sport);
+});
+
+router.post('/insert-teams-players', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/insertTeamsAndPlayers.js", sport);
+});
+
+router.post('/update-participants', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/updateNumberOfParticipantsInCompetitions.js", sport);
+});
+
+router.post('/update-descriptions', (req, res) => {
+    const sport = req.body.sport || req.query.sport;
+    if (!sport || sport.trim() === '') {
+        return res.status(400).json({ error: 'Sport is required and cannot be empty.' });
+    }
+    createWorker(res, "src/inserts/insertCompetitionDescriptionsGeneralAI.js", sport);
 });
 
 export default router;
