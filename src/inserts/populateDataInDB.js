@@ -1,3 +1,4 @@
+import { createTables } from "./createTables.js"; // <-- newly added import
 import { getAndSaveCompetitions } from "./insertCompetitions.js";
 import { processFixtures } from "./insertOnlyFixtures.js";
 import { main as insertTeams } from "./insertTeams.js";
@@ -8,6 +9,7 @@ import { updateTournamentDescriptionsGeneralAI } from "./insertCompetitionDescri
 // Export runAll so it can be used by your endpoint
 export async function runAll(sport = 'cs2') {
     console.log('🚀 Iniciando población completa de DB...');
+    await createTables(sport); // <-- run table creation first
     await getAndSaveCompetitions(sport);
     await processFixtures(sport);
     await insertTeams(sport);

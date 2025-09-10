@@ -11,7 +11,7 @@ function getDbBySport(sport = 'cs2') {
 // Get sport from CLI argument or default to 'cs2'
 const sport = process.argv[2] || 'cs2';
 
-async function createTables(sport = 'cs2') {
+export async function createTables(sport = 'cs2') {
   const db = getDbBySport(sport);
 
   try {
