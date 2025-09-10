@@ -170,4 +170,14 @@ export async function main() {
 }
 
 // Ejecuta el script principal
-await main();
+import { parentPort, workerData } from 'worker_threads';
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Equipos insertados exitosamente.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Equipos insertados exitosamente.');
+    });
+}

@@ -19,11 +19,18 @@ export async function runAll(sport = 'cs2') {
 }
 
 // Optional: keep CLI usage for direct script execution
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/'))) {
-    runAll(process.argv[2])
-        .then(() => console.log('✅ Todos los procesos completados.'))
-        .catch(err => {
-            console.error('❌ Error en la ejecución:', err);
-            process.exit(1);
-        });
+import { parentPort, workerData } from 'worker_threads';
+
+async function main(sport) {
+    await runAll(sport);
+}
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Todos los procesos completados.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Todos los procesos completados.');
+    });
 }

@@ -161,4 +161,18 @@ export async function getAndSaveCompetitions() {
     }
 }
 
-await getAndSaveCompetitions();
+import { parentPort, workerData } from 'worker_threads';
+
+async function main(sport) {
+    await getAndSaveCompetitions(sport);
+}
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Competiciones insertadas exitosamente.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Competiciones insertadas exitosamente.');
+    });
+}

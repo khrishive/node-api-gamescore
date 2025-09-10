@@ -166,11 +166,18 @@ export async function processTeams() {
 /**
  * Ejecución principal con control global de errores.
  */
-try {
-    await processTeams();
-    console.log("🎉 Proceso terminado correctamente");
-    process.exit(0);
-} catch (err) {
-    console.error("❌ Error crítico en ejecución:", err);
-    process.exit(1);
+import { parentPort, workerData } from 'worker_threads';
+
+async function main(sport) {
+    await processTeams(sport);
+}
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Equipos y jugadores insertados exitosamente.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Equipos y jugadores insertados exitosamente.');
+    });
 }

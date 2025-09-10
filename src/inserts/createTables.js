@@ -150,4 +150,18 @@ export async function createTables(sport = 'cs2') {
 }
 
 // Only create tables for the selected sport
-createTables(sport);
+import { parentPort, workerData } from 'worker_threads';
+
+async function main(sport) {
+    await createTables(sport);
+}
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Tablas creadas exitosamente.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Tablas creadas exitosamente.');
+    });
+}

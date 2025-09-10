@@ -216,11 +216,18 @@ export async function updateTournamentDescriptionsGeneralAI() {
 }
 
 // CLI usage
-if (process.argv[1] && import.meta.url.endsWith(process.argv[1].replace(/\\/g, '/'))) {
-  updateTournamentDescriptionsGeneralAI()
-    .then(() => console.log('✅ All processes completed.'))
-    .catch(err => {
-      console.error('❌ Error during execution:', err);
-      process.exit(1);
+import { parentPort, workerData } from 'worker_threads';
+
+async function main(sport) {
+    await updateTournamentDescriptionsGeneralAI(sport);
+}
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Descripciones de torneos actualizadas exitosamente.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Descripciones de torneos actualizadas exitosamente.');
     });
 }
