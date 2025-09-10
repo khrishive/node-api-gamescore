@@ -1,0 +1,50 @@
+{
+	"info": {
+		"_postman_id": "8739c7a1-9703-40f6-b9c5-9b63f4e87525",
+		"name": "Node Api Gamescore",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "15572031"
+	},
+	"item": [
+		{
+			"name": "PopulateDB",
+			"item": [
+				{
+					"name": "general",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/populate/general?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"populate",
+								"general"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "db",
+			"item": []
+		}
+	]
+}
