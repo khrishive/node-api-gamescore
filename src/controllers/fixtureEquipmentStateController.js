@@ -1,10 +1,4 @@
-import { dbCS2, dbLOL } from '../db.js';
-
-// Helper to get the correct DB pool based on sport
-function getDbBySport(sport = 'cs2') {
-  if (sport === 'lol') return dbLOL;
-  return dbCS2;
-}
+import { getDbBySport } from '../utils/dbUtils.js';
 
 export async function getFixtureEquipmentState(fixtureId, sport = 'cs2') {
   const db = getDbBySport(sport);

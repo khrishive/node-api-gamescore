@@ -1,4 +1,4 @@
-import { dbCS2, dbLOL } from '../db.js';
+import { getDbBySport } from '../utils/dbUtils.js';
 
 /**
  * Obtiene las estadísticas completas de un fixture, o filtradas por mapa si se pasa mapId.
@@ -164,9 +164,4 @@ export async function getFixtureStats(fixtureId, mapId = null, sport = 'cs2') {
     teams: teamStats,
     maps: mapBreakdown
   };
-}
-
-function getDbBySport(sport = 'cs2') {
-  if (sport === 'lol') return dbLOL;
-  return dbCS2;
 }

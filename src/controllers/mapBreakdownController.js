@@ -1,10 +1,4 @@
-import { dbCS2, dbLOL } from '../db.js';
-
-// Helper to get the correct DB pool based on sport
-function getDbBySport(sport = 'cs2') {
-  if (sport === 'lol') return dbLOL;
-  return dbCS2;
-}
+import { getDbBySport } from '../utils/dbUtils.js';
 
 export async function mapBreakdownController(req, res) {
   try {
@@ -63,9 +57,10 @@ export async function mapBreakdownControllerNoTournament(req, res) {
 
     // ✅ Buscar stats del equipo (sin torneo específico)
     const [teamStats] = await db.execute(
-      `SELECT id, total_fixtures, competition_id 
-       FROM team_stats 
-       WHERE team_id = ?`,
+      `SELECT ts.id, ts.total_fixtures, ts.competition_id, tsb.map_name AS map, tsb.played, tsb.wins AS w, tsb.losses AS l, tsb.win_pct
+       FROM team_stats ts
+       LEFT JOIN team_stats_breakdown tsb ON ts.id = tsb.team_stats_id
+       WHERE ts.team_id = ?`,
       [teamId]
     );
 
@@ -73,26 +68,29 @@ export async function mapBreakdownControllerNoTournament(req, res) {
       return res.status(404).json({ error: 'No stats found for this team' });
     }
 
-    // ⚠️ Aquí podrías devolver todos los torneos, no solo uno
-    const response = [];
-    for (const stat of teamStats) {
-      const [breakdownRows] = await db.execute(
-        `SELECT map_name AS map, played, wins AS w, losses AS l, win_pct 
-         FROM team_stats_breakdown 
-         WHERE team_stats_id = ?`,
-        [stat.id]
-      );
-
-      response.push({
-        competitionId: stat.competition_id,
-        totalFixtures: stat.total_fixtures,
-        breakdown: breakdownRows
-      });
-    }
+    const competitions = {};
+    teamStats.forEach(row => {
+      if (!competitions[row.competition_id]) {
+        competitions[row.competition_id] = {
+          competitionId: row.competition_id,
+          totalFixtures: row.total_fixtures,
+          breakdown: []
+        };
+      }
+      if (row.map) {
+        competitions[row.competition_id].breakdown.push({
+          map: row.map,
+          played: row.played,
+          w: row.w,
+          l: row.l,
+          win_pct: row.win_pct
+        });
+      }
+    });
 
     return res.json({
       teamId,
-      competitions: response
+      competitions: Object.values(competitions)
     });
 
   } catch (error) {

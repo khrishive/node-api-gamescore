@@ -1,12 +1,4 @@
-import { dbCS2, dbLOL } from '../db.js'; // <-- Update your db.js to export these
-
-/**
- * Helper to get the correct DB connection based on sport
- */
-function getDbBySport(sport = 'cs2') {
-  if (sport === 'lol') return dbLOL;
-  return dbCS2; // default to cs2
-}
+import { getDbBySport } from '../utils/dbUtils.js';
 
 /**
  * Obtener registros con paginación, filtros y orden.
@@ -14,7 +6,9 @@ function getDbBySport(sport = 'cs2') {
 export const getRecords = async (tableName, offset, limit, filters = {}, orderBy = '', sport = 'cs2') => {
   const db = getDbBySport(sport);
 
-  let query = `SELECT * FROM \`${tableName}\``;
+  let query = `SELECT * FROM 
+${tableName}
+`;
   let params = [];
   const conditions = [];
 
@@ -24,15 +18,21 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
 
     if (Array.isArray(value)) {
       // Para valores múltiples → `IN`
-      conditions.push(`\`${field}\` IN (${value.map(() => '?').join(',')})`);
+      conditions.push(`
+${field}
+ IN (${value.map(() => '?').join(',')})`);
       params.push(...value);
     } else if (typeof value === 'string' && value.includes('%')) {
       // Para búsquedas con LIKE → usar % en el query param
-      conditions.push(`\`${field}\` LIKE ?`);
+      conditions.push(`
+${field}
+ LIKE ?`);
       params.push(value);
     } else {
       // Igualdad simple
-      conditions.push(`\`${field}\` = ?`);
+      conditions.push(`
+${field}
+ = ?`);
       params.push(value);
     }
   }
@@ -43,7 +43,9 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
 
   // Orden
   if (orderBy) {
-    query += ` ORDER BY ${orderBy}`;
+    query += ` ORDER BY 
+${orderBy}
+`;
   } else if (tableName === 'competitions') {
     query += ' ORDER BY updated_at DESC';
   }
@@ -51,7 +53,11 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
   // Paginación
   const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
-  query += ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+  query += ` LIMIT 
+${safeLimit}
+ OFFSET 
+${safeOffset}
+`;
   const [rows] = await db.execute(query, params);
   return rows;
 };
@@ -69,7 +75,13 @@ export const getAllRecords = async (tableName, sport = 'cs2', offset = 0, limit 
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
 
   // Interpolate LIMIT and OFFSET directly
-  const query = `SELECT * FROM \`${tableName}\` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+  const query = `SELECT * FROM 
+${tableName}
+ LIMIT 
+${safeLimit}
+ OFFSET 
+${safeOffset}
+`;
   const [rows] = await db.execute(query);
   return rows;
 };

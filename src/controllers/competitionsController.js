@@ -1,14 +1,7 @@
-import { dbCS2, dbLOL } from '../db.js';
-import mysql from 'mysql2/promise';
-
-// Helper to get the correct DB pool based on sport
-function getDbPoolBySport(sport = 'cs2') {
-  if (sport === 'lol') return dbLOL;
-  return dbCS2; // default to cs2
-}
+import { getDbBySport } from '../utils/dbUtils.js';
 
 export const getCompetitions = async (offset = 0, limit = 100, filters = {}, sport = 'cs2') => {
-  const db = getDbPoolBySport(sport);
+  const db = getDbBySport(sport);
   let query = `SELECT * FROM competitions`;
   const params = [];
   const conditions = [];
