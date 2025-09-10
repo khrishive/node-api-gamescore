@@ -59,9 +59,17 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
 /**
  * Obtener todos los registros de una tabla.
  */
-export const getAllRecords = async (tableName, sport = 'cs2') => {
-  console.log('Fetching all records from', tableName, 'for sport', sport);
+export const getAllRecords = async (tableName, sport = 'cs2', offset = 0, limit = 100) => {
+  console.log('Fetching all records from', tableName, 'for sport', sport, 'offset', offset, 'limit', limit);
+
   const db = getDbBySport(sport);
-  const [rows] = await db.execute(`SELECT * FROM \`${tableName}\``);
+
+  // Ensure safe pagination values
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
+  const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
+
+  // Interpolate LIMIT and OFFSET directly
+  const query = `SELECT * FROM \`${tableName}\` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+  const [rows] = await db.execute(query);
   return rows;
 };

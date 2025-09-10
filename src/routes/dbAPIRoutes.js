@@ -51,7 +51,24 @@ router.get('/competitions', async (req, res) => {
   }
 });
 
+router.get("/all_competitions", async (req, res) => {
+  const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
+  const offset = parseInt(req.query.offset, 10);
+  const limit = parseInt(req.query.limit, 10);
 
+  // Set default values if not provided or invalid
+  const safeOffset = isNaN(offset) ? 0 : offset;
+  const safeLimit = isNaN(limit) ? 100 : limit;
+
+  try {
+    // Pass pagination parameters to getAllRecords
+    let data = await getAllRecords("competitions", sport, safeOffset, safeLimit);
+    res.json(data);
+  } catch (error) {
+    console.error("Error en la conexión:", error);
+    res.status(500).json({ error: "Error de servidor" });
+  }
+});
 
 router.get('/fixtures', async (req, res) => { 
   let offset = parseInt(req.query.offset, 10);
