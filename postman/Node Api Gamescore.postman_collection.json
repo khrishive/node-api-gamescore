@@ -39,6 +39,192 @@
 						}
 					},
 					"response": []
+				},
+				{
+					"name": "insert-competitions",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/populate/insert-competitions?sport=cs2",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"populate",
+								"insert-competitions"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "insert-fixtures",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/populate/insert-fixtures?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"populate",
+								"insert-fixtures"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "insert-teams",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/populate/insert-teams?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"populate",
+								"insert-teams"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "insert-teams-players",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/populate/insert-teams-players?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"populate",
+								"insert-teams-players"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update-participants",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/populate/update-participants?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"populate",
+								"update-participants"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "update-descriptions",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/populate/update-descriptions?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"populate",
+								"update-descriptions"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
 				}
 			]
 		},
@@ -351,7 +537,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{nagURL}}/db/participants?sport=cs2",
+							"raw": "{{nagURL}}/db/participants?sport=lol",
 							"host": [
 								"{{nagURL}}"
 							],
@@ -362,7 +548,7 @@
 							"query": [
 								{
 									"key": "sport",
-									"value": "cs2"
+									"value": "lol"
 								},
 								{
 									"key": "id",
@@ -451,7 +637,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{nagURL}}/db/all_fixtures?sport=lol",
+							"raw": "{{nagURL}}/db/all_fixtures?sport=cs2",
 							"host": [
 								"{{nagURL}}"
 							],
@@ -462,7 +648,7 @@
 							"query": [
 								{
 									"key": "sport",
-									"value": "lol"
+									"value": "cs2"
 								}
 							]
 						}
