@@ -122,14 +122,20 @@ router.get('/all_fixtures', async (req, res) => {
     }
 });
 
+// Example for team_fixture_stats
 router.get('/team_fixture_stats', async (req, res) => {
-    try {
-        const data = await getRecords('team_fixture_stats');
-        res.json(data);
-    } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
-    }
+  const sport = req.query.sport || "cs2";
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = parseInt(req.query.limit) || 100;
+  const filters = {}; // Add any filter logic if needed
+
+  try {
+    const data = await getRecords("team_fixture_stats", offset, limit, filters, '', sport);
+    res.json(data);
+  } catch (error) {
+    console.error("Error en la conexión:", error);
+    res.status(500).json({ error: "Error de servidor" });
+  }
 });
 
 router.get('/fixture_links', async (req, res) => {
