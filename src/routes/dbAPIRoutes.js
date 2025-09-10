@@ -60,47 +60,49 @@ router.get('/fixtures', async (req, res) => {
   if (isNaN(offset)) offset = 0;
   if (isNaN(limit)) limit = 100;
 
-  const { today, from, to, ...filters } = req.query;
+  const {
+    today, from, to,
+    id, competition_id, competition_name, end_time, format_name, format_value,
+    scheduled_start_time, sport_alias, sport_name, start_time, status, tie, winner_id,
+    participants0_id, participants0_name, participants0_score,
+    participants1_name, participants1_id, participants1_score
+  } = req.query;
 
-  if (today === 'true') {
-    const now = new Date();
-    const start_day = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
-    const end_day = start_day + (24 * 60 * 60 * 1000) - 1;
-    filters.todayRange = { start_day, end_day };
-    console.log('Filtro today=true:', {
-      start_day,
-      end_day,
-      startISO: new Date(start_day).toISOString(),
-      endISO: new Date(end_day).toISOString()
-    });
-  } else if (from && to) {
-    try {
-      const fromDate = new Date(from);
-      const toDate = new Date(to);
+  const sport = req.query.sport || 'cs2';
 
-      if (isNaN(fromDate) || isNaN(toDate)) {
-        return res.status(400).json({ error: 'Formato de fecha inválido. Usa YYYY-MM-DD' });
-      }
+  const filters = {};
 
-      const fromMs = Date.UTC(fromDate.getUTCFullYear(), fromDate.getUTCMonth(), fromDate.getUTCDate());
-      const toMs = Date.UTC(toDate.getUTCFullYear(), toDate.getUTCMonth(), toDate.getUTCDate()) + (24 * 60 * 60 * 1000) - 1;
-
-      console.log('🎯 Filtro por rango :v:', {
-        from: new Date(fromMs).toISOString(),
-        to: new Date(toMs).toISOString()
-      });
-
-
-      filters.customRange = { from: fromMs, to: toMs };
-      console.log('🎯 Filtro por rango:', filters.customRange);
-    } catch (err) {
-      return res.status(400).json({ error: 'Error al convertir fechas' });
-    }
+  // Flexible date filtering for scheduled_start_time and start_time
+  if (from && to) {
+    filters.customRange = { from, to };
+  } else if (from) {
+    filters.from = from;
+  } else if (to) {
+    filters.to = to;
   }
 
+  if (id) filters.id = id;
+  if (competition_id) filters.competition_id = competition_id;
+  if (competition_name) filters.competition_name = competition_name;
+  if (end_time) filters.end_time = end_time;
+  if (format_name) filters.format_name = format_name;
+  if (format_value) filters.format_value = format_value;
+  if (scheduled_start_time) filters.scheduled_start_time = scheduled_start_time;
+  if (sport_alias) filters.sport_alias = sport_alias;
+  if (sport_name) filters.sport_name = sport_name;
+  if (start_time) filters.start_time = start_time;
+  if (status) filters.status = status;
+  if (tie) filters.tie = tie;
+  if (winner_id) filters.winner_id = winner_id;
+  if (participants0_id) filters.participants0_id = participants0_id;
+  if (participants0_name) filters.participants0_name = participants0_name;
+  if (participants0_score) filters.participants0_score = participants0_score;
+  if (participants1_name) filters.participants1_name = participants1_name;
+  if (participants1_id) filters.participants1_id = participants1_id;
+  if (participants1_score) filters.participants1_score = participants1_score;
+
   try {
-    console.log('📥 Filtros recibidos:', filters);
-    const data = await getFixtures(offset, limit, filters);
+    const data = await getFixtures(offset, limit, filters, sport);
     res.json(data);
   } catch (error) {
     console.error('Error en la conexión:', error);
