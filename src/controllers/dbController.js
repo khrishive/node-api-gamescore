@@ -52,7 +52,6 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
   const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
   query += ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
-
   const [rows] = await db.execute(query, params);
   return rows;
 };
