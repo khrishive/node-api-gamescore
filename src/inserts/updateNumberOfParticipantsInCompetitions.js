@@ -88,4 +88,18 @@ export async function actualizarParticipantes() {
     }
 }
 
-await actualizarParticipantes();
+import { parentPort, workerData } from 'worker_threads';
+
+async function main(sport) {
+    await actualizarParticipantes(sport);
+}
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Número de participantes actualizado exitosamente.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Número de participantes actualizado exitosamente.');
+    });
+}

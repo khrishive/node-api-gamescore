@@ -169,4 +169,18 @@ export async function processFixtures(endDate) {
     console.log("✅ Proceso completado.");
 }
 
-await processFixtures();
+import { parentPort, workerData } from 'worker_threads';
+
+async function main(sport) {
+    await processFixtures(sport);
+}
+
+if (parentPort) {
+    main(workerData.sport).then(() => {
+        parentPort.postMessage('Fixtures insertados exitosamente.');
+    });
+} else {
+    main(process.argv[2]).then(() => {
+        console.log('Fixtures insertados exitosamente.');
+    });
+}
