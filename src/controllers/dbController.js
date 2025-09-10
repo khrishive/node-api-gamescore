@@ -61,6 +61,7 @@ export const getRecords = async (tableName, offset, limit, filters = {}, orderBy
  * Obtener todos los registros de una tabla.
  */
 export const getAllRecords = async (tableName, sport = 'cs2') => {
+  console.log('Fetching all records from', tableName, 'for sport', sport);
   const db = getDbBySport(sport);
   const [rows] = await db.execute(`SELECT * FROM \`${tableName}\``);
   return rows;

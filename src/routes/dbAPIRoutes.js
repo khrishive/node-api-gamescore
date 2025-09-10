@@ -112,8 +112,9 @@ router.get('/fixtures', async (req, res) => {
 
 
 router.get('/all_fixture', async (req, res) => {
+    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
     try {
-        const data = await getAllRecords('fixtures');
+        const data = await getAllRecords('fixtures', sport); // Pass sport to controller
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);

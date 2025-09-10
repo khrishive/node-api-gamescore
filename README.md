@@ -13,15 +13,15 @@ This document provides a summary of the available API endpoints.
 
 ## Database API
 
-- `GET /api/db/competitions`: Get records from the 'competitions' table with optional filters.
-- `GET /api/db/fixtures`: Get records from the 'fixtures' table with optional filters.
-- `GET /api/db/all_fixture`: Get all records from the 'fixtures' table.
-- `GET /api/db/team_fixture_stats`: Get records from the 'team_fixture_stats' table.
-- `GET /api/db/fixture_links`: Get records from the 'fixture_links' table.
-- `GET /api/db/participants`: Get records from the 'participants' table with optional filters.
-- `GET /api/db/players`: Get records from the 'player' table with optional filters.
-- `GET /api/db/stats_player`: Get records from the 'stats_player' table.
-- `GET /api/db/team_info`: Get records from the 'team_info' table.
+- `GET /db/competitions`: Get records from the 'competitions' table with optional filters.
+- `GET /db/fixtures`: Get records from the 'fixtures' table with optional filters.
+- `GET /db/all_fixture`: Get all records from the 'fixtures' table.
+- `GET /db/team_fixture_stats`: Get records from the 'team_fixture_stats' table.
+- `GET /db/fixture_links`: Get records from the 'fixture_links' table.
+- `GET /db/participants`: Get records from the 'participants' table with optional filters.
+- `GET /db/players`: Get records from the 'player' table with optional filters.
+- `GET /db/stats_player`: Get records from the 'stats_player' table.
+- `GET /db/team_info`: Get records from the 'team_info' table.
 
 ## Fixtures
 
