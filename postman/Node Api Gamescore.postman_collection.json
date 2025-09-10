@@ -44,7 +44,495 @@
 		},
 		{
 			"name": "db",
-			"item": []
+			"item": [
+				{
+					"name": "competitions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/competitions?sport=cs2",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"competitions"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								},
+								{
+									"key": "id",
+									"value": "32281",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "KYZYK",
+									"disabled": true
+								},
+								{
+									"key": "start_date",
+									"value": "20240100",
+									"disabled": true
+								},
+								{
+									"key": "end_date",
+									"value": "20241231",
+									"disabled": true
+								},
+								{
+									"key": "prize_pool_usd",
+									"value": "1000000",
+									"disabled": true
+								},
+								{
+									"key": "location",
+									"value": "America",
+									"disabled": true
+								},
+								{
+									"key": "organizer",
+									"value": "Riot",
+									"disabled": true
+								},
+								{
+									"key": "type",
+									"value": "Major",
+									"disabled": true
+								},
+								{
+									"key": "fixture_count",
+									"value": "10",
+									"disabled": true
+								},
+								{
+									"key": "description",
+									"value": "International event",
+									"disabled": true
+								},
+								{
+									"key": "no_participants",
+									"value": "16",
+									"disabled": true
+								},
+								{
+									"key": "stage",
+									"value": "Finals",
+									"disabled": true
+								},
+								{
+									"key": "time_of_year",
+									"value": "Summer",
+									"disabled": true
+								},
+								{
+									"key": "year",
+									"value": "2024",
+									"disabled": true
+								},
+								{
+									"key": "series",
+									"value": "World Championship",
+									"disabled": true
+								},
+								{
+									"key": "tier",
+									"value": "C",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100",
+									"disabled": true
+								},
+								{
+									"key": "from",
+									"value": "20240101",
+									"disabled": true
+								},
+								{
+									"key": "to",
+									"value": "20241231",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fixtures",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/fixtures?sport=cs2&participants0_name=Eternal Fire",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"fixtures"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								},
+								{
+									"key": "id",
+									"value": "940729",
+									"disabled": true
+								},
+								{
+									"key": "competition_id",
+									"value": "30145",
+									"disabled": true
+								},
+								{
+									"key": "competition_name",
+									"value": "European",
+									"disabled": true
+								},
+								{
+									"key": "end_time",
+									"value": "20241232",
+									"disabled": true
+								},
+								{
+									"key": "format_name",
+									"value": "BO3",
+									"disabled": true
+								},
+								{
+									"key": "format_value",
+									"value": "3",
+									"disabled": true
+								},
+								{
+									"key": "scheduled_start_time",
+									"value": "20240601",
+									"disabled": true
+								},
+								{
+									"key": "sport_alias",
+									"value": "cs2",
+									"disabled": true
+								},
+								{
+									"key": "sport_name",
+									"value": "Counter-Strike",
+									"disabled": true
+								},
+								{
+									"key": "start_time",
+									"value": "20240601",
+									"disabled": true
+								},
+								{
+									"key": "status",
+									"value": "finished",
+									"disabled": true
+								},
+								{
+									"key": "tie",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "winner_id",
+									"value": "200",
+									"disabled": true
+								},
+								{
+									"key": "participants0_id",
+									"value": "300",
+									"disabled": true
+								},
+								{
+									"key": "participants0_name",
+									"value": "Eternal Fire"
+								},
+								{
+									"key": "participants0_score",
+									"value": "16",
+									"disabled": true
+								},
+								{
+									"key": "participants1_id",
+									"value": "301",
+									"disabled": true
+								},
+								{
+									"key": "participants1_name",
+									"value": "MAGICOS",
+									"disabled": true
+								},
+								{
+									"key": "participants1_score",
+									"value": "14",
+									"disabled": true
+								},
+								{
+									"key": "offset",
+									"value": "0",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "100",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "all fixtures",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/all_fixtures?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"all_fixtures"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "team_fixture_stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}db/team_fixture_stats?sport=cs2",
+							"host": [
+								"{{nagURL}}db"
+							],
+							"path": [
+								"team_fixture_stats"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fixture_links",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/fixture_links?sport=cs2&fixture_id=107",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"fixture_links"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								},
+								{
+									"key": "fixture_id",
+									"value": "107"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "participants",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/participants?sport=cs2",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"participants"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								},
+								{
+									"key": "id",
+									"value": "231200",
+									"disabled": true
+								},
+								{
+									"key": "name",
+									"value": "Takewondóri",
+									"disabled": true
+								},
+								{
+									"key": "countryISO",
+									"value": "US",
+									"disabled": true
+								},
+								{
+									"key": "region",
+									"value": "America",
+									"disabled": true
+								},
+								{
+									"key": "player_id_0",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "player_name_0",
+									"value": "Test",
+									"disabled": true
+								},
+								{
+									"key": "player_id_1",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "player_name_1",
+									"value": "Test",
+									"disabled": true
+								},
+								{
+									"key": "player_id_2",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "player_name_2",
+									"value": "Test",
+									"disabled": true
+								},
+								{
+									"key": "player_id_3",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "player_name_3",
+									"value": "Test",
+									"disabled": true
+								},
+								{
+									"key": "player_id_4",
+									"value": "1",
+									"disabled": true
+								},
+								{
+									"key": "player_name_4",
+									"value": "Kras",
+									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "players",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/players?sport=cs2",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"players"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	]
 }
