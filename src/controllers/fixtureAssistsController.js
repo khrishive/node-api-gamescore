@@ -1,9 +1,4 @@
-import { dbCS2, dbLOL } from '../db.js';
-
-function getDbBySport(sport = 'cs2') {
-  if (sport === 'lol') return dbLOL;
-  return dbCS2;
-}
+import { getDbBySport } from '../utils/dbUtils.js';
 
 export async function getFixtureAssists(fixtureId, sport = 'cs2') {
   const db = getDbBySport(sport);

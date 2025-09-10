@@ -1,6 +1,4 @@
-// controllers/matchEventController.js
-
-import { dbCS2, dbLOL } from '../db.js';
+import { getDbBySport } from '../utils/dbUtils.js';
 import { getMatchMapResults } from '../services/getMatchMapResults.js';
 
 const allowedFields = [
@@ -11,12 +9,6 @@ const allowedFields = [
   'weapon', 'kill_id', 'headshot', 'penetrated', 'no_scope',
   'through_smoke', 'while_blinded', 'winner_team_id'
 ];
-
-// Helper to get the correct DB pool based on sport
-function getDbBySport(sport = 'cs2') {
-  if (sport === 'lol') return dbLOL;
-  return dbCS2;
-}
 
 // GET /api/events
 export const getMatchEvents = async (req, res) => {

@@ -1,16 +1,7 @@
-import mysql from 'mysql2/promise';
-
-const createConnection = async () => {
-  return await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
-};
+import { getDbBySport } from '../utils/dbUtils.js';
 
 export const getFixtures = async (offset = 0, limit = 100, filters = {}, sport = 'cs2') => {
-  const connection = await createConnection();
+  const db = getDbBySport(sport);
   let query = `SELECT * FROM fixtures`;
   const params = [];
   const conditions = [];
@@ -84,7 +75,7 @@ export const getFixtures = async (offset = 0, limit = 100, filters = {}, sport =
 
   query += ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
 
-  const [rows] = await connection.execute(query, params);
-  await connection.end();
+  const [rows] = await db.execute(query, params);
   return rows;
 };
+
