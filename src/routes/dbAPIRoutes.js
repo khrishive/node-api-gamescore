@@ -139,8 +139,18 @@ router.get('/team_fixture_stats', async (req, res) => {
 });
 
 router.get('/fixture_links', async (req, res) => {
+    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 100;
+
+    // Only apply filter for fixture_id if present
+    const filters = {};
+    if (req.query.fixture_id !== undefined) {
+        filters.fixture_id = req.query.fixture_id;
+    }
+
     try {
-        const data = await getRecords('fixture_links');
+        const data = await getRecords('fixture_links', offset, limit, filters, '', sport); // Pass sport to controller
         res.json(data);
     } catch (error) {
         console.error('Error en la conexión:', error);
