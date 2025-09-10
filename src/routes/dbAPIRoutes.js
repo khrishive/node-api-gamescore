@@ -8,19 +8,42 @@ import { getCompetitions } from '../controllers/competitionsController.js';
 // Endpoint para obtener todos los registros de la tabla 'competitions'
 router.get('/competitions', async (req, res) => {
   try {
-    const { from, to, id, offset = 0, limit = 100 } = req.query;
-    const sport = req.query.sport || 'cs2';
+    const {
+      from, to, id, name, sport_alias, start_date, end_date, prize_pool_usd,
+      location, organizer, type, fixture_count, description, no_participants,
+      stage, time_of_year, year, series, tier, offset = 0, limit = 100
+    } = req.query;
+    const sport = req.query.sport || 'cs2'; // Always present
 
     const filters = {};
     if (from && to) {
       filters.customRange = { from, to };
     }
-    if (id) {
-      filters.id = parseInt(id, 10);
-    }
+    if (id) filters.id = parseInt(id, 10);
+    if (name) filters.name = name;
+    if (sport_alias) filters.sport_alias = sport_alias;
+    if (start_date) filters.start_date = start_date;
+    if (end_date) filters.end_date = end_date;
+    if (prize_pool_usd) filters.prize_pool_usd = prize_pool_usd;
+    if (location) filters.location = location;
+    if (organizer) filters.organizer = organizer;
+    if (type) filters.type = type;
+    if (fixture_count) filters.fixture_count = fixture_count;
+    if (description) filters.description = description;
+    if (no_participants) filters.no_participants = no_participants;
+    if (stage) filters.stage = stage;
+    if (time_of_year) filters.time_of_year = time_of_year;
+    if (year) filters.year = year;
+    if (series) filters.series = series;
+    if (tier) filters.tier = tier;
 
-    // Pass sport to the controller
-    const data = await getCompetitions(parseInt(offset), parseInt(limit), filters, sport);
+    // Pass sport and filters to the controller
+    const data = await getCompetitions(
+      parseInt(offset),
+      parseInt(limit),
+      filters,
+      sport
+    );
     res.json(data);
   } catch (error) {
     console.error('Error en la conexión:', error);

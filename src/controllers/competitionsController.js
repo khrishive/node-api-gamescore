@@ -1,4 +1,4 @@
-import { dbCS2, dbLOL } from '../db.js'; // Use your updated db.js
+import { dbCS2, dbLOL } from '../db.js';
 import mysql from 'mysql2/promise';
 
 // Helper to get the correct DB pool based on sport
@@ -13,15 +13,45 @@ export const getCompetitions = async (offset = 0, limit = 100, filters = {}, spo
   const params = [];
   const conditions = [];
 
+  // Flexible date filtering
   if (filters.customRange) {
     const { from, to } = filters.customRange;
     conditions.push(`start_date BETWEEN ? AND ?`);
     params.push(from, to);
+  } else if (filters.start_date && filters.end_date) {
+    conditions.push(`start_date BETWEEN ? AND ?`);
+    params.push(filters.start_date, filters.end_date);
+  } else if (filters.start_date) {
+    conditions.push(`start_date >= ?`);
+    params.push(filters.start_date);
+  } else if (filters.end_date) {
+    conditions.push(`start_date <= ?`);
+    params.push(filters.end_date);
   }
 
-  if (filters.id) {
-    conditions.push(`id = ?`);
-    params.push(filters.id);
+  // All other optional filters except updated_at and sport_alias (merged with sport)
+  const filterFields = [
+    'id', 'name', 'prize_pool_usd',
+    'location', 'organizer', 'type', 'fixture_count', 'description',
+    'no_participants', 'stage', 'time_of_year', 'year', 'series', 'tier'
+  ];
+
+  for (const field of filterFields) {
+    if (filters[field] !== undefined) {
+      if (field === "name" || field === "location" || field === "organizer" || field === "description" || field === "series") {
+        conditions.push(`\`${field}\` LIKE ?`);
+        params.push(`%${filters[field]}%`);
+      } else {
+        conditions.push(`\`${field}\` = ?`);
+        params.push(filters[field]);
+      }
+    }
+  }
+
+  // Always filter by sport_alias using sport value
+  if (sport) {
+    conditions.push('sport_alias = ?');
+    params.push(sport);
   }
 
   if (conditions.length > 0) {
