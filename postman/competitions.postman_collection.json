@@ -1,0 +1,52 @@
+{
+  "info": {
+    "_postman_id": "b7e8e6c2-8e5b-4e8e-9c7d-competitions",
+    "name": "Get Competitions (All Filters)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Competitions (All Filters)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+"raw": "http://localhost:3000/db/competitions?sport=cs2&id=1&name=Worlds&sport_alias=lol&start_date=20240101&end_date=20241231&prize_pool_usd=1000000&location=Berlin&organizer=Riot&type=Major&fixture_count=10&description=International%20event&no_participants=16&stage=Finals&time_of_year=Summer&year=2024&series=World%20Championship&tier=S&offset=0&limit=100&from=20240101&to=20241231",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "competitions"
+          ],
+          "query": [
+            { "key": "sport", "value": "cs2" },
+            { "key": "id", "value": "1" },
+            { "key": "name", "value": "Worlds" },
+            { "key": "sport_alias", "value": "lol" },
+            { "key": "start_date", "value": "20240101" },
+            { "key": "end_date", "value": "20241231" },
+            { "key": "prize_pool_usd", "value": "1000000" },
+            { "key": "location", "value": "Berlin" },
+            { "key": "organizer", "value": "Riot" },
+            { "key": "type", "value": "Major" },
+            { "key": "fixture_count", "value": "10" },
+            { "key": "description", "value": "International event" },
+            { "key": "no_participants", "value": "16" },
+            { "key": "stage", "value": "Finals" },
+            { "key": "time_of_year", "value": "Summer" },
+            { "key": "year", "value": "2024" },
+            { "key": "series", "value": "World Championship" },
+            { "key": "tier", "value": "S" },
+            { "key": "offset", "value": "0" },
+            { "key": "limit", "value": "100" },
+            { "key": "from", "value": "20240101" },
+            { "key": "to", "value": "20241231" }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
