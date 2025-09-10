@@ -7,15 +7,6 @@ function getDbPoolBySport(sport = 'cs2') {
   return dbCS2; // default to cs2
 }
 
-const createConnection = async () => {
-  return await mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-  });
-};
-
 export const getCompetitions = async (offset = 0, limit = 100, filters = {}, sport = 'cs2') => {
   const db = getDbPoolBySport(sport);
   let query = `SELECT * FROM competitions`;
