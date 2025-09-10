@@ -160,6 +160,7 @@ router.get('/fixture_links', async (req, res) => {
 
 router.get('/participants', async (req, res) => {
   try {
+    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
@@ -180,7 +181,7 @@ router.get('/participants', async (req, res) => {
       }
     }
 
-    const data = await getRecords('participants', offset, limit, filters, 'id DESC');
+    const data = await getRecords('participants', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
     res.json(data);
   } catch (error) {
     console.error('❌ Error en la conexión:', error.message);
