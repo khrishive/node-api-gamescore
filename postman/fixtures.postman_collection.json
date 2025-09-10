@@ -1,0 +1,54 @@
+{
+  "info": {
+    "_postman_id": "b7e8e6c2-8e5b-4e8e-9c7d-fixtures",
+    "name": "Get Fixtures (All Filters)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Fixtures (All Filters)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/fixtures?sport=cs2&id=1&competition_id=100&competition_name=Major%20Championship&end_time=20241231&format_name=BO3&format_value=3&scheduled_start_time=20240601&sport_alias=cs2&sport_name=Counter-Strike&start_time=20240601&status=finished&tie=0&winner_id=200&participants0_id=300&participants0_name=Team%20A&participants0_score=16&participants1_id=301&participants1_name=Team%20B&participants1_score=14&offset=0&limit=100&from=20240601&to=20241231",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "fixtures"
+          ],
+          "query": [
+            { "key": "sport", "value": "cs2" },
+            { "key": "id", "value": "1" },
+            { "key": "competition_id", "value": "100" },
+            { "key": "competition_name", "value": "Major Championship" },
+            { "key": "end_time", "value": "20241231" },
+            { "key": "format_name", "value": "BO3" },
+            { "key": "format_value", "value": "3" },
+            { "key": "scheduled_start_time", "value": "20240601" },
+            { "key": "sport_alias", "value": "cs2" },
+            { "key": "sport_name", "value": "Counter-Strike" },
+            { "key": "start_time", "value": "20240601" },
+            { "key": "status", "value": "finished" },
+            { "key": "tie", "value": "0" },
+            { "key": "winner_id", "value": "200" },
+            { "key": "participants0_id", "value": "300" },
+            { "key": "participants0_name", "value": "Team A" },
+            { "key": "participants0_score", "value": "16" },
+            { "key": "participants1_id", "value": "301" },
+            { "key": "participants1_name", "value": "Team B" },
+            { "key": "participants1_score", "value": "14" },
+            { "key": "offset", "value": "0" },
+            { "key": "limit", "value": "100" },
+            { "key": "from", "value": "20240601" },
+            { "key": "to", "value": "20241231" }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
