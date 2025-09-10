@@ -176,6 +176,36 @@
 					"response": []
 				},
 				{
+					"name": "all_competitions",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/all_competitions?sport=cs2",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"all_competitions"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "fixtures",
 					"request": {
 						"method": "GET",
@@ -310,99 +340,6 @@
 					"response": []
 				},
 				{
-					"name": "all fixtures",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{nagXApiKey}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{nagURL}}/db/all_fixtures?sport=lol",
-							"host": [
-								"{{nagURL}}"
-							],
-							"path": [
-								"db",
-								"all_fixtures"
-							],
-							"query": [
-								{
-									"key": "sport",
-									"value": "lol"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "team_fixture_stats",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{nagXApiKey}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{nagURL}}db/team_fixture_stats?sport=cs2",
-							"host": [
-								"{{nagURL}}db"
-							],
-							"path": [
-								"team_fixture_stats"
-							],
-							"query": [
-								{
-									"key": "sport",
-									"value": "cs2"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
-					"name": "fixture_links",
-					"request": {
-						"method": "GET",
-						"header": [
-							{
-								"key": "x-api-key",
-								"value": "{{nagXApiKey}}",
-								"type": "text"
-							}
-						],
-						"url": {
-							"raw": "{{nagURL}}/db/fixture_links?sport=cs2&fixture_id=107",
-							"host": [
-								"{{nagURL}}"
-							],
-							"path": [
-								"db",
-								"fixture_links"
-							],
-							"query": [
-								{
-									"key": "sport",
-									"value": "cs2"
-								},
-								{
-									"key": "fixture_id",
-									"value": "107"
-								}
-							]
-						}
-					},
-					"response": []
-				},
-				{
 					"name": "participants",
 					"request": {
 						"method": "GET",
@@ -496,6 +433,99 @@
 									"key": "player_name_4",
 									"value": "Kras",
 									"disabled": true
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "all fixtures",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/all_fixtures?sport=lol",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"all_fixtures"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "lol"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "team_fixture_stats",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}db/team_fixture_stats?sport=cs2",
+							"host": [
+								"{{nagURL}}db"
+							],
+							"path": [
+								"team_fixture_stats"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "fixture_links",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "x-api-key",
+								"value": "{{nagXApiKey}}",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "{{nagURL}}/db/fixture_links?sport=cs2&fixture_id=107",
+							"host": [
+								"{{nagURL}}"
+							],
+							"path": [
+								"db",
+								"fixture_links"
+							],
+							"query": [
+								{
+									"key": "sport",
+									"value": "cs2"
+								},
+								{
+									"key": "fixture_id",
+									"value": "107"
 								}
 							]
 						}
