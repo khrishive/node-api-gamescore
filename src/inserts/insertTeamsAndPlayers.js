@@ -34,7 +34,7 @@ const API_URL = `${process.env.GAME_SCORE_API}`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 /**
- * Obtiene los IDs únicos de participantes desde la DB.
+ * Gets the unique participant IDs from the DB.
  */
 async function fetchParticipantIds() {
     const [rows] = await db.execute('SELECT DISTINCT id FROM participants');
@@ -42,7 +42,7 @@ async function fetchParticipantIds() {
 }
 
 /**
- * Obtiene información del equipo desde la API.
+ * Gets team information from the API.
  */
 async function fetchTeamInfo(id) {
     try {
@@ -51,13 +51,13 @@ async function fetchTeamInfo(id) {
         });
         return response.data || null;
     } catch (error) {
-        console.error(`❌ Error al obtener equipo ID ${id}:`, error.message);
+        console.error(`❌ Error getting team ID ${id}:`, error.message);
         return null;
     }
 }
 
 /**
- * Obtiene información del jugador desde la API.
+ * Gets player information from the API.
  */
 async function fetchPlayerInfo(playerId) {
     try {
@@ -66,13 +66,13 @@ async function fetchPlayerInfo(playerId) {
         });
         return response.data || null;
     } catch (error) {
-        console.error(`❌ Error al obtener jugador ID ${playerId}:`, error.message);
+        console.error(`❌ Error getting player ID ${playerId}:`, error.message);
         return null;
     }
 }
 
 /**
- * Limpia y estructura los datos del jugador.
+ * Cleans and structures the player data.
  */
 function sanitizePlayerData(playerInfo, player, teamId) {
     return {
@@ -89,7 +89,7 @@ function sanitizePlayerData(playerInfo, player, teamId) {
 }
 
 /**
- * Guarda la información de los jugadores de un equipo en la DB.
+ * Saves the information of a team's players in the DB.
  */
 async function saveTeamInfoToDB(teamInfo) {
     const playerQuery = `
@@ -107,14 +107,14 @@ async function saveTeamInfoToDB(teamInfo) {
 
     try {
         if (!teamInfo.most_recent_lineup || !Array.isArray(teamInfo.most_recent_lineup) || teamInfo.most_recent_lineup.length === 0) {
-            console.log(`⚠️ El equipo ${teamInfo.id} (${teamInfo.name}) no tiene lineup registrado`);
+            console.log(`⚠️ Team ${teamInfo.id} (${teamInfo.name}) has no registered lineup`);
             return;
         }
 
         const playerPromises = teamInfo.most_recent_lineup.map(async (player) => {
             const playerInfo = await fetchPlayerInfo(player.id);
             if (!playerInfo) {
-                console.log(`⚠️ Sin info del jugador ID: ${player.id}`);
+                console.log(`⚠️ No info for player ID: ${player.id}`);
                 return;
             }
 
@@ -132,39 +132,39 @@ async function saveTeamInfoToDB(teamInfo) {
                 sanitized.sport
             ]);
 
-            console.log(`✅ Guardado jugador ${sanitized.nickname} (${sanitized.id})`);
+            console.log(`✅ Saved player ${sanitized.nickname} (${sanitized.id})`);
         });
 
         await Promise.all(playerPromises);
 
-        console.log(`✅ Equipo procesado: ${teamInfo.name} (ID: ${teamInfo.id})`);
+        console.log(`✅ Processed team: ${teamInfo.name} (ID: ${teamInfo.id})`);
     } catch (error) {
-        console.error(`❌ Error al guardar equipo ${teamInfo.id}:`, error.message);
+        console.error(`❌ Error saving team ${teamInfo.id}:`, error.message);
     }
 }
 
 
 /**
- * Flujo principal: obtiene participantes, procesa cada equipo y guarda en DB.
+ * Main flow: gets participants, processes each team and saves to DB.
  */
 export async function processTeams() {
-    console.log('🔄 Obteniendo IDs de participantes...');
+    console.log('🔄 Getting participant IDs...');
     const participantIds = await fetchParticipantIds();
 
     for (const id of participantIds) {
-        console.log(`🔄 Procesando equipo ID: ${id}`);
+        console.log(`🔄 Processing team ID: ${id}`);
         const teamInfo = await fetchTeamInfo(id);
 
         if (teamInfo) {
             await saveTeamInfoToDB(teamInfo);
         } else {
-            console.log(`⚠️ No se encontró información del equipo ID: ${id}`);
+            console.log(`⚠️ No information found for team ID: ${id}`);
         }
     }
 }
 
 /**
- * Ejecución principal con control global de errores.
+ * Main execution with global error handling.
  */
 import { parentPort, workerData } from 'worker_threads';
 
@@ -174,10 +174,10 @@ async function main(sport) {
 
 if (parentPort) {
     main(workerData.sport).then(() => {
-        parentPort.postMessage('Equipos y jugadores insertados exitosamente.');
+        parentPort.postMessage('Teams and players inserted successfully.');
     });
 } else {
     main(process.argv[2]).then(() => {
-        console.log('Equipos y jugadores insertados exitosamente.');
+        console.log('Teams and players inserted successfully.');
     });
 }

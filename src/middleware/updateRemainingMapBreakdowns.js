@@ -3,7 +3,7 @@ import { saveOrUpdateMapBreakdown } from './saveOrUpdateMapBreakdown.js';
 
 async function updateRemainingMapBreakdowns(sport = "cs2") {
   const db = getDbBySport(sport);
-  // 🔍 Buscar solo pares (team_id, competition_id) que FALTAN en team_stats
+  // 🔍 Search only for pairs (team_id, competition_id) that are MISSING in team_stats
   const [rows] = await db.execute(`
     SELECT DISTINCT f.competition_id, f.participants0_id AS team_id
     FROM fixtures f
@@ -24,28 +24,28 @@ async function updateRemainingMapBreakdowns(sport = "cs2") {
       AND ts.id IS NULL
   `);
 
-  console.log(`Encontrados ${rows.length} equipos-torneos pendientes de registrar`);
+  console.log(`Found ${rows.length} team-tournaments pending registration`);
 
   for (const row of rows) {
     const { team_id, competition_id } = row;
 
     try {
-      console.log(`➡ Procesando team_id=${team_id}, competition_id=${competition_id}`);
+      console.log(`➡ Processing team_id=${team_id}, competition_id=${competition_id}`);
       await saveOrUpdateMapBreakdown(team_id, competition_id, sport);
-      console.log(`✅ Guardado/actualizado team_id=${team_id}, competition_id=${competition_id}`);
+      console.log(`✅ Saved/updated team_id=${team_id}, competition_id=${competition_id}`);
     } catch (err) {
-      console.error(`❌ Error con team_id=${team_id}, competition_id=${competition_id}`, err.message);
+      console.error(`❌ Error with team_id=${team_id}, competition_id=${competition_id}`, err.message);
     }
   }
 
-  console.log(`🎉 Proceso de actualización terminado para ${sport}`);
+  console.log(`🎉 Update process finished for ${sport}`);
 }
 
-// Ejecutar
+// Execute
 const sport = process.argv[2] || "cs2";
 updateRemainingMapBreakdowns(sport)
   .then(() => process.exit(0))
   .catch(err => {
-    console.error('Error global:', err);
+    console.error('Global error:', err);
     process.exit(1);
   });

@@ -25,7 +25,7 @@ export async function getParticipantsByTournamentId(tournamentId) {
             }
         }
 
-        console.log(`🔢 Participantes únicos: ${uniqueParticipantIds.size}`);
+        console.log(`🔢 Unique participants: ${uniqueParticipantIds.size}`);
         return {
             totalFixtures: fixtures.length,
             uniqueParticipantCount: uniqueParticipantIds.size,
@@ -35,12 +35,12 @@ export async function getParticipantsByTournamentId(tournamentId) {
 
     } catch (error) {
         if (error.response) {
-            console.error('Statusss:', error.response.status);
-            console.error('Dataaa:', error.response.data);
+            console.error('Status:', error.response.status);
+            console.error('Data:', error.response.data);
         } else if (error.request) {
-            console.error('No response receiveddd:', error.request);
+            console.error('No response received:', error.request);
         } else {
-            console.error('Errorrr:', error.message);
+            console.error('Error:', error.message);
         }
         return {
             totalFixtures: 0,
@@ -51,5 +51,5 @@ export async function getParticipantsByTournamentId(tournamentId) {
     }
 }
 
-// Ejecuta la función correctamente usando await
+// Execute the function correctly using await
 //getParticipantsByTournamentId(28941).then(console.log).catch(console.error);

@@ -15,7 +15,7 @@ export async function createTables(sport = 'cs2') {
   const db = getDbBySport(sport);
 
   try {
-    // Tabla competitions
+    // competitions table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS competitions (
         id INT PRIMARY KEY,
@@ -39,7 +39,7 @@ export async function createTables(sport = 'cs2') {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
-    // Tabla fixture_links
+    // fixture_links table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS fixture_links (
         fixture_id BIGINT,
@@ -49,7 +49,7 @@ export async function createTables(sport = 'cs2') {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
-    // Tabla fixtures
+    // fixtures table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS fixtures (
         id BIGINT PRIMARY KEY,
@@ -74,7 +74,7 @@ export async function createTables(sport = 'cs2') {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
-    // Tabla participants
+    // participants table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS participants (
         id BIGINT PRIMARY KEY,
@@ -101,7 +101,7 @@ export async function createTables(sport = 'cs2') {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
-    // Tabla player
+    // player table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS player (
         id BIGINT PRIMARY KEY,
@@ -117,7 +117,7 @@ export async function createTables(sport = 'cs2') {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
-    // Tabla stats_player
+    // stats_player table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS stats_player (
         player_id BIGINT PRIMARY KEY,
@@ -131,7 +131,7 @@ export async function createTables(sport = 'cs2') {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
-    // Tabla team_info
+    // team_info table
     await db.execute(`
       CREATE TABLE IF NOT EXISTS team_info (
         id BIGINT PRIMARY KEY,
@@ -143,9 +143,9 @@ export async function createTables(sport = 'cs2') {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
     `);
 
-    console.log(`✅ Tablas creadas exitosamente en la base de datos para el deporte: ${sport}`);
+    console.log(`✅ Tables created successfully in the database for the sport: ${sport}`);
   } catch (error) {
-    console.error(`❌ Error al crear las tablas para ${sport}:`, error.message);
+    console.error(`❌ Error creating tables for ${sport}:`, error.message);
   }
 }
 
@@ -158,10 +158,10 @@ async function main(sport) {
 
 if (parentPort) {
     main(workerData.sport).then(() => {
-        parentPort.postMessage('Tablas creadas exitosamente.');
+        parentPort.postMessage('Tables created successfully.');
     });
 } else {
     main(process.argv[2]).then(() => {
-        console.log('Tablas creadas exitosamente.');
+        console.log('Tables created successfully.');
     });
 }

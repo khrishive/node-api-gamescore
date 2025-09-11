@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// 🔌 Configuración de base de datos
+// 🔌 Database configuration
 const dbConfig = {
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -13,11 +13,11 @@ const dbConfig = {
   port: process.env.DB_PORT
 };
 
-// 🔐 Configuración de API
+// 🔐 API Configuration
 const API_BASE_URL = "https://api.gamescorekeeper.com/v2/live/historic/";
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-// 🧠 Extrae los campos estandarizados según el evento
+// 🧠 Extracts standardized fields according to the event
 function extractEventData(payload, fixtureId, event) {
   const name = payload.name || null;
   const actor = payload.killer || payload.planter || payload.assister || payload.defuser || null;
@@ -52,7 +52,7 @@ function extractEventData(payload, fixtureId, event) {
     through_smoke: payload.throughSmoke || null,
     while_blinded: payload.whileBlinded || null,
 
-    winner_team_id: payload.winnerId || null // 🆕 nuevo campo agregado
+    winner_team_id: payload.winnerId || null // 🆕 new field added
   };
 }
 
@@ -70,24 +70,24 @@ async function fetchAndStoreFixtureEvents() {
 
     for (const fixture of fixtures) {
       const fixtureId = fixture.id;
-      console.log(`🔍 Procesando fixture ${fixtureId}`);
+      console.log(`🔍 Processing fixture ${fixtureId}`);
 
       const connection = await mysql.createConnection(dbConfig);
 
       try {
-        // Validar si ya fue registrado
+        // Validate if it was already registered
         const [existing] = await connection.query(
           "SELECT COUNT(*) AS total FROM cs_match_events WHERE fixture_id = ?",
           [fixtureId]
         );
 
         if (existing[0].total > 0) {
-          console.log(`⏩ Fixture ${fixtureId} ya procesado. Se omite.`);
+          console.log(`⏩ Fixture ${fixtureId} already processed. Skipping.`);
           await connection.end();
           continue;
         }
 
-        // 📡 Llamada a la API
+        // 📡 API Call
         const response = await axios.get(`${API_BASE_URL}${fixtureId}`, {
           headers: { Authorization: AUTH_TOKEN }
         });
@@ -95,12 +95,12 @@ async function fetchAndStoreFixtureEvents() {
         const events = response.data.events;
 
         if (!Array.isArray(events) || events.length === 0) {
-          console.warn(`⚠️ Fixture ${fixtureId} no tiene eventos válidos.`);
+          console.warn(`⚠️ Fixture ${fixtureId} has no valid events.`);
           await connection.end();
           continue;
         }
 
-        // 🔁 Insertar eventos
+        // 🔁 Insert events
         for (const event of events) {
           const payload = event.payload || {};
           const values = extractEventData(payload, fixtureId, event);
@@ -118,16 +118,16 @@ async function fetchAndStoreFixtureEvents() {
           );
         }
 
-        console.log(`✅ Fixture ${fixtureId} procesado con ${events.length} eventos.`);
+        console.log(`✅ Fixture ${fixtureId} processed with ${events.length} events.`);
       } catch (apiErr) {
-        console.error(`❌ Error en fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
+        console.error(`❌ Error in fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
       } finally {
         await connection.end();
       }
     }
 
   } catch (dbErr) {
-    console.error('❌ Error al obtener fixtures:', dbErr.message);
+    console.error('❌ Error getting fixtures:', dbErr.message);
   } finally {
     await mainConnection.end();
   }

@@ -17,7 +17,7 @@ const API_URL = `${process.env.GAME_SCORE_API}/fixtures`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 /**
- * Obtiene los fixtures desde la API para un rango de fechas.
+ * Gets the fixtures from the API for a date range.
  */
 async function fetchFixtures(from, to) {
     try {
@@ -33,7 +33,7 @@ async function fetchFixtures(from, to) {
         });
         return response.data.fixtures || [];
     } catch (error) {
-        logger.error('❌ Error al obtener fixtures', {
+        logger.error('❌ Error getting fixtures', {
             from,
             to,
             message: error.message,
@@ -44,7 +44,7 @@ async function fetchFixtures(from, to) {
 }
 
 /**
- * Compara fixture de API con DB y actualiza si hay diferencias.
+ * Compares API fixture with DB and updates if there are differences.
  */
 async function updateFixtureIfChanged(apiFixture, db) {
     const [rows] = await db.execute(
@@ -53,7 +53,7 @@ async function updateFixtureIfChanged(apiFixture, db) {
     );
 
     if (rows.length === 0) {
-        logger.warn('⚠️ Fixture no encontrado en DB', { id: apiFixture.id });
+        logger.warn('⚠️ Fixture not found in DB', { id: apiFixture.id });
         return;
     }
 
@@ -97,18 +97,18 @@ async function updateFixtureIfChanged(apiFixture, db) {
 
         await db.execute(updateQuery, values);
 
-        logger.info('🔁 Fixture actualizado', {
+        logger.info('🔁 Fixture updated', {
         id: apiFixture.id,
         changes,
     });
         
     } else {
-        console.log(`✅ Fixture ${apiFixture.id} sin cambios.`);
+        console.log(`✅ Fixture ${apiFixture.id} without changes.`);
     }
 }
 
 /**
- * Proceso principal para sincronizar fixtures.
+ * Main process to synchronize fixtures.
  */
 async function syncFixturesStatus(from, to) {
     const db = await mysql.createConnection(dbConfig);
@@ -121,7 +121,7 @@ async function syncFixturesStatus(from, to) {
     await db.end();
 }
 
-// 📌 Fechas desde AYER hasta MAÑANA
+// 📌 Dates from YESTERDAY to TOMORROW
 function getDateOffsetString(offsetDays = 0) {
     const d = new Date();
     d.setDate(d.getDate() + offsetDays);
@@ -131,15 +131,15 @@ function getDateOffsetString(offsetDays = 0) {
     return `${yyyy}-${mm}-${dd}`;
 }
 
-const fromDate = getDateOffsetString(-1); // ayer
-const toDate = getDateOffsetString(1);    // mañana
+const fromDate = getDateOffsetString(-1); // yesterday
+const toDate = getDateOffsetString(1);    // tomorrow
 
-// Ejecutar
+// Execute
 try {
-    console.log(`🔄 Sincronizando fixtures desde ${fromDate} hasta ${toDate}...`);
+    console.log(`🔄 Synchronizing fixtures from ${fromDate} to ${toDate}...`);
     await syncFixturesStatus(fromDate, toDate);
 
-    console.log('✅ Sincronización completada.');
+    console.log('✅ Synchronization completed.');
 } catch (err) {
-    console.error('❌ Error general durante la sincronización:', err.message);
+    console.error('❌ General error during synchronization:', err.message);
 }

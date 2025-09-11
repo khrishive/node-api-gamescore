@@ -4,10 +4,10 @@ import axios from 'axios';
 
 dotenv.config();
 
-// API Keys y endpoint
+// API Keys and endpoint
 const apiKey = process.env.GAME_SCORE_APIKEY;
 const TOKEN = apiKey;
-const WP_API_KEY = process.env.POST_SYNC_API_KEY; // Tu API Key para WP
+const WP_API_KEY = process.env.POST_SYNC_API_KEY; // Your API Key for WP
 const WP_DEV_URL = 'https://wordpressmu-1372681-5818581.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_STAGING_URL = 'https://wordpressmu-1301114-4845462.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_PROD_URL = 'https://www.hotspawn.com/wp-json/fixtures/v1/update';
@@ -20,7 +20,7 @@ export function connectWebSocket(fixture_id) {
     fixtureId: fixture_id,
     mapNumber: null,
     roundNumber: null,
-    ended: false // 🔹 bandera para saber si ya terminó
+    ended: false // 🔹 flag to know if it has already finished
   };
 
   const WS_URL = `wss://api.gamescorekeeper.com/v2/live/${fixture_id}`;
@@ -33,7 +33,7 @@ export function connectWebSocket(fixture_id) {
   let pingInterval;
 
   ws.on('open', () => {
-    console.log(`[WebSocket] Conectado al fixture ${context.fixtureId}`);
+    console.log(`[WebSocket] Connected to fixture ${context.fixtureId}`);
     reconnectAttempts = 0;
 
     pingInterval = setInterval(() => {
@@ -47,18 +47,18 @@ export function connectWebSocket(fixture_id) {
     try {
       const message = JSON.parse(data);
 
-      // --- Detectar inicio del partido ---
+      // --- Detect start of the match ---
       if (message.type === 'fixture_started') {
         const fixtureId = message.payload.fixtureId;
 
-        console.log('[WebSocket] Evento fixture_started detectado:', { fixtureId });
+        console.log('[WebSocket] fixture_started event detected:', { fixtureId });
 
         const payload = {
           external_id: fixtureId,
           status: 'Started'
         };
 
-        // --- Envío a WP DEV ---
+        // --- Send to WP DEV ---
         try {
           const res = await axios.post(WP_DEV_URL, payload, {
             headers: {
@@ -66,12 +66,12 @@ export function connectWebSocket(fixture_id) {
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> WP DEV] Respuesta:', res.data);
+          console.log('[POST -> WP DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP DEV] Error al enviar:', err.message);
+          console.error('[POST -> WP DEV] Error sending:', err.message);
         }
 
-        // --- Envío a WP STAGING ---
+        // --- Send to WP STAGING ---
         try {
           const res = await axios.post(WP_STAGING_URL, payload, {
             headers: {
@@ -83,12 +83,12 @@ export function connectWebSocket(fixture_id) {
               password: 'ENPK9JE57j'
             }
           });
-          console.log('[POST -> WP STAGING] Respuesta:', res.data);
+          console.log('[POST -> WP STAGING] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+          console.error('[POST -> WP STAGING] Error sending:', err.message);
         }
 
-        // --- Envío a WP PROD ---
+        // --- Send to WP PROD ---
         try {
           const res = await axios.post(WP_PROD_URL, payload, {
             headers: {
@@ -96,12 +96,12 @@ export function connectWebSocket(fixture_id) {
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> WP PROD] Respuesta:', res.data);
+          console.log('[POST -> WP PROD] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP PROD] Error al enviar:', err.message);
+          console.error('[POST -> WP PROD] Error sending:', err.message);
         }
 
-        // --- Envío a RR DEV ---
+        // --- Send to RR DEV ---
         try {
           const res = await axios.post(RR_DEV_URL, payload, {
             headers: {
@@ -109,24 +109,24 @@ export function connectWebSocket(fixture_id) {
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> RR DEV] Respuesta:', res.data);
+          console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> RR DEV] Error al enviar:', err.message);
+          console.error('[POST -> RR DEV] Error sending:', err.message);
         }
       }
 
-      // --- Detectar final del partido ---
+      // --- Detect end of the match ---
       if (message.type === 'fixture_ended') {
         const fixtureId = message.payload.fixtureId;
 
-        console.log('[WebSocket] Evento fixture_started detectado:', { fixtureId });
+        console.log('[WebSocket] fixture_started event detected:', { fixtureId });
 
         const payload = {
           external_id: fixtureId,
           status: 'Ended'
         };
 
-        // --- Envío a WP DEV ---
+        // --- Send to WP DEV ---
         try {
           const res = await axios.post(WP_DEV_URL, payload, {
             headers: {
@@ -134,12 +134,12 @@ export function connectWebSocket(fixture_id) {
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> WP DEV] Respuesta:', res.data);
+          console.log('[POST -> WP DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP DEV] Error al enviar:', err.message);
+          console.error('[POST -> WP DEV] Error sending:', err.message);
         }
 
-        // --- Envío a WP STAGING ---
+        // --- Send to WP STAGING ---
         try {
           const res = await axios.post(WP_STAGING_URL, payload, {
             headers: {
@@ -151,12 +151,12 @@ export function connectWebSocket(fixture_id) {
               password: 'ENPK9JE57j'
             }
           });
-          console.log('[POST -> WP STAGING] Respuesta:', res.data);
+          console.log('[POST -> WP STAGING] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+          console.error('[POST -> WP STAGING] Error sending:', err.message);
         }
 
-        // --- Envío a WP PROD ---
+        // --- Send to WP PROD ---
         try {
           const res = await axios.post(WP_PROD_URL, payload, {
             headers: {
@@ -164,12 +164,12 @@ export function connectWebSocket(fixture_id) {
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> WP PROD] Respuesta:', res.data);
+          console.log('[POST -> WP PROD] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP PROD] Error al enviar:', err.message);
+          console.error('[POST -> WP PROD] Error sending:', err.message);
         }
 
-        // --- Envío a RR DEV ---
+        // --- Send to RR DEV ---
         try {
           const res = await axios.post(RR_DEV_URL, payload, {
             headers: {
@@ -177,22 +177,22 @@ export function connectWebSocket(fixture_id) {
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> RR DEV] Respuesta:', res.data);
+          console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> RR DEV] Error al enviar:', err.message);
+          console.error('[POST -> RR DEV] Error sending:', err.message);
         }
       }
 
 
 
-      // --- Detectar score_changed ---
+      // --- Detect score_changed ---
       if (message.type === 'score_changed') {
         const fixtureId = message.payload.fixtureId;
         const scores = message.payload.scores;
 
-        console.log('[WebSocket] Evento score_changed detectado:', { fixtureId, scores });
+        console.log('[WebSocket] score_changed event detected:', { fixtureId, scores });
 
-        // --- Envío a WP DEV ---
+        // --- Send to WP DEV ---
         try {
           const res = await axios.post(WP_DEV_URL, {
             external_id: fixtureId,
@@ -207,12 +207,12 @@ export function connectWebSocket(fixture_id) {
             }
           });
 
-          console.log('[POST -> WP DEV] Respuesta:', res.data);
+          console.log('[POST -> WP DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP DEV] Error al enviar:', err.message);
+          console.error('[POST -> WP DEV] Error sending:', err.message);
         }
 
-        // --- Envío a WP STAGING ---
+        // --- Send to WP STAGING ---
         try {
           
 
@@ -233,12 +233,12 @@ export function connectWebSocket(fixture_id) {
             }
           });
 
-          console.log('[POST -> WP STAGING] Respuesta:', res.data);
+          console.log('[POST -> WP STAGING] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP STAGING] Error al enviar:', err.message);
+          console.error('[POST -> WP STAGING] Error sending:', err.message);
         }
 
-        // --- Envío a WP PROD ---
+        // --- Send to WP PROD ---
 
         try {
           
@@ -256,12 +256,12 @@ export function connectWebSocket(fixture_id) {
             }
           });
 
-          console.log('[POST -> WP PROD] Respuesta:', res.data);
+          console.log('[POST -> WP PROD] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP PROD] Error al enviar:', err.message);
+          console.error('[POST -> WP PROD] Error sending:', err.message);
         }
 
-        // --- Envío a RR DEV ---
+        // --- Send to RR DEV ---
         try {
           const res = await axios.post(RR_DEV_URL, {
             external_id: fixtureId,
@@ -276,13 +276,13 @@ export function connectWebSocket(fixture_id) {
             }
           });
 
-          console.log('[POST -> RR DEV] Respuesta:', res.data);
+          console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> RR DEV] Error al enviar:', err.message);
+          console.error('[POST -> RR DEV] Error sending:', err.message);
         }
       }
 
-      // --- Actualizar contexto ---
+      // --- Update context ---
       if (message.type === 'occurrence' && message.payload) {
         const name = message.payload.name;
         if (name === 'map_started') {
@@ -294,55 +294,55 @@ export function connectWebSocket(fixture_id) {
         }
       }
 
-      // --- Eventos de sistema ---
+      // --- System events ---
       if (message.type === 'auth') {
         ws.send(JSON.stringify({ token: TOKEN }));
       } else if (message.type === 'pong') {
-        console.log('[WebSocket] Pong recibido');
+        console.log('[WebSocket] Pong received');
       } else if (message.type === 'ended') {
-        console.log(`[WebSocket] Fixture ${context.fixtureId} finalizado`);
+        console.log(`[WebSocket] Fixture ${context.fixtureId} finished`);
         context.ended = true;
-        ws.close(1000, 'Fixture terminado'); // 🔹 cierre limpio
+        ws.close(1000, 'Fixture finished'); // 🔹 clean closure
       }
 
     } catch (error) {
-      console.error('[WebSocket] Error al procesar mensaje:', error.message);
+      console.error('[WebSocket] Error processing message:', error.message);
     }
   });
 
   ws.on('error', (error) => {
-    console.error(`[WebSocket] Error en la conexión (${context.fixtureId}):`, error.message);
+    console.error(`[WebSocket] Connection error (${context.fixtureId}):`, error.message);
   });
 
   ws.on('close', (code, reason) => {
     clearInterval(pingInterval);
-    console.warn(`[WebSocket] Conexión cerrada para fixture ${context.fixtureId}. Code: ${code}, Reason: ${reason}`);
+    console.warn(`[WebSocket] Connection closed for fixture ${context.fixtureId}. Code: ${code}, Reason: ${reason}`);
 
-    // 🔹 No reconectar si el fixture terminó
+    // 🔹 Do not reconnect if the fixture is finished
     if (context.ended) {
-      console.log(`[WebSocket] Fixture ${context.fixtureId} ya terminó, no se reintentará.`);
+      console.log(`[WebSocket] Fixture ${context.fixtureId} has already finished, it will not be retried.`);
       return;
     }
 
-    // 🔹 Cierre normal → no reconectar
+    // 🔹 Normal closure → do not reconnect
     if (code === 1000) {
-      console.log(`[WebSocket] Conexión cerrada de forma normal (${context.fixtureId}), no se reintentará.`);
+      console.log(`[WebSocket] Connection closed normally (${context.fixtureId}), it will not be retried.`);
       reconnectAttempts = 0;
       return;
     }
 
-    // 🔹 Errores anormales → limitar intentos
+    // 🔹 Abnormal errors → limit attempts
     reconnectAttempts++;
     if (reconnectAttempts > 5) {
-      console.error(`[WebSocket] Demasiados intentos fallidos (${context.fixtureId}), deteniendo reconexiones.`);
+      console.error(`[WebSocket] Too many failed attempts (${context.fixtureId}), stopping reconnections.`);
       return;
     }
 
     const timeout = Math.min(30000, 5000 * reconnectAttempts);
-    console.log(`[WebSocket] Reintentando conexión en ${timeout}ms (Intento ${reconnectAttempts})`);
+    console.log(`[WebSocket] Retrying connection in ${timeout}ms (Attempt ${reconnectAttempts})`);
     setTimeout(() => connectWebSocket(fixture_id), timeout);
   });
 }
 
-// Inicia la conexión de prueba
+// Start the test connection
 connectWebSocket();

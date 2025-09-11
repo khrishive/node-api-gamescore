@@ -14,13 +14,13 @@ function isValidAssistEvent(assistEvent, fixtureId, mapId, roundId, type) {
 
 export async function insertAssist(assistEvent, fixtureId, mapId, roundId, type) {
   assistsLogger.debug({
-    msg: '[insertAssist] Datos recibidos para insert',
+    msg: '[insertAssist] Data received for insert',
     assistEvent, fixtureId, mapId, roundId, type
   });
 
   if (!isValidAssistEvent(assistEvent, fixtureId, mapId, roundId, type)) {
     assistsLogger.warn({
-      msg: '[insertAssist] Datos incompletos, se omite insert',
+      msg: '[insertAssist] Incomplete data, skipping insert',
       assistEvent, fixtureId, mapId, roundId, type
     });
     return;
@@ -39,17 +39,17 @@ export async function insertAssist(assistEvent, fixtureId, mapId, roundId, type)
       id, roundId, mapId, fixtureId, assister.id, victim.id, killId, type, timestamp
     ]);
     assistsLogger.debug({
-      msg: '[insertAssist] Assist insertado',
+      msg: '[insertAssist] Assist inserted',
       id, roundId, mapId, fixtureId,
       assisterId: assister.id,
       victimId: victim.id,
       killId, type, timestamp
     });
 
-    console('asistencia pricesada')
+    console.log('Assist processed')
   } catch (error) {
     assistsLogger.error({
-      msg: '[insertAssist] Error al insertar assist',
+      msg: '[insertAssist] Error inserting assist',
       error: error.message,
       assistEvent, fixtureId, mapId, roundId, type
     });

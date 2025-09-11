@@ -34,15 +34,15 @@ const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 async function getFixtureIds() {
-  // 📅 Hoy 00:00:00
+  // 📅 Today 00:00:00
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  // 📅 Mañana 00:00:00
+  // 📅 Tomorrow 00:00:00
   const startOfTomorrow = new Date(startOfToday);
   startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
 
-  // 🔢 Convertimos a timestamp en milisegundos
+  // 🔢 Convert to timestamp in milliseconds
   const startTimestamp = startOfToday.getTime();
   const endTimestamp = startOfTomorrow.getTime();
 
@@ -64,13 +64,13 @@ async function getFixtureIds() {
 
 async function fetchMapTeamPlayers(fixtureId) {
   try {
-    // 1️⃣ Obtener fixture principal (esto sí es obligatorio)
+    // 1️⃣ Get main fixture (this is mandatory)
     const response = await axios.get(`${API_URL}/fixtures/${fixtureId}`, {
       headers: { Authorization: AUTH_TOKEN }
     });
     const fixtureData = response.data;
 
-    // 2️⃣ Intentar obtener pickBan (si falla, seguimos con vacío)
+    // 2️⃣ Try to get pickBan (if it fails, we continue with empty)
     let pickBanData = { pickBan: [] };
     try {
       const pickBan = await axios.get(`${API_URL}/pickban/${fixtureId}/maps`, {
@@ -79,9 +79,9 @@ async function fetchMapTeamPlayers(fixtureId) {
       pickBanData = pickBan.data;
     } catch (err) {
       if (err.response?.status === 404) {
-        console.warn(`[INFO] Pick/Ban no encontrado para fixture ${fixtureId}, continuando...`);
+        console.warn(`[INFO] Pick/Ban not found for fixture ${fixtureId}, continuing...`);
       } else {
-        console.error(`[ERROR] Pick/Ban para fixture ${fixtureId}:`, err.message);
+        console.error(`[ERROR] Pick/Ban for fixture ${fixtureId}:`, err.message);
       }
     }
 
@@ -89,7 +89,7 @@ async function fetchMapTeamPlayers(fixtureId) {
       return { teamStatsResult: [], teamRoundScores: [] };
     }
 
-    // Crear mapa de picks { mapNameLower: teamId }
+    // Create map of picks { mapNameLower: teamId }
     const pickMap = {};
     for (const item of pickBanData.pickBan || []) {
       if (item.pickOrBan === 'pick' && item.teamId) {
@@ -104,7 +104,7 @@ async function fetchMapTeamPlayers(fixtureId) {
       const mapNumber = map.mapNumber;
       const mapName = map.mapName;
 
-      // ---- Stats de jugadores ----
+      // ---- Player stats ----
       for (const team of map.teamStats || []) {
         const teamId = team.teamId ?? 0;
 
@@ -132,14 +132,14 @@ async function fetchMapTeamPlayers(fixtureId) {
         }
       }
 
-      // ---- Rondas de equipos ----
+      // ---- Team rounds ----
       for (const team of map.roundScores || []) {
         const teamId = team.id ?? 0;
         const roundsWon = team.roundsWon ?? 0;
         const half1 = team.halfScores?.[0] ?? 0;
         const half2 = team.halfScores?.[1] ?? 0;
 
-        // Normalizar nombre de mapa para comparar picks
+        // Normalize map name to compare picks
         const normalizeMapName = name => name.toLowerCase().replace(/^de_/, '');
         const mapKey = normalizeMapName(mapName);
         const pickTeamId = pickMap[mapKey] ?? null;
@@ -190,7 +190,7 @@ async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
       `;
 
       await db.query(playerQuery, [teamStatsResult]);
-      console.log(`[✓] Insertados ${teamStatsResult.length} registros en map_team_players`);
+      console.log(`[✓] Inserted ${teamStatsResult.length} records in map_team_players`);
     }
 
     // Insert map_team_round_scores
@@ -207,11 +207,11 @@ async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
       `;
 
       await db.query(roundQuery, [teamRoundScores]);
-      console.log(`[✓] Insertados ${teamRoundScores.length} registros en map_team_round_scores`);
+      console.log(`[✓] Inserted ${teamRoundScores.length} records in map_team_round_scores`);
     }
 
   } catch (err) {
-    console.error(`[ERROR INSERT]`, err.message);
+    console.error(`[INSERT ERROR]`, err.message);
   }
 }
 
@@ -219,12 +219,12 @@ async function main() {
   const fixtureIds = await getFixtureIds();
 
   for (const fixtureId of fixtureIds) {
-    console.log(`Procesando fixture ${fixtureId}`);
+    console.log(`Processing fixture ${fixtureId}`);
     const data = await fetchMapTeamPlayers(fixtureId);
     await insertMapTeamPlayers(data);
   }
 
-  console.log('✓ Proceso finalizado');
+  console.log('✓ Process finished');
   process.exit();
 }
 
