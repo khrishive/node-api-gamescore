@@ -3,7 +3,7 @@ import { saveOrUpdateMapBreakdown } from "./saveOrUpdateMapBreakdown.js";
 
 async function updateActiveMapBreakdowns(sport = "cs2") {
   const db = getDbBySport(sport);
-
+  console.log(`Using database for sport: ${sport}`);
   // 🔍 Get all unique pairs (team, competition) ONLY from active tournaments
   const [rows] = await db.execute(`
     SELECT DISTINCT f.competition_id, f.participants0_id AS team_id
@@ -32,6 +32,7 @@ async function updateActiveMapBreakdowns(sport = "cs2") {
       console.log(
         `➡ Processing team_id=${team_id}, competition_id=${competition_id}`
       );
+      console.log(`Using in the loop sport: ${sport}`);
       await saveOrUpdateMapBreakdown(team_id, competition_id, sport);
     } catch (err) {
       console.error(
@@ -48,6 +49,7 @@ async function updateActiveMapBreakdowns(sport = "cs2") {
 
 // Execute with sport parameter (example: node updateActiveTournamentsMapBreakdowns.js cs2)
 const sport = process.argv[2] || "cs2";
+console.log(`Starting update for sport: ${sport}`);
 updateActiveMapBreakdowns(sport)
   .then(() => process.exit(0))
   .catch((err) => {

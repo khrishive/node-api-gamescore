@@ -3,9 +3,10 @@ import { getMapBreakdownByTeam } from "./mapBreakdownDataProcess.js";
 
 export async function saveOrUpdateMapBreakdown(teamId, competitionId, sport = "cs2") {
   try {
+    console.log(`Starting saveOrUpdateMapBreakdown for teamId=${teamId}, competitionId=${competitionId}, sport=${sport}`);
     const db = getDbBySport(sport);
     // 1️⃣ Get team breakdown
-    const mapData = await getMapBreakdownByTeam(teamId, 100, competitionId);
+    const mapData = await getMapBreakdownByTeam(teamId, 100, competitionId, sport);
     const { totalFixtures, breakdown } = mapData;
 
     // 2️⃣ Check if the teamId + competitionId combination already exists
