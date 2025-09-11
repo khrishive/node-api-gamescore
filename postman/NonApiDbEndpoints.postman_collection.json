@@ -1,0 +1,310 @@
+{
+  "info": {
+    "name": "Non-API/DB Endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Fixtures by Competition",
+      "item": [
+        {
+          "name": "Get Fixtures by Competition",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fixtures-by-comp/:competitionId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fixtures-by-comp",
+                ":competitionId"
+              ],
+              "variable": [
+                {
+                  "key": "competitionId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Historic Events",
+      "item": [
+        {
+          "name": "Get Match Events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/historic-events/events",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "historic-events",
+                "events"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Map Scores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/historic-events/mapscores/:fixtureId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "historic-events",
+                "mapscores",
+                ":fixtureId"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Fixtures Details",
+      "item": [
+        {
+          "name": "Get Fixture Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fixtures/:fixtureId/stats",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fixtures",
+                ":fixtureId",
+                "stats"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fixture Assists",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fixtures/:fixtureId/assists",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fixtures",
+                ":fixtureId",
+                "assists"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fixture Equipment State",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fixtures/:fixtureId/equipment",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fixtures",
+                ":fixtureId",
+                "equipment"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fixture Events Raw",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fixtures/:fixtureId/events-raw",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fixtures",
+                ":fixtureId",
+                "events-raw"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Fixture Maps",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fixtures/:fixtureId/maps",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "fixtures",
+                ":fixtureId",
+                "maps"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Map Stats",
+      "item": [
+        {
+          "name": "Get Map Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/map-stats/map-stats/:fixtureId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "map-stats",
+                "map-stats",
+                ":fixtureId"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Map Round Scores",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/map-stats/map-round-scores/:fixtureId",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "map-stats",
+                "map-round-scores",
+                ":fixtureId"
+              ],
+              "variable": [
+                {
+                  "key": "fixtureId",
+                  "value": ""
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{apiKey}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "apiKey",
+      "value": "your_api_key_here"
+    }
+  ]
+}
