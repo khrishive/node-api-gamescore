@@ -5,7 +5,7 @@ import {getAllRecords} from '../controllers/dbController.js';
 import { getFixtures } from '../controllers/fixturesController.js';
 import { getCompetitions } from '../controllers/competitionsController.js';
 
-// Endpoint para obtener todos los registros de la tabla 'competitions'
+// Endpoint to get all records from the 'competitions' table
 router.get('/competitions', async (req, res) => {
   try {
     const {
@@ -46,8 +46,8 @@ router.get('/competitions', async (req, res) => {
     );
     res.json(data);
   } catch (error) {
-    console.error('Error en la conexión:', error);
-    res.status(500).json({ error: 'Error de servidor' });
+    console.error('Connection error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -65,8 +65,8 @@ router.get("/all_competitions", async (req, res) => {
     let data = await getAllRecords("competitions", sport, safeOffset, safeLimit);
     res.json(data);
   } catch (error) {
-    console.error("Error en la conexión:", error);
-    res.status(500).json({ error: "Error de servidor" });
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -122,8 +122,8 @@ router.get('/fixtures', async (req, res) => {
     const data = await getFixtures(offset, limit, filters, sport);
     res.json(data);
   } catch (error) {
-    console.error('Error en la conexión:', error);
-    res.status(500).json({ error: 'Error de servidor' });
+    console.error('Connection error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -134,8 +134,8 @@ router.get('/all_fixtures', async (req, res) => {
         const data = await getAllRecords('fixtures', sport); // Pass sport to controller
         res.json(data);
     } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
@@ -150,8 +150,8 @@ router.get('/team_fixture_stats', async (req, res) => {
     const data = await getRecords("team_fixture_stats", offset, limit, filters, '', sport);
     res.json(data);
   } catch (error) {
-    console.error("Error en la conexión:", error);
-    res.status(500).json({ error: "Error de servidor" });
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -170,8 +170,8 @@ router.get('/fixture_links', async (req, res) => {
         const data = await getRecords('fixture_links', offset, limit, filters, '', sport); // Pass sport to controller
         res.json(data);
     } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
@@ -201,8 +201,8 @@ router.get('/participants', async (req, res) => {
     const data = await getRecords('participants', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error('❌ Error en la conexión:', error.message);
-    res.status(500).json({ error: 'Error de servidor' });
+    console.error('❌ Connection error:', error.message);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -214,7 +214,7 @@ router.get('/players', async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
-    // Mapear solo los campos válidos de la tabla
+    // Map only the valid fields of the table
     const filters = {};
     const validFields = [
       'id', 'team_id', 'first_name', 'last_name', 
@@ -230,8 +230,8 @@ router.get('/players', async (req, res) => {
     const data = await getRecords('player', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error('❌ Error en la conexión:', error.message);
-    res.status(500).json({ error: 'Error de servidor' });
+    console.error('❌ Connection error:', error.message);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
@@ -240,8 +240,8 @@ router.get('/stats_player', async (req, res) => {
         const data = await getRecords('stats_player');
         res.json(data);
     } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
@@ -250,8 +250,8 @@ router.get('/team_info', async (req, res) => {
         const data = await getRecords('team_info');
         res.json(data);
     } catch (error) {
-        console.error('Error en la conexión:', error);
-        res.status(500).json({ error: 'Error de servidor' });
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
