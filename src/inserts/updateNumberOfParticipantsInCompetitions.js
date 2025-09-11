@@ -1,5 +1,5 @@
-//Este archivo trae directamente de la API los jugadores participantes en cada torneo,
-//los cuenta, y los inserta en el campo "no_participants" de la tabla competitions.
+//This file brings directly from the API the participating players in each tournament,
+//counts them, and inserts them into the "no_participants" field of the competitions table.
 
 import mysql from 'mysql2/promise';
 import axios from 'axios';
@@ -43,12 +43,12 @@ export async function actualizarParticipantes() {
         ...dbConfig,
         multipleStatements: true
     });
-    console.log(`🔄 Actualizando participantes para el deporte: ${SPORT}`);
+    console.log(`🔄 Updating participants for the sport: ${SPORT}`);
     try {
-        // Paso 1: Obtener todos los competitionIds de la tabla "competitions"
+        // Step 1: Get all competitionIds from the "competitions" table
         const [competitions] = await connection.execute(`SELECT id FROM ${COMPETITIONS_TABLE}`);
 
-        // Paso 2: Obtener todos los participantes y guardar en un array
+        // Step 2: Get all participants and save in an array
         const updates = [];
         for (const competition of competitions) {
             const competitionId = competition.id;
@@ -57,18 +57,18 @@ export async function actualizarParticipantes() {
                     headers: {
                         Authorization: AUTH_TOKEN,
                     },
-                    timeout: 15000, // 15 segundos
+                    timeout: 15000, // 15 seconds
                 });
 
                 const no_participants = Array.isArray(data.participants) ? data.participants.length : 0;
-                console.log(`🏆 competitionId ${competitionId} tiene ${no_participants} participantes.`);
+                console.log(`🏆 competitionId ${competitionId} has ${no_participants} participants.`);
                 updates.push([no_participants, competitionId]);
             } catch (error) {
-                console.error(`❌ Error al consultar participantes de competitionId ${competitionId}:`, error.message);
+                console.error(`❌ Error querying participants for competitionId ${competitionId}:`, error.message);
             }
         }
 
-        // Paso 3: Bulk update usando múltiples sentencias UPDATE
+        // Step 3: Bulk update using multiple UPDATE statements
         if (updates.length > 0) {
             // Build all UPDATE statements
             const sqlStatements = updates.map(
@@ -77,12 +77,12 @@ export async function actualizarParticipantes() {
 
             // Enable multiple statements for this connection
             await connection.query({ sql: sqlStatements, multipleStatements: true });
-            console.log(`✅ Bulk update completado para ${updates.length} competitions.`);
+            console.log(`✅ Bulk update completed for ${updates.length} competitions.`);
         } else {
-            console.log('⚠️ No hay actualizaciones para aplicar.');
+            console.log('⚠️ No updates to apply.');
         }
     } catch (error) {
-        console.error('❌ Error general al actualizar los participantes:', error);
+        console.error('❌ General error updating participants:', error);
     } finally {
         await connection.end();
     }
@@ -96,10 +96,10 @@ async function main(sport) {
 
 if (parentPort) {
     main(workerData.sport).then(() => {
-        parentPort.postMessage('Número de participantes actualizado exitosamente.');
+        parentPort.postMessage('Number of participants updated successfully.');
     });
 } else {
     main(process.argv[2]).then(() => {
-        console.log('Número de participantes actualizado exitosamente.');
+        console.log('Number of participants updated successfully.');
     });
 }

@@ -6,7 +6,7 @@ export const getFixturesByCompetition = async (req, res) => {
   const db = getDbBySport(sport);
 
   if (!competitionId) {
-    return res.status(400).json({ error: 'competitionId requerido' });
+    return res.status(400).json({ error: 'competitionId required' });
   }
 
   try {
@@ -20,7 +20,7 @@ export const getFixturesByCompetition = async (req, res) => {
 
     res.json(rows);
   } catch (error) {
-    console.error('Error al consultar fixtures:', error);
-    res.status(500).json({ error: 'Error interno del servidor' });
+    console.error('Error querying fixtures:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 };

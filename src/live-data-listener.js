@@ -1,12 +1,12 @@
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import fs from 'fs';
-import { handleLiveEvent } from './inserts/live-data/index.js'; // Importa tu función central de inserción
-import mainLogger from './inserts/live-data/loggers/mainLoggers.js'; // <-- Logger centralizado
+import { handleLiveEvent } from './inserts/live-data/index.js'; // Import your central insertion function
+import mainLogger from './inserts/live-data/loggers/mainLoggers.js'; // <-- Centralized logger
 
 dotenv.config();
 
-// Lee la API Key desde tus variables de entorno
+// Read the API Key from your environment variables
 const apiKey = process.env.GAME_SCORE_APIKEY;
 
 
@@ -17,18 +17,18 @@ const TOKEN = apiKey;
 let reconnectAttempts = 0;
 
 export function connectWebSocket(fixture_id) {
-  console.log(`Conectando WebSocket para fixture ID: ${fixture_id}`);
-  // Contexto para guardar los IDs actuales de fixture, mapa y ronda
+  console.log(`Connecting WebSocket for fixture ID: ${fixture_id}`);
+  // Context to save the current fixture, map and round IDs
   let context = {
     fixtureId: fixture_id,
     mapNumber: null,
     roundNumber: null,
-    // Puedes agregar más campos si necesitas
+    // You can add more fields if you need
   };
 
-  // URL del WebSocket de GameScorekeeper
+  // GameScorekeeper WebSocket URL
   const WS_URL = `wss://api.gamescorekeeper.com/v2/live/${fixture_id}`;
-  // Crea la conexión al WebSocket con el header de autenticación
+  // Create the WebSocket connection with the authentication header
   const ws = new WebSocket(WS_URL, {
     headers: {
       'Authorization': `Bearer ${TOKEN}`
@@ -39,12 +39,12 @@ export function connectWebSocket(fixture_id) {
 
   ws.on('open', () => {
     mainLogger.info({
-      msg: '[WebSocket] Conectado a GameScorekeeper Live API',
+      msg: '[WebSocket] Connected to GameScorekeeper Live API',
       fixtureId: context.fixtureId
     });
     reconnectAttempts = 0;
 
-    // Envía pings cada 30 segundos para mantener viva la conexión
+    // Send pings every 30 seconds to keep the connection alive
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.ping();
@@ -56,51 +56,51 @@ export function connectWebSocket(fixture_id) {
     try {
       const message = JSON.parse(data);
 
-      // Log del mensaje recibido para auditoría (puedes ajustar nivel)
+      // Log of the message received for auditing (you can adjust the level)
       mainLogger.debug({
-        msg: '[WebSocket] Mensaje recibido',
+        msg: '[WebSocket] Message received',
         message
       });
 
-      // Guarda el evento en un archivo para auditoría/debug (opcional)
+      // Save the event to a file for auditing/debug (optional)
 
-      // Actualiza el contexto según el tipo de evento recibido
+      // Update the context according to the type of event received
       if (message.type === 'occurrence' && message.payload) {
         const name = message.payload.name;
         if (name === 'map_started') {
-          // Cuando inicia un mapa, actualiza el mapId, resetea roundId
+          // When a map starts, update the mapId, reset roundId
           context.mapNumber = message.payload.mapNumber || message.payload.mapNumber || null;
           context.roundNumber  = null;
         }
         if (name === 'round_started') {
-          // Cuando inicia una ronda, actualiza el roundId
+          // When a round starts, update the roundId
           context.roundNumber  = message.payload.roundNumber  || message.payload.roundNumber  || null;
         }
-        // Puedes agregar más lógica aquí si necesitas más IDs del contexto
+        // You can add more logic here if you need more IDs from the context
       }
 
-      // Llama a la función central para insertar el evento en la base de datos
+      // Call the central function to insert the event into the database
       if (context.fixtureId) {
-        console.log(`Procesando evento para fixtureId: ${context.fixtureId}`);
+        console.log(`Processing event for fixtureId: ${context.fixtureId}`);
         await handleLiveEvent(message, context);
-        console.log(`Evento procesado para fixtureId: ${context.fixtureId}`);
+        console.log(`Event processed for fixtureId: ${context.fixtureId}`);
         
       }
 
-      // Procesamiento de otros tipos de mensajes
+      // Processing other types of messages
       if (message.type === 'auth') {
         ws.send(JSON.stringify({ token: TOKEN }));
       } else if (message.type === 'pong') {
-        mainLogger.debug({ msg: '[WebSocket] Pong recibido' });
+        mainLogger.debug({ msg: '[WebSocket] Pong received' });
       } else if (message.type === 'ended') {
-        mainLogger.warn({ msg: '[WebSocket] Mensaje de fin recibido' });
+        mainLogger.warn({ msg: '[WebSocket] End message received' });
       } else {
-        // Otros mensajes para debug si lo deseas
-        // mainLogger.debug({ msg: '[WebSocket] Otro mensaje', message });
+        // Other messages for debug if you wish
+        // mainLogger.debug({ msg: '[WebSocket] Other message', message });
       }
     } catch (error) {
       mainLogger.error({
-        msg: '[WebSocket] Error al procesar mensaje',
+        msg: '[WebSocket] Error processing message',
         error: error.message,
         stack: error.stack
       });
@@ -109,7 +109,7 @@ export function connectWebSocket(fixture_id) {
 
   ws.on('error', (error) => {
     mainLogger.error({
-      msg: '[WebSocket] Error en la conexión',
+      msg: '[WebSocket] Connection error',
       error: error.message,
       stack: error.stack,
       fixtureId: context.fixtureId
@@ -119,26 +119,26 @@ export function connectWebSocket(fixture_id) {
   ws.on('close', (code, reason) => {
     clearInterval(pingInterval);
     mainLogger.warn({
-      msg: '[WebSocket] Conexión cerrada. Intentando reconectar...',
+      msg: '[WebSocket] Connection closed. Trying to reconnect...',
       code,
       reason: reason ? reason.toString() : '',
       fixtureId: context.fixtureId,
       attempt: reconnectAttempts + 1
     });
-    if (code !== 1000) { // No reconectar si el cierre es normal
+    if (code !== 1000) { // Do not reconnect if the closure is normal
       reconnectAttempts++;
       const timeout = Math.min(30000, 5000 * reconnectAttempts);
       setTimeout(connectWebSocket, timeout);
       mainLogger.info({
-        msg: '[WebSocket] Reintentando conexión',
+        msg: '[WebSocket] Retrying connection',
         attempt: reconnectAttempts,
-        espera_ms: timeout,
+        wait_ms: timeout,
         fixtureId: context.fixtureId
       });
     } else {
       reconnectAttempts = 0;
       mainLogger.info({
-        msg: '[WebSocket] Conexión cerrada de forma normal',
+        msg: '[WebSocket] Connection closed normally',
         code,
         fixtureId: context.fixtureId
       });
@@ -146,5 +146,5 @@ export function connectWebSocket(fixture_id) {
   });
 }
 
-// Inicia la conexión cuando ejecutas este archivo
+// Start the connection when you run this file
 connectWebSocket();

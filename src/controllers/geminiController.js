@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-// Configuración de la API de Gemini
+// Gemini API configuration
 const apiKey = process.env.GEMINI_API_KEY;
 const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
@@ -8,7 +8,7 @@ export const askGemini = async (req, res) => {
     const { question } = req.body;
 
     if (!question) {
-        return res.status(400).json({ error: "Falta la pregunta en el cuerpo de la solicitud" });
+        return res.status(400).json({ error: "Missing question in the request body" });
     }
 
     try {
@@ -18,22 +18,22 @@ export const askGemini = async (req, res) => {
             headers: { "Content-Type": "application/json" }
         });
     
-        const respuestaTexto = response.data.candidates[0].content.parts[0].text;
+        const textResponse = response.data.candidates[0].content.parts[0].text;
     
-        // Expresión regular para encontrar el premio en dinero
-        const match = respuestaTexto.match(/(?:\$\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)/);
-        const premio = match ? match[0] : "No especificado"; // Si no encuentra el premio, pone "No especificado"
+        // Regular expression to find the prize money
+        const match = textResponse.match(/(?:\$\d{1,3}(?:,\d{3})*(?:\.\d{1,2})?)/);
+        const prize = match ? match[0] : "Not specified"; // If it does not find the prize, it puts "Not specified"
     
-        // Eliminar la parte del premio del texto principal
-        const descripcion = match ? respuestaTexto.replace(match[0], "").trim() : respuestaTexto;
+        // Remove the prize part from the main text
+        const description = match ? textResponse.replace(match[0], "").trim() : textResponse;
     
-        console.log("✅ Descripción del torneo:", descripcion);
-        console.log("🏆 Premio:", premio);
+        console.log("✅ Tournament description:", description);
+        console.log("🏆 Prize:", prize);
     
-        res.status(200).json({ descripcion, premio });
+        res.status(200).json({ description, prize });
     } catch (error) {
-        console.error("❌ Error en la API de Gemini:", error.response?.data || error.message);
-        res.status(500).json({ error: "Error al comunicarse con Gemini" });
+        console.error("❌ Error in Gemini API:", error.response?.data || error.message);
+        res.status(500).json({ error: "Error communicating with Gemini" });
     }
     
     

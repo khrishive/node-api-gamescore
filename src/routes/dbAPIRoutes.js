@@ -181,7 +181,7 @@ router.get('/participants', async (req, res) => {
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
-    // Campos válidos para la tabla participants
+    // Valid fields for the participants table
     const filters = {};
     const validFields = [
       'id', 'name', 'sport', 'country', 'countryISO', 'region',

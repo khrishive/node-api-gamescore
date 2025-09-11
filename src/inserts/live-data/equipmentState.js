@@ -26,13 +26,13 @@ function isValidEquipmentState(equipmentStateEvent, fixtureId, mapId, roundId) {
 
 export async function insertEquipmentState(equipmentStateEvent, fixtureId, mapId, roundId) {
   equipmentStateLogger.debug({
-    msg: '[insertEquipmentState] Datos recibidos para insert',
+    msg: '[insertEquipmentState] Data received for insert',
     equipmentStateEvent, fixtureId, mapId, roundId
   });
 
   if (!isValidEquipmentState(equipmentStateEvent, fixtureId, mapId, roundId)) {
     equipmentStateLogger.warn({
-      msg: '[insertEquipmentState] Datos incompletos, se omite insert',
+      msg: '[insertEquipmentState] Incomplete data, skipping insert',
       equipmentStateEvent, fixtureId, mapId, roundId
     });
     return;
@@ -42,13 +42,13 @@ export async function insertEquipmentState(equipmentStateEvent, fixtureId, mapId
 
   for (const player of players) {
     equipmentStateLogger.debug({
-      msg: '[insertEquipmentState] Procesando player',
+      msg: '[insertEquipmentState] Processing player',
       player, fixtureId, mapId, roundId, timestamp
     });
 
     if (!isValidPlayer(player)) {
       equipmentStateLogger.warn({
-        msg: '[insertEquipmentState] Datos incompletos de jugador, se omite insert para este jugador',
+        msg: '[insertEquipmentState] Incomplete player data, skipping insert for this player',
         player, fixtureId, mapId, roundId, timestamp
       });
       continue;
@@ -67,7 +67,7 @@ export async function insertEquipmentState(equipmentStateEvent, fixtureId, mapId
         player.money, player.primaryWeapon, player.kevlar, player.helmet, player.defuseKit, timestamp
       ]);
       equipmentStateLogger.debug({
-        msg: '[insertEquipmentState] Equipment state insertado',
+        msg: '[insertEquipmentState] Equipment state inserted',
         roundId, mapId, fixtureId,
         playerId: player.playerId,
         teamId: player.teamId,
@@ -80,7 +80,7 @@ export async function insertEquipmentState(equipmentStateEvent, fixtureId, mapId
       });
     } catch (error) {
       equipmentStateLogger.error({
-        msg: '[insertEquipmentState] Error al insertar equipment state',
+        msg: '[insertEquipmentState] Error inserting equipment state',
         error: error.message,
         player, fixtureId, mapId, roundId, timestamp
       });

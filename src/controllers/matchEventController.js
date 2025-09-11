@@ -31,8 +31,8 @@ export const getMatchEvents = async (req, res) => {
     const [rows] = await db.query(sql, values);
     res.json(rows);
   } catch (err) {
-    console.error('❌ Error al obtener los eventos:', err.message);
-    res.status(500).json({ error: 'Error al obtener los eventos' });
+    console.error('❌ Error getting events:', err.message);
+    res.status(500).json({ error: 'Error getting events' });
   }
 };
 

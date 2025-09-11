@@ -1,9 +1,9 @@
-// Importa las dependencias necesarias
-import axios from 'axios';           // Cliente HTTP para hacer peticiones a APIs externas
-import dotenv from 'dotenv';         // Permite cargar variables de entorno desde un archivo .env
-import mysql from 'mysql2/promise';  // Cliente MySQL con soporte para promesas
+// Import the necessary dependencies
+import axios from 'axios';           // HTTP client to make requests to external APIs
+import dotenv from 'dotenv';         // Allows loading environment variables from a .env file
+import mysql from 'mysql2/promise';  // MySQL client with promise support
 
-// Carga las variables de entorno definidas en el archivo .env
+// Load the environment variables defined in the .env file
 dotenv.config();
 
 // Get sport from command line argument, default to 'cs2'
@@ -31,17 +31,17 @@ const dbConfigs = {
 
 const dbConfig = dbConfigs[SPORT];
 
-// Constantes para la API de equipos
-const API_URL = `${process.env.GAME_SCORE_API}/teams`;         // URL base de la API de equipos
-const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;  // Token de autenticación para la API
+// Constants for the teams API
+const API_URL = `${process.env.GAME_SCORE_API}/teams`;         // Base URL of the teams API
+const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;  // Authentication token for the API
 const DB_SERVER_TOKEN = process.env.API_KEY; 
 
 
 
 /**
- * Obtiene la información de un equipo usando su ID desde la API externa.
- * @ param {string|number} id - El ID del equipo a consultar.
- * @ returns {Promise<Object>} - Retorna un objeto con la información del equipo o un objeto vacío en caso de error.
+ * Gets the information of a team using its ID from the external API.
+ * @ param {string|number} id - The ID of the team to consult.
+ * @ returns {Promise<Object>} - Returns an object with the team information or an empty object in case of error.
  */
 async function fetchTeamInfo(id) {
     try {
@@ -52,17 +52,17 @@ async function fetchTeamInfo(id) {
         });
         return response.data || {};
     } catch (error) {
-        console.error(`❌ Error al obtener datos de la API para id ${id}:`, error.message);
+        console.error(`❌ Error getting data from the API for id ${id}:`, error.message);
         return {};
     }
 }
 
 /**
- * Obtiene los IDs únicos de participantes de la API de fixtures.
- * @ returns {Promise<string[]>} - Retorna un array de IDs únicos de participantes.
+ * Gets the unique IDs of participants from the fixtures API.
+ * @ returns {Promise<string[]>} - Returns an array of unique participant IDs.
  */
 async function fetchUniqueParticipants(connection) {
-    console.log('🔄 Trayendo participantes únicos desde la tabla fixtures...');
+    console.log('🔄 Fetching unique participants from the fixtures table...');
     try {
         const [rows] = await connection.execute(
             'SELECT participants0_id, participants1_id FROM fixtures'
@@ -74,39 +74,39 @@ async function fetchUniqueParticipants(connection) {
                     .filter(id => !!id)
             )
         ];
-        console.log(`🎯 ${uniqueIds.length} participantes únicos encontrados.`);
+        console.log(`🎯 ${uniqueIds.length} unique participants found.`);
         return uniqueIds;
     } catch (error) {
-        console.error('❌ Error trayendo participantes desde la tabla fixtures:', error.message);
+        console.error('❌ Error fetching participants from the fixtures table:', error.message);
         return [];
     }
 }
 
 
 /**
- * Extrae los IDs y nombres de los jugadores del lineup de un equipo.
- * Devuelve un array plano: [player_id_0, player_name_0, ..., player_id_4, player_name_4]
- * @ param {Array} lineup - Arreglo de jugadores (puede contener hasta 5 jugadores).
- * @ returns {Array} - Array plano con los IDs y nombres de los jugadores, o null si falta.
+ * Extracts the IDs and names of the players from a team's lineup.
+ * Returns a flat array: [player_id_0, player_name_0, ..., player_id_4, player_name_4]
+ * @ param {Array} lineup - Array of players (can contain up to 5 players).
+ * @ returns {Array} - Flat array with the IDs and names of the players, or null if missing.
  */
 function extractLineup(lineup) {
     const result = [];
     for (let i = 0; i < 5; i++) {
         if (lineup && lineup[i]) {
-            result.push(lineup[i].id ? String(lineup[i].id) : null);    // ID del jugador
-            result.push(lineup[i].name ? String(lineup[i].name) : null); // Nombre del jugador
+            result.push(lineup[i].id ? String(lineup[i].id) : null);    // Player ID
+            result.push(lineup[i].name ? String(lineup[i].name) : null); // Player name
         } else {
-            result.push(null, null); // Si falta el jugador, agrega dos nulos
+            result.push(null, null); // If the player is missing, add two nulls
         }
     }
     return result;
 }
 
 /**
- * Guarda (o actualiza) la información de un equipo en la tabla participants de la base de datos.
- * Usa REPLACE INTO para insertar o actualizar el registro según el ID.
- * @ param {Object} connection - Conexión MySQL.
- * @ param {Object} team - Objeto con la información del equipo.
+ * Saves (or updates) the information of a team in the participants table of the database.
+ * Uses REPLACE INTO to insert or update the record according to the ID.
+ * @ param {Object} connection - MySQL connection.
+ * @ param {Object} team - Object with the team information.
  */
 async function saveParticipant(connection, team) {
     const lineup = extractLineup(team.most_recent_lineup);
@@ -123,7 +123,7 @@ async function saveParticipant(connection, team) {
                   ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    // Prepara los valores para la consulta SQL
+    // Prepare the values for the SQL query
     const values = [
         team.id ? String(team.id) : null,
         team.name || null,
@@ -136,17 +136,17 @@ async function saveParticipant(connection, team) {
 
     try {
         await connection.execute(sql, values);
-        console.log(`✅ Guardado equipo ${team.name} (${team.id})`);
+        console.log(`✅ Saved team ${team.name} (${team.id})`);
     } catch (error) {
-        console.error(`❌ Error guardando equipo ${team.id}:`, error.message);
+        console.error(`❌ Error saving team ${team.id}:`, error.message);
     }
 }
 
 const pool = mysql.createPool(dbConfig);
 
 /**
- * Función principal: obtiene los IDs de equipos únicos, consulta la info de cada equipo,
- * y la guarda en la base de datos.
+ * Main function: gets the unique team IDs, queries the info of each team,
+ * and saves it in the database.
  */
 export async function main() {
     let connection;
@@ -160,24 +160,24 @@ export async function main() {
                 await saveParticipant(connection, teamInfo);
             }
         }
-        console.log('✅ Proceso completado.');
+        console.log('✅ Process completed.');
     } catch (error) {
-        console.error('❌ Error en el proceso principal:', error);
+        console.error('❌ Error in the main process:', error);
     } finally {
         if (connection) await connection.release();
         await pool.end();
     }
 }
 
-// Ejecuta el script principal
+// Execute the main script
 import { parentPort, workerData } from 'worker_threads';
 
 if (parentPort) {
     main(workerData.sport).then(() => {
-        parentPort.postMessage('Equipos insertados exitosamente.');
+        parentPort.postMessage('Teams inserted successfully.');
     });
 } else {
     main(process.argv[2]).then(() => {
-        console.log('Equipos insertados exitosamente.');
+        console.log('Teams inserted successfully.');
     });
 }

@@ -49,18 +49,18 @@ async function processFixtureFromAPI(fixtureId) {
           }
         }
 
-        mainLogger.debug(`[API] Procesando evento ${message.type} para fixture ${fixtureId}`);
+        mainLogger.debug(`[API] Processing event ${message.type} for fixture ${fixtureId}`);
         await handleLiveEvent(message, context);
 
       } catch (err) {
-        mainLogger.error(`[API] Error procesando evento en fixture ${fixtureId}, snapshot ${message?.payload?.snapshotNumber}: ${err.message}\n${err.stack}`);
+        mainLogger.error(`[API] Error processing event in fixture ${fixtureId}, snapshot ${message?.payload?.snapshotNumber}: ${err.message}\n${err.stack}`);
       }
     }
 
-    mainLogger.info(`[API] Procesamiento completo para fixture ${fixtureId}`);
+    mainLogger.info(`[API] Processing complete for fixture ${fixtureId}`);
 
   } catch (err) {
-    mainLogger.error(`[API] Error obteniendo datos de fixture ${fixtureId}: ${err.message}\n${err.stack}`);
+    mainLogger.error(`[API] Error getting data from fixture ${fixtureId}: ${err.message}\n${err.stack}`);
   }
 }
 

@@ -2,36 +2,36 @@ import winston from 'winston';
 import 'winston-daily-rotate-file';
 import path from 'path';
 
-// Carpeta para logs normales
+// Folder for normal logs
 const logDir = path.resolve('src/inserts/live-data/logs');
-// Carpeta para logs de error/warn
+// Folder for error/warn logs
 const errorLogDir = path.resolve('src/inserts/live-data/error-logs');
 
 const infoTransport = new winston.transports.DailyRotateFile({
   dirname: logDir,
   filename: 'assists-%DATE%.log',
   datePattern: 'YYYY-MM-DD',
-  level: 'debug', // <-- Cambiado a 'debug' para permitir logs debug, info, warn, error
+  level: 'debug', // <-- Changed to 'debug' to allow debug, info, warn, error logs
   zippedArchive: false,
   maxSize: '20m',
-  maxFiles: '14d', // Guarda 14 días
+  maxFiles: '14d', // Save 14 days
 });
 
 const errorTransport = new winston.transports.DailyRotateFile({
   dirname: errorLogDir,
   filename: 'assists-%DATE%.log',
   datePattern: 'YYYY-MM-DD',
-  level: 'warn', // Incluye warn y error
+  level: 'warn', // Includes warn and error
   zippedArchive: false,
   maxSize: '20m',
-  maxFiles: '30d', // Guarda 30 días de errores
+  maxFiles: '30d', // Save 30 days of errors
 });
 
 const assistsLogger = winston.createLogger({
-  level: 'debug', // <-- Cambiado a 'debug' para que acepte logs debug
+  level: 'debug', // <-- Changed to 'debug' to accept debug logs
   format: winston.format.combine(
     winston.format.timestamp(),
-    winston.format.json() // Puedes usar format.simple() para texto plano
+    winston.format.json() // You can use format.simple() for plain text
   ),
   transports: [
     infoTransport,

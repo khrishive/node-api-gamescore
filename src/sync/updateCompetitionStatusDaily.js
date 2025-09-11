@@ -1,11 +1,11 @@
-import { db } from '../db.js'; // Asegúrate de importar tu conexión a la base de datos
+import { db } from '../db.js'; // Make sure to import your database connection
 
 async function updateCompetitionStatus() {
   try {
-    // Fecha actual en segundos (UNIX timestamp * 1000 porque tus campos están en milisegundos)
+    // Current date in seconds (UNIX timestamp * 1000 because your fields are in milliseconds)
     const today = Date.now();
 
-    // 1️⃣ Actualizar upcoming → started
+    // 1️⃣ Update upcoming → started
     const [upcomingToStarted] = await db.query(
       `UPDATE competitions 
        SET status = 'started' 
@@ -14,9 +14,9 @@ async function updateCompetitionStatus() {
       [today]
     );
 
-    console.log(`✅ Competitions actualizadas a started: ${upcomingToStarted.affectedRows}`);
+    console.log(`✅ Competitions updated to started: ${upcomingToStarted.affectedRows}`);
 
-    // 2️⃣ Actualizar started → ended
+    // 2️⃣ Update started → ended
     const [startedToEnded] = await db.query(
       `UPDATE competitions 
        SET status = 'ended' 
@@ -25,12 +25,12 @@ async function updateCompetitionStatus() {
       [today]
     );
 
-    console.log(`✅ Competitions actualizadas a ended: ${startedToEnded.affectedRows}`);
+    console.log(`✅ Competitions updated to ended: ${startedToEnded.affectedRows}`);
 
   } catch (err) {
-    console.error('❌ Error al actualizar competiciones:', err);
+    console.error('❌ Error updating competitions:', err);
   } finally {
-    db.end(); // cerrar conexión cuando termine
+    db.end(); // close connection when finished
   }
 }
 

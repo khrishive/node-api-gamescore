@@ -36,7 +36,7 @@ const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 const FIXTURES_TABLE = `fixtures`;
 
 /**
- * Llamada a la API para obtener los fixtures de una fecha específica.
+ * API call to get fixtures for a specific date.
  */
 async function fetchFixtures(from, to, page = 1) {
     try {
@@ -51,13 +51,13 @@ async function fetchFixtures(from, to, page = 1) {
             totalCount: response.data.totalCount || 0
         };
     } catch (error) {
-        console.error(`❌ Error al obtener datos de la API para el rango ${from} a ${to}, página ${page}:`, error.message);
+        console.error(`❌ Error getting data from the API for the range ${from} to ${to}, page ${page}:`, error.message);
         return { fixtures: [], totalCount: 0 };
     }
 }
 
 /**
- * Guardar fixtures en la base de datos.
+ * Save fixtures to the database.
  */
 async function saveFixturesToDB(fixtures) {
     const connection = await mysql.createConnection(dbConfig);
@@ -108,20 +108,20 @@ async function saveFixturesToDB(fixtures) {
                 fixture.participants[1]?.name,
                 fixture.participants[1]?.score
             ]);
-            console.log(`✅ Fixture guardado: ${fixture.id}`);
+            console.log(`✅ Fixture saved: ${fixture.id}`);
         }
     } catch (error) {
-        console.error('❌ Error al guardar en la base de datos:', error.message);
+        console.error('❌ Error saving to the database:', error.message);
     } finally {
         await connection.end();
     }
 }
 
 /**
- * Procesa rangos de fechas, obtiene fixtures y los guarda en la base de datos.
+ * Process date ranges, get fixtures and save them to the database.
  */
 export async function processFixtures(endDate) {
-    console.log(`🔄 Generando rangos de fechas para el deporte: ${SPORT}...`);
+    console.log(`🔄 Generating date ranges for the sport: ${SPORT}...`);
     const currentDate = new Date().toISOString().slice(0, 10);
 
     // If endDate is not provided, set it to the last day of the current year
@@ -137,7 +137,7 @@ export async function processFixtures(endDate) {
 
     while (keepPaging) {
         console.log(
-            `🔄 Obteniendo fixtures para el rango: ${currentDate} a ${endDate}, página ${page}`
+            `🔄 Getting fixtures for the range: ${currentDate} to ${endDate}, page ${page}`
         );
         const { fixtures, totalCount } = await fetchFixtures(
             currentDate,
@@ -158,15 +158,15 @@ export async function processFixtures(endDate) {
     }
 
     if (allFixtures.length > 0) {
-        console.log(`📥 ${allFixtures.length} fixtures encontrados, guardando en la base de datos...`);
+        console.log(`📥 ${allFixtures.length} fixtures found, saving to the database...`);
         await saveFixturesToDB(allFixtures);
     } else {
         console.log(
-            `⚠️ No se encontraron fixtures para el rango: ${currentDate} a ${endDate}`
+            `⚠️ No fixtures found for the range: ${currentDate} to ${endDate}`
         );
     }
 
-    console.log("✅ Proceso completado.");
+    console.log("✅ Process completed.");
 }
 
 import { parentPort, workerData } from 'worker_threads';
@@ -177,10 +177,10 @@ async function main(sport) {
 
 if (parentPort) {
     main(workerData.sport).then(() => {
-        parentPort.postMessage('Fixtures insertados exitosamente.');
+        parentPort.postMessage('Fixtures inserted successfully.');
     });
 } else {
     main(process.argv[2]).then(() => {
-        console.log('Fixtures insertados exitosamente.');
+        console.log('Fixtures inserted successfully.');
     });
 }
