@@ -18,7 +18,7 @@ export async function getMapBreakdownByTeam(
   const safeBatchSize = !isNaN(batch) && batch > 0 ? batch : 100;
   if (isNaN(safeBatchSize)) throw new Error("Invalid batch size");
 
-  // ✅ Obtener total de fixtures del equipo en la competencia específica
+  // ✅ Get total fixtures of the team in the specific competition
   const [[{ total }]] = await db.execute(
     `SELECT COUNT(*) AS total
      FROM fixtures
@@ -29,7 +29,7 @@ export async function getMapBreakdownByTeam(
 
   const mapStats = {};
 
-  // ✅ Loop en lotes filtrando también por competition_id
+  // ✅ Loop in batches also filtering by competition_id
   for (let offset = 0; offset < total; offset += safeBatchSize) {
     const [fixtures] = await db.execute(
       `SELECT id, winner_id
@@ -45,7 +45,7 @@ export async function getMapBreakdownByTeam(
       const fixtureId = fixture.id;
       const winnerId = fixture.winner_id;
 
-      // 👇 Obtener mapas que se jugaron en el fixture
+      // 👇 Get maps that were played in the fixture
       const [maps] = await db.execute(
         `SELECT DISTINCT map_number, map_name
          FROM cs_match_events
@@ -58,7 +58,7 @@ export async function getMapBreakdownByTeam(
       for (const map of maps) {
         const { map_number, map_name } = map;
 
-        // 👇 Verificar si el equipo participó en ese mapa
+        // 👇 Check if the team participated in that map
         const [participation] = await db.execute(
           `SELECT 1 FROM cs_match_events
            WHERE fixture_id = ?
@@ -70,7 +70,7 @@ export async function getMapBreakdownByTeam(
 
         if (participation.length === 0) continue;
 
-        // 👇 Inicializar estructura de stats si no existe
+        // 👇 Initialize stats structure if it does not exist
         if (!mapStats[map_name]) {
           mapStats[map_name] = { played: 0, wins: 0, losses: 0 };
         }
@@ -86,7 +86,7 @@ export async function getMapBreakdownByTeam(
     }
   }
 
-  // ✅ Convertir stats en array con porcentaje de victoria
+  // ✅ Convert stats to array with win percentage
   const breakdown = Object.entries(mapStats).map(([map, stats]) => {
     const { played, wins, losses } = stats;
     const winPct =
