@@ -36,21 +36,21 @@ app.use(express.json());
 app.use(morgan('dev')); // Registra cada solicitud en la consola
 
 // Rutas protegidas con API Key:
-app.use('/api/competitions', apiKeyAuth, competitionsRoutes);
-app.use('/api/fixtures', apiKeyAuth, fixturesRoutes);
-app.use('/fixtures-by-comp', apiKeyAuth, fixturesByComp);
-app.use('/api', apiKeyAuth, mapBreakdownRoute);
-app.use('/historic-events', apiKeyAuth, matchEventRoute);
-app.use('/fixtures', apiKeyAuth, fixtureStatsRouter);
-app.use('/fixtures', apiKeyAuth, fixtureAssistsRouter);
-app.use('/fixtures', apiKeyAuth, fixtureEquipmentStateRouter);
-app.use('/fixtures', apiKeyAuth, fixtureEventsRawRouter);
-app.use('/fixtures', apiKeyAuth, fixtureMapsRouter);
-app.use('/api/teams', apiKeyAuth, teamsRoutes);
-app.use('/api/players', apiKeyAuth, playersRoutes);
-app.use('/db', apiKeyAuth, dbAPIRoutes);
-app.use("/db/populate", populateRoutes);
-app.use('/map-stats', apiKeyAuth, mapStatsRoute);
+app.use('/v2/api/competitions', apiKeyAuth, competitionsRoutes);
+app.use("/v2/api/fixtures", apiKeyAuth, fixturesRoutes);
+app.use("/v2/fixtures-by-comp", apiKeyAuth, fixturesByComp);
+app.use("/v2/api", apiKeyAuth, mapBreakdownRoute);
+app.use("/v2/historic-events", apiKeyAuth, matchEventRoute);
+app.use("/v2/fixtures", apiKeyAuth, fixtureStatsRouter);
+app.use("/v2/fixtures", apiKeyAuth, fixtureAssistsRouter);
+app.use("/v2/fixtures", apiKeyAuth, fixtureEquipmentStateRouter);
+app.use("/v2/fixtures", apiKeyAuth, fixtureEventsRawRouter);
+app.use("/v2/fixtures", apiKeyAuth, fixtureMapsRouter);
+app.use("/v2/api/teams", apiKeyAuth, teamsRoutes);
+app.use("/v2/api/players", apiKeyAuth, playersRoutes);
+app.use("/v2/db", apiKeyAuth, dbAPIRoutes);
+app.use("/v2/db/populate", populateRoutes);
+app.use('/v2/map-stats', apiKeyAuth, mapStatsRoute);
 //app.use('/api/gemini', geminiRoutes);
 
 

@@ -1,15 +1,22 @@
-import { db } from '../db.js';
+import { getDbBySport } from "../utils/dbUtils.js";
 
-export async function getMapBreakdownByTeam(teamId, batchSize = 100, competitionId = null) {
+export async function getMapBreakdownByTeam(
+  teamId,
+  batchSize = 100,
+  competitionId = null,
+  sport = "cs2"
+) {
+  const db = getDbBySport(sport);
   const teamIdNum = parseInt(teamId, 10);
   const batch = parseInt(batchSize, 10);
   const competitionIdNum = parseInt(competitionId, 10);
 
-  if (isNaN(teamIdNum)) throw new Error('Invalid teamId provided');
-  if (isNaN(competitionIdNum)) throw new Error('Invalid competitionId provided');
+  if (isNaN(teamIdNum)) throw new Error("Invalid teamId provided");
+  if (isNaN(competitionIdNum))
+    throw new Error("Invalid competitionId provided");
 
   const safeBatchSize = !isNaN(batch) && batch > 0 ? batch : 100;
-  if (isNaN(safeBatchSize)) throw new Error('Invalid batch size');
+  if (isNaN(safeBatchSize)) throw new Error("Invalid batch size");
 
   // ✅ Obtener total de fixtures del equipo en la competencia específica
   const [[{ total }]] = await db.execute(
@@ -82,18 +89,19 @@ export async function getMapBreakdownByTeam(teamId, batchSize = 100, competition
   // ✅ Convertir stats en array con porcentaje de victoria
   const breakdown = Object.entries(mapStats).map(([map, stats]) => {
     const { played, wins, losses } = stats;
-    const winPct = wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(2) : '0.00';
+    const winPct =
+      wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(2) : "0.00";
     return {
       map,
       played,
       w: wins,
       l: losses,
-      win_pct: winPct + '%'
+      win_pct: winPct + "%",
     };
   });
 
   return {
     totalFixtures: total,
-    breakdown
+    breakdown,
   };
 }

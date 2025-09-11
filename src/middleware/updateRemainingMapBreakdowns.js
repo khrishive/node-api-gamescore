@@ -1,7 +1,8 @@
-import { db } from '../db.js';
+import { getDbBySport } from "../utils/dbUtils.js";
 import { saveOrUpdateMapBreakdown } from './saveOrUpdateMapBreakdown.js';
 
-async function updateAllMapBreakdowns() {
+async function updateRemainingMapBreakdowns(sport = "cs2") {
+  const db = getDbBySport(sport);
   // 🔍 Buscar solo pares (team_id, competition_id) que FALTAN en team_stats
   const [rows] = await db.execute(`
     SELECT DISTINCT f.competition_id, f.participants0_id AS team_id
@@ -30,18 +31,19 @@ async function updateAllMapBreakdowns() {
 
     try {
       console.log(`➡ Procesando team_id=${team_id}, competition_id=${competition_id}`);
-      await saveOrUpdateMapBreakdown(team_id, competition_id);
+      await saveOrUpdateMapBreakdown(team_id, competition_id, sport);
       console.log(`✅ Guardado/actualizado team_id=${team_id}, competition_id=${competition_id}`);
     } catch (err) {
       console.error(`❌ Error con team_id=${team_id}, competition_id=${competition_id}`, err.message);
     }
   }
 
-  console.log('🎉 Proceso de actualización terminado');
+  console.log(`🎉 Proceso de actualización terminado para ${sport}`);
 }
 
 // Ejecutar
-updateAllMapBreakdowns()
+const sport = process.argv[2] || "cs2";
+updateRemainingMapBreakdowns(sport)
   .then(() => process.exit(0))
   .catch(err => {
     console.error('Error global:', err);

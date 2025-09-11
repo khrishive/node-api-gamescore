@@ -1,6 +1,7 @@
-import { db } from '../db.js';
+import { getDbBySport } from "../utils/dbUtils.js";
 
-export async function getMapBreakdownByTeamNoTournament(teamId, batchSize = 100, competitionId = null) {
+export async function getMapBreakdownByTeamNoTournament(teamId, batchSize = 100, competitionId = null, sport = "cs2") {
+  const db = getDbBySport(sport);
   const teamIdNum = parseInt(teamId, 10);
   const batch = parseInt(batchSize, 10);
   const competitionIdNum = competitionId !== null ? parseInt(competitionId, 10) : null;
