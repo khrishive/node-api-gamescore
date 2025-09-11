@@ -1,4 +1,6 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
 // Cargar la configuración desde config.json
 const API_URL = process.env.GAME_SCORE_API;
