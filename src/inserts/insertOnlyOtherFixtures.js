@@ -1,25 +1,20 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { getDbBySport } from '../utils/dbUtils.js'; // <-- Import your helper
 
 dotenv.config();
 
-const requiredEnv = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT', 'GAME_SCORE_API', 'GAME_SCORE_APIKEY'];
+const requiredEnv = ['GAME_SCORE_API', 'GAME_SCORE_APIKEY'];
 requiredEnv.forEach(name => {
   if (!process.env[name]) throw new Error(`❌ Missing environment variable ${name}`);
 });
 
-
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT
-};
-
 const API_URL = `${process.env.GAME_SCORE_API}/fixtures`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
+
+// Accept sport as a parameter (default to 'cs2')
+const sport = process.argv[2] || 'cs2';
 
 /**
  * Generate date ranges day by day between two dates.
@@ -49,7 +44,7 @@ async function fetchFixtures(from, to) {
             headers: {
                 Authorization: AUTH_TOKEN,
             },
-            params: { sport: 'cs2', from, to },
+            params: { sport, from, to },
         });
         return response.data.fixtures || [];
     } catch (error) {
@@ -59,10 +54,10 @@ async function fetchFixtures(from, to) {
 }
 
 /**
- * Save fixtures to the database.
+ * Save fixtures to the database using the correct DB connection for the sport.
  */
 async function saveFixturesToDB(fixtures) {
-    const connection = await mysql.createConnection(dbConfig);
+    const db = getDbBySport(sport); // <-- Use the helper to get the correct DB connection
 
     const fixtureQuery = `
         INSERT INTO fixtures (
@@ -91,7 +86,7 @@ async function saveFixturesToDB(fixtures) {
 
     try {
         for (const fixture of fixtures) {
-            await connection.execute(fixtureQuery, [
+            await db.execute(fixtureQuery, [
                 fixture.id,
                 fixture.competition.id,
                 fixture.competition.name,
@@ -114,14 +109,11 @@ async function saveFixturesToDB(fixtures) {
         }
     } catch (error) {
         console.error('❌ Error saving to the database:', error.message);
-    } finally {
-        await connection.end();
     }
 }
 
 /**
  * Process date ranges, get fixtures and save them to the database.
- * @ param {string} [endDate='2025-11-03'] - End date for the ranges.
  */
 export async function processFixtures() {
     console.log('🔄 Generating date ranges...');
@@ -130,11 +122,11 @@ export async function processFixtures() {
     const now = new Date();
     
     const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
+    yesterday.setDate(now.getDate() - 1);
     yesterday.setHours(0, 0, 0, 0); // start of the day
 
     const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setDate(now.getDate() + 1);
     tomorrow.setHours(23, 59, 59, 999); // end of the day
 
     // 🗓 Format to YYYY-MM-DD
