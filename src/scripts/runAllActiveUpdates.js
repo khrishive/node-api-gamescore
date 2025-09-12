@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import { dbCS2, dbLOL } from "../src/db.js";
+import { dbCS2, dbLOL } from "../db.js";
 
 // Dynamically get sports from db.js exports
 const dbConnections = { cs2: dbCS2, lol: dbLOL };

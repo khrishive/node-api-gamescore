@@ -1,13 +1,22 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { db } from '../db.js'; // Reuse connection pool
+import { dbCS2, dbLOL } from '../db.js'; // Import all DB connections
 
 dotenv.config();
 
 // 🔐 API Configuration
 const API_BASE_URL = "https://api.gamescorekeeper.com/v2/live/historic/";
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
+
+// Helper to select DB by sport
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
+}
+
+// Get sport from command line or default to 'cs2'
+const sport = process.argv[2] || 'cs2';
 
 // 🧠 Format values by type
 function normalize(value, type) {
@@ -59,6 +68,8 @@ function extractEventData(payload, fixtureId, event) {
 }
 
 async function fetchAndStoreFixtureEvents() {
+  const db = getDbBySport(sport); // <-- Use the correct DB connection
+
   const now = new Date();
 
   //🟡 Yesterday 00:00:00
@@ -67,17 +78,8 @@ async function fetchAndStoreFixtureEvents() {
   startOfYesterday.setHours(0, 0, 0, 0);
   const startOfYesterdayUnix = startOfYesterday.getTime();
 
-/**
- * // 🟢 Start of June 1, 2025 (00:00:00) in milliseconds
-  const startOfJuneFirst = new Date();
-  startOfJuneFirst.setFullYear(2025, 5, 1); // June (month 5 because it starts from 0)
-  startOfJuneFirst.setHours(0, 0, 0, 0);
-  const startOfYesterdayUnix = startOfJuneFirst.getTime();
- */
-
-
   // 🟢 Today 23:59:59
-  const hoy = new Date(); // Make sure you have this line if it is not before
+  const hoy = new Date();
   const endOfToday = new Date(hoy);
   endOfToday.setHours(23, 59, 59, 999);
   const endOfTodayUnix = endOfToday.getTime();
