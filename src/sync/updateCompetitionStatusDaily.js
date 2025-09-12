@@ -1,8 +1,13 @@
-import { db } from '../db.js'; // Make sure to import your database connection
+import { getDbBySport } from '../utils/dbUtils.js'; // Centralized DB selector
+
+// Get sport from command line argument, default to 'cs2'
+const sport = process.argv[2] || 'cs2';
 
 async function updateCompetitionStatus() {
+  const db = getDbBySport(sport); // Use the correct DB connection
+
   try {
-    // Current date in seconds (UNIX timestamp * 1000 because your fields are in milliseconds)
+    // Current date in milliseconds
     const today = Date.now();
 
     // 1️⃣ Update upcoming → started
@@ -30,7 +35,7 @@ async function updateCompetitionStatus() {
   } catch (err) {
     console.error('❌ Error updating competitions:', err);
   } finally {
-    db.end(); // close connection when finished
+    await db.end(); // close connection when finished
   }
 }
 
