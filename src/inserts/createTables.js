@@ -20,23 +20,24 @@ export async function createTables(sport = 'cs2') {
       CREATE TABLE IF NOT EXISTS competitions (
         id INT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
+        status VARCHAR(50) NOT NULL DEFAULT 'Waiting for information',
         sport_alias VARCHAR(50) NOT NULL,
-        start_date BIGINT NOT NULL,
-        end_date BIGINT NOT NULL,
-        prize_pool_usd INT,
-        location VARCHAR(100),
-        organizer VARCHAR(100),
-        type VARCHAR(50),
-        fixture_count INT,
-        description TEXT,
-        no_participants INT,
-        stage VARCHAR(50),
-        time_of_year VARCHAR(50),
-        year VARCHAR(50),
-        series VARCHAR(200),
-        tier VARCHAR(50),
-        updated_at DATETIME
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+        start_date BIGINT NOT NULL DEFAULT 9999999999999,
+        end_date BIGINT NOT NULL DEFAULT 9999999999999,
+        prize_pool_usd INT DEFAULT 0,
+        location VARCHAR(100) NOT NULL DEFAULT 'Waiting for information',
+        organizer VARCHAR(100) NOT NULL DEFAULT 'Waiting for information',
+        type VARCHAR(50) NOT NULL DEFAULT 'Waiting for information',
+        fixture_count INT DEFAULT 0,
+        description TEXT NOT NULL,
+        no_participants INT DEFAULT 0,
+        stage VARCHAR(100) NOT NULL DEFAULT 'Waiting for information',
+        time_of_year VARCHAR(100) NOT NULL DEFAULT 'Waiting for information',
+        year VARCHAR(100) NOT NULL DEFAULT 'Waiting for information',
+        series VARCHAR(100) NOT NULL DEFAULT 'Waiting for information',
+        tier VARCHAR(100) NOT NULL DEFAULT 'Waiting for information',
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
     `);
 
     // fixture_links table
@@ -141,6 +142,124 @@ export async function createTables(sport = 'cs2') {
         countryISO VARCHAR(10),
         region VARCHAR(50)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    `);
+
+    // team_fixture_stats table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS team_fixture_stats (
+        id BIGINT NOT NULL AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        fixture_id BIGINT NOT NULL,
+        stats JSON DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id),
+        KEY fixture_id (fixture_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+    `);
+
+    // cs_match_events table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS cs_match_events (
+        id BIGINT NOT NULL AUTO_INCREMENT,
+        fixture_id BIGINT NOT NULL,
+        snapshot_number INT DEFAULT NULL,
+        sort_index BIGINT DEFAULT NULL,
+        event_type VARCHAR(50) DEFAULT NULL,
+        name VARCHAR(50) DEFAULT NULL,
+        map_name VARCHAR(100) DEFAULT NULL,
+        map_number INT DEFAULT NULL,
+        half_number INT DEFAULT NULL,
+        round_number INT DEFAULT NULL,
+        event_timestamp BIGINT DEFAULT NULL,
+        actor_id VARCHAR(20) DEFAULT NULL,
+        actor_name VARCHAR(255) DEFAULT NULL,
+        actor_team_id VARCHAR(20) DEFAULT NULL,
+        actor_side VARCHAR(20) DEFAULT NULL,
+        victim_id VARCHAR(20) DEFAULT NULL,
+        victim_name VARCHAR(255) DEFAULT NULL,
+        victim_team_id VARCHAR(20) DEFAULT NULL,
+        victim_side VARCHAR(20) DEFAULT NULL,
+        weapon VARCHAR(50) DEFAULT NULL,
+        kill_id VARCHAR(100) DEFAULT NULL,
+        headshot TINYINT(1) DEFAULT NULL,
+        penetrated TINYINT(1) DEFAULT NULL,
+        no_scope TINYINT(1) DEFAULT NULL,
+        through_smoke TINYINT(1) DEFAULT NULL,
+        while_blinded TINYINT(1) DEFAULT NULL,
+        winner_team_id VARCHAR(20) DEFAULT NULL,
+        PRIMARY KEY (id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+    `);
+
+    // map_team_players table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS map_team_players (
+        id INT NOT NULL AUTO_INCREMENT,
+        fixture_id INT NOT NULL,
+        map_number INT NOT NULL,
+        map_name VARCHAR(50) DEFAULT NULL,
+        team_id BIGINT NOT NULL,
+        player_id BIGINT NOT NULL,
+        player_name VARCHAR(50) DEFAULT NULL,
+        kills INT DEFAULT NULL,
+        deaths INT DEFAULT NULL,
+        assists INT DEFAULT NULL,
+        plus_minus INT DEFAULT NULL,
+        adr FLOAT DEFAULT NULL,
+        headshot_percent FLOAT DEFAULT NULL,
+        PRIMARY KEY (id),
+        UNIQUE KEY unique_player_map (fixture_id, map_number, player_id),
+        UNIQUE KEY unique_fixture_map_team_player (fixture_id, map_number, team_id, player_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+    `);
+
+    // map_team_round_scores table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS map_team_round_scores (
+        id INT NOT NULL AUTO_INCREMENT,
+        fixture_id INT NOT NULL,
+        map_number INT NOT NULL,
+        map_name VARCHAR(50) DEFAULT NULL,
+        team_id BIGINT NOT NULL,
+        rounds_won TINYINT UNSIGNED NOT NULL,
+        half1_score TINYINT UNSIGNED NOT NULL,
+        half2_score TINYINT UNSIGNED NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        is_pick TINYINT(1) DEFAULT 0,
+        PRIMARY KEY (id),
+        UNIQUE KEY uniq_fixture_map_team (fixture_id, map_number, team_id),
+        KEY idx_fixture_map_team (fixture_id, map_number, team_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+    `);
+
+    // team_stats table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS team_stats (
+        id INT NOT NULL AUTO_INCREMENT,
+        team_id INT NOT NULL,
+        competition_id INT NOT NULL,
+        total_fixtures INT NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+    `);
+
+    // team_stats_breakdown table
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS team_stats_breakdown (
+        id INT NOT NULL AUTO_INCREMENT,
+        team_stats_id INT NOT NULL,
+        map_name VARCHAR(50) NOT NULL,
+        played INT NOT NULL,
+        w INT NOT NULL,
+        l INT NOT NULL,
+        win_pct DECIMAL(5,2) NOT NULL,
+        PRIMARY KEY (id),
+        KEY team_stats_id (team_stats_id),
+        CONSTRAINT team_stats_breakdown_ibfk_1 FOREIGN KEY (team_stats_id) REFERENCES team_stats (id) ON DELETE CASCADE
+      ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
     `);
 
     console.log(`✅ Tables created successfully in the database for the sport: ${sport}`);
