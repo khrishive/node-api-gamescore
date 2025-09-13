@@ -51,7 +51,6 @@ app.use("/v2/api/players", apiKeyAuth, playersRoutes);
 app.use("/v2/db", apiKeyAuth, dbAPIRoutes);
 app.use("/v2/db/populate", populateRoutes);
 app.use('/v2/map-stats', apiKeyAuth, mapStatsRoute);
-//app.use('/api/gemini', geminiRoutes);
 
 
 
