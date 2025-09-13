@@ -38,7 +38,7 @@ function generateDateRanges(startDate, endDate) {
 /**
  * API call to get fixtures for a specific date.
  */
-async function fetchFixtures(from, to) {
+async function fetchFixtures(from, to, sport) { // <-- Accept sport
     try {
         const response = await axios.get(API_URL, {
             headers: {
@@ -56,7 +56,7 @@ async function fetchFixtures(from, to) {
 /**
  * Save fixtures to the database using the correct DB connection for the sport.
  */
-async function saveFixturesToDB(fixtures) {
+async function saveFixturesToDB(fixtures, sport) { // <-- Accept sport
     const db = getDbBySport(sport); // <-- Use the helper to get the correct DB connection
 
     const fixtureQuery = `
@@ -115,7 +115,7 @@ async function saveFixturesToDB(fixtures) {
 /**
  * Process date ranges, get fixtures and save them to the database.
  */
-export async function processFixtures() {
+export async function processFixtures(sport) { // <-- Accept sport as a parameter
     console.log('🔄 Generating date ranges...');
 
     // 📅 Calculate yesterday and tomorrow
@@ -142,11 +142,11 @@ export async function processFixtures() {
     for (const range of dateRanges) {
         console.log(`🔄 Getting fixtures for the range: ${range.from} to ${range.to}`);
 
-        const fixtures = await fetchFixtures(range.from, range.to);
+        const fixtures = await fetchFixtures(range.from, range.to, sport); // <-- Pass sport
 
         if (fixtures.length > 0) {
             console.log(`📥 ${fixtures.length} fixtures found, saving to the database...`);
-            await saveFixturesToDB(fixtures);
+            await saveFixturesToDB(fixtures, sport); // <-- Pass sport
         } else {
             console.log(`⚠️ No fixtures found for the date: ${range.from}`);
         }
@@ -155,5 +155,11 @@ export async function processFixtures() {
     console.log('✅ Process completed.');
 }
 
-
-await processFixtures()
+// If called directly, get sport from CLI
+if (import.meta.url === `file://${process.argv[1]}`) {
+    const sport = process.argv[2] || 'cs2';
+    processFixtures(sport).catch(err => {
+        console.error("❌ Error during direct execution:", err.message);
+        process.exit(1);
+    });
+}

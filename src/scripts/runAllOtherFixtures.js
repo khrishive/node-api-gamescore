@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { processFixtures } from '../inserts/insertOnlyOtherFixtures.js';
 import { dbCS2, dbLOL } from "../db.js";
 
 // Dynamically get sports from db.js exports
@@ -15,41 +15,21 @@ async function runAllOtherFixtures() {
 
   for (const sport of sports) {
     console.log(`--- Processing sport: ${sport} ---`);
-
-    const command = `node src/inserts/insertOnlyOtherFixtures.js ${sport}`;
-
-    await new Promise((resolve) => {
-      const process = exec(command);
-
-      process.stdout.on("data", (data) => {
-        // Optionally, suppress child completion message here
-        const msg = data.toString().trim();
-        if (msg !== "✅ Process completed.") {
-          console.log(msg);
-        }
-      });
-
-      process.stderr.on("data", (data) => {
-        console.error(`Error processing ${sport}:`, data.toString().trim());
-      });
-
-      process.on("close", (code) => {
-        if (code === 0) {
-          executedCount++;
-          executedDatabases.push(sport);
-          console.log(`--- Finished processing sport: ${sport} ---`);
-        } else {
-          failedCount++;
-          failedDatabases.push(sport);
-          console.error(`--- Script for ${sport} exited with code ${code} ---`);
-        }
-        resolve(); // Always resolve so the loop continues
-      });
-    });
+    try {
+      await processFixtures(sport);
+      executedCount++;
+      executedDatabases.push(sport);
+      console.log(`--- Finished processing sport: ${sport} ---`);
+    } catch (error) {
+      failedCount++;
+      failedDatabases.push(sport);
+      console.error(`--- Error processing ${sport}:`, error.message);
+    }
   }
 
   // Final summary
-  console.log(`\n✅ All sports processed!`);
+  console.log(`
+✅ All sports processed!`);
   console.log(`The script has been executed ${executedCount} time(s) in the following databases: ${executedDatabases.join(', ')}`);
   if (failedCount > 0) {
     console.log(`❌ Failed in ${failedCount} database(s): ${failedDatabases.join(', ')}`);
