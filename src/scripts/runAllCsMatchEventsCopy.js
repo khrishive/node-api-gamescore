@@ -1,5 +1,6 @@
-import { exec } from "child_process";
 import { dbCS2, dbLOL } from "../db.js";
+import path from "path";
+import { exec } from "child_process";
 
 // Dynamically get sports from db.js exports
 const dbConnections = { cs2: dbCS2, lol: dbLOL };
@@ -16,14 +17,16 @@ async function runAllCsMatchEventsCopy() {
   for (const sport of sports) {
     console.log(`--- Processing sport: ${sport} ---`);
 
-    const command = `node src/inserts/csMatchEventsCopy.js ${sport}`;
+    // Use absolute path for reliability
+    const scriptPath = path.resolve("src/inserts/csMatchEventsCopy.js");
+    const command = `node ${scriptPath} ${sport}`;
 
     await new Promise((resolve) => {
       const process = exec(command);
 
       process.stdout.on("data", (data) => {
         const msg = data.toString().trim();
-        if (msg !== "🎯 Process finished.") {
+        if (msg !== "") {
           console.log(msg);
         }
       });
@@ -47,6 +50,7 @@ async function runAllCsMatchEventsCopy() {
     });
   }
 
+  // Final summary
   console.log(`\n✅ All sports processed!`);
   console.log(`The script has been executed ${executedCount} time(s) in the following databases: ${executedDatabases.join(', ')}`);
   if (failedCount > 0) {
@@ -56,5 +60,6 @@ async function runAllCsMatchEventsCopy() {
 }
 
 runAllCsMatchEventsCopy().catch((error) => {
-  console.error("\n❌ A global error occurred:", error);
+  console.error("\n❌ A global error occurred:", error.message);
+  process.exit(1);
 });
