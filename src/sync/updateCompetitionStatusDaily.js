@@ -2,13 +2,14 @@ import { getDbBySport } from '../utils/dbUtils.js'; // Centralized DB selector
 
 export async function updateCompetitionStatus(sport = 'cs2') {
   const db = getDbBySport(sport); // Use the correct DB connection
-  console.log(`🚀 Starting competition status update for ${sport}...`);
+  console.log(`[${sport}] 🚀 Starting competition status update...`);
 
   try {
     // Current date in milliseconds
     const today = Date.now();
 
-    // 1️⃣ Update upcoming → started
+    // --- Step 1: Update upcoming → started ---
+    console.log(`[${sport}] 1/2: Checking for 'upcoming' competitions to move to 'started'...`);
     const [upcomingToStarted] = await db.query(
       `UPDATE competitions 
        SET status = 'started' 
@@ -18,10 +19,13 @@ export async function updateCompetitionStatus(sport = 'cs2') {
     );
 
     if (upcomingToStarted.affectedRows > 0) {
-        console.log(`✅ Competitions updated to started in ${sport}: ${upcomingToStarted.affectedRows}`);
+      console.log(`[${sport}] ✅ Updated ${upcomingToStarted.affectedRows} competitions from 'upcoming' to 'started'.`);
+    } else {
+      console.log(`[${sport}] ℹ️  No 'upcoming' competitions needed to be updated.`);
     }
 
-    // 2️⃣ Update started → ended
+    // --- Step 2: Update started → ended ---
+    console.log(`[${sport}] 2/2: Checking for 'started' competitions to move to 'ended'...`);
     const [startedToEnded] = await db.query(
       `UPDATE competitions 
        SET status = 'ended' 
@@ -31,16 +35,18 @@ export async function updateCompetitionStatus(sport = 'cs2') {
     );
 
     if (startedToEnded.affectedRows > 0) {
-        console.log(`✅ Competitions updated to ended in ${sport}: ${startedToEnded.affectedRows}`);
+      console.log(`[${sport}] ✅ Updated ${startedToEnded.affectedRows} competitions from 'started' to 'ended'.`);
+    } else {
+      console.log(`[${sport}] ℹ️  No 'started' competitions needed to be updated.`);
     }
 
-    console.log(`🏁 Finished competition status update for ${sport}.`);
+    console.log(`[${sport}] 🏁 Finished competition status update.`);
 
   } catch (err) {
-    console.error(`❌ Error updating competitions for ${sport}:`, err);
+    console.error(`[${sport}] ❌ Error during competition status update:`, err);
+    throw err; // Re-throw the error so the runner script can catch it
   } finally {
     // The connection pool should not be ended here to allow reuse.
-    // await db.end();
   }
 }
 
@@ -48,7 +54,7 @@ export async function updateCompetitionStatus(sport = 'cs2') {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const sportArg = process.argv[2] || 'cs2';
   updateCompetitionStatus(sportArg).catch(err => {
-    console.error("Error during direct execution:", err);
+    // Error is already logged in the function, just exit
     process.exit(1);
   });
 }
