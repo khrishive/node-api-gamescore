@@ -1,30 +1,19 @@
 import dotenv from 'dotenv';
 import axios from 'axios';
-import { getDbBySport } from '../utils/dbUtils.js'; // <-- Centralized DB selector
+import { getDbBySport } from '../utils/dbUtils.js';
 
 dotenv.config();
-
-// Get sport from command line argument, default to 'cs2'
-const sportArg = process.argv[2] || 'cs2';
-const SUPPORTED_SPORTS = ['cs2', 'lol'];
-const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
-
-// Use centralized DB selector
-const db = getDbBySport(SPORT);
 
 const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-async function getFixtureIds() {
-  // 📅 Today 00:00:00
+async function getFixtureIds(db) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  // 📅 Tomorrow 00:00:00
   const startOfTomorrow = new Date(startOfToday);
   startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
 
-  // 🔢 Convert to timestamp in milliseconds
   const startTimestamp = startOfToday.getTime();
   const endTimestamp = startOfTomorrow.getTime();
 
@@ -45,13 +34,11 @@ async function getFixtureIds() {
 
 async function fetchMapTeamPlayers(fixtureId) {
   try {
-    // 1️⃣ Get main fixture (this is mandatory)
     const response = await axios.get(`${API_URL}/fixtures/${fixtureId}`, {
       headers: { Authorization: AUTH_TOKEN }
     });
     const fixtureData = response.data;
 
-    // 2️⃣ Try to get pickBan (if it fails, we continue with empty)
     let pickBanData = { pickBan: [] };
     try {
       const pickBan = await axios.get(`${API_URL}/pickban/${fixtureId}/maps`, {
@@ -70,7 +57,6 @@ async function fetchMapTeamPlayers(fixtureId) {
       return { teamStatsResult: [], teamRoundScores: [] };
     }
 
-    // Create map of picks { mapNameLower: teamId }
     const pickMap = {};
     for (const item of pickBanData.pickBan || []) {
       if (item.pickOrBan === 'pick' && item.teamId) {
@@ -85,7 +71,6 @@ async function fetchMapTeamPlayers(fixtureId) {
       const mapNumber = map.mapNumber;
       const mapName = map.mapName;
 
-      // ---- Player stats ----
       for (const team of map.teamStats || []) {
         const teamId = team.teamId ?? 0;
 
@@ -113,14 +98,12 @@ async function fetchMapTeamPlayers(fixtureId) {
         }
       }
 
-      // ---- Team rounds ----
       for (const team of map.roundScores || []) {
         const teamId = team.id ?? 0;
         const roundsWon = team.roundsWon ?? 0;
         const half1 = team.halfScores?.[0] ?? 0;
         const half2 = team.halfScores?.[1] ?? 0;
 
-        // Normalize map name to compare picks
         const normalizeMapName = name => name.toLowerCase().replace(/^de_/, '');
         const mapKey = normalizeMapName(mapName);
         const pickTeamId = pickMap[mapKey] ?? null;
@@ -150,9 +133,8 @@ async function fetchMapTeamPlayers(fixtureId) {
   }
 }
 
-async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
+async function insertMapTeamPlayers(db, { teamStatsResult, teamRoundScores }) {
   try {
-    // Insert map_team_players
     if (teamStatsResult.length > 0) {
       const playerQuery = `
         INSERT INTO map_team_players (
@@ -173,7 +155,6 @@ async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
       console.log(`[✓] Inserted ${teamStatsResult.length} records in map_team_players`);
     }
 
-    // Insert map_team_round_scores
     if (teamRoundScores.length > 0) {
       const roundQuery = `
         INSERT INTO map_team_round_scores (
@@ -195,17 +176,25 @@ async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
   }
 }
 
-async function main() {
-  const fixtureIds = await getFixtureIds();
+export async function processMapTeamPlayers(sport = 'cs2') {
+  const db = getDbBySport(sport);
+  const fixtureIds = await getFixtureIds(db);
+  console.log(`Found ${fixtureIds.length} fixtures for ${sport} to process.`);
 
   for (const fixtureId of fixtureIds) {
     console.log(`Processing fixture ${fixtureId}`);
     const data = await fetchMapTeamPlayers(fixtureId);
-    await insertMapTeamPlayers(data);
+    await insertMapTeamPlayers(db, data);
   }
 
-  console.log('✓ Process finished');
-  process.exit();
+  console.log(`✓ Process finished for ${sport}`);
 }
 
-main();
+// If run directly, execute with CLI arguments
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const sportArg = process.argv[2] || 'cs2';
+  processMapTeamPlayers(sportArg).catch(err => {
+    console.error("Error during direct execution:", err.message);
+    process.exit(1);
+  });
+}

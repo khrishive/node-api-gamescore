@@ -1,4 +1,4 @@
-import { exec } from "child_process";
+import { processMapTeamPlayers } from '../inserts/insertMapTeamPlayers.js';
 import { dbCS2, dbLOL } from "../db.js";
 
 // Dynamically get sports from db.js exports
@@ -15,36 +15,16 @@ async function runAllInsertMapTeamPlayers() {
 
   for (const sport of sports) {
     console.log(`--- Processing sport: ${sport} ---`);
-
-    const command = `node src/inserts/insertMapTeamPlayers.js ${sport}`;
-
-    await new Promise((resolve) => {
-      const process = exec(command);
-
-      process.stdout.on("data", (data) => {
-        const msg = data.toString().trim();
-        if (msg !== "✓ Process finished") {
-          console.log(msg);
-        }
-      });
-
-      process.stderr.on("data", (data) => {
-        console.error(`Error processing ${sport}:`, data.toString().trim());
-      });
-
-      process.on("close", (code) => {
-        if (code === 0) {
-          executedCount++;
-          executedDatabases.push(sport);
-          console.log(`--- Finished processing sport: ${sport} ---`);
-        } else {
-          failedCount++;
-          failedDatabases.push(sport);
-          console.error(`--- Script for ${sport} exited with code ${code} ---`);
-        }
-        resolve();
-      });
-    });
+    try {
+      await processMapTeamPlayers(sport);
+      executedCount++;
+      executedDatabases.push(sport);
+      console.log(`--- Finished processing sport: ${sport} ---`);
+    } catch (error) {
+      failedCount++;
+      failedDatabases.push(sport);
+      console.error(`--- Error processing ${sport}:`, error.message);
+    }
   }
 
   console.log(`\n✅ All sports processed!`);
