@@ -15,9 +15,6 @@ function getDbBySport(sport = 'cs2') {
   return dbCS2;
 }
 
-// Get sport from command line or default to 'cs2'
-const sport = process.argv[2] || 'cs2';
-
 // 🧠 Format values by type
 function normalize(value, type) {
   if (value === null || value === undefined) {
@@ -67,7 +64,7 @@ function extractEventData(payload, fixtureId, event) {
   };
 }
 
-async function fetchAndStoreFixtureEvents() {
+export async function processCsMatchEvents(sport = 'cs2') {
   const db = getDbBySport(sport); // <-- Use the correct DB connection
 
   const now = new Date();
@@ -92,7 +89,7 @@ async function fetchAndStoreFixtureEvents() {
       [startOfYesterdayUnix, endOfTodayUnix]
     );
 
-    console.log(`🔍 Found ${fixtures.length} fixtures.`);
+    console.log(`🔍 Found ${fixtures.length} fixtures for ${sport}.`);
 
     let processedFixtures = 0;
 
@@ -156,13 +153,21 @@ async function fetchAndStoreFixtureEvents() {
       }
     }
 
-    console.log(`🎯 Process finished. Processed fixtures: ${processedFixtures} of ${fixtures.length}.`);
+    console.log(`🎯 Process finished for ${sport}. Processed fixtures: ${processedFixtures} of ${fixtures.length}.`);
   } catch (err) {
-    console.error('❌ General error:', err.message);
+    console.error(`❌ General error for ${sport}:`, err.message);
   } finally {
-    await db.end();
-    console.log('🔌 Connection closed.');
+    // We don't end the connection here, as the pool is managed globally
+    // await db.end();
+    // console.log('🔌 Connection closed.');
   }
 }
 
-fetchAndStoreFixtureEvents();
+// If called directly from the command line, run the function
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const sport = process.argv[2] || 'cs2';
+  processCsMatchEvents(sport).catch(error => {
+    console.error("❌ Error during direct execution:", error.message);
+    process.exit(1);
+  });
+}
