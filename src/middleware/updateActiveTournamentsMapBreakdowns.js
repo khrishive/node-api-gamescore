@@ -1,7 +1,7 @@
 import { getDbBySport } from "../utils/dbUtils.js";
 import { saveOrUpdateMapBreakdown } from "./saveOrUpdateMapBreakdown.js";
 
-async function updateActiveMapBreakdowns(sport = "cs2") {
+export async function updateActiveMapBreakdowns(sport = "cs2") {
   const db = getDbBySport(sport);
   console.log(`Using database for sport: ${sport}`);
   // 🔍 Get all unique pairs (team, competition) ONLY from active tournaments
@@ -22,7 +22,7 @@ async function updateActiveMapBreakdowns(sport = "cs2") {
   `);
 
   console.log(
-    `Found ${rows.length} unique team-tournaments in ACTIVE competitions`
+    `Found ${rows.length} unique team-tournaments in ACTIVE competitions for ${sport}`
   );
 
   for (const row of rows) {
@@ -32,11 +32,10 @@ async function updateActiveMapBreakdowns(sport = "cs2") {
       console.log(
         `➡ Processing team_id=${team_id}, competition_id=${competition_id}`
       );
-      console.log(`Using in the loop sport: ${sport}`);
       await saveOrUpdateMapBreakdown(team_id, competition_id, sport);
     } catch (err) {
       console.error(
-        `❌ Error with team_id=${team_id}, competition_id=${competition_id}`,
+        `❌ Error with team_id=${team_id}, competition_id=${competition_id} in ${sport}`,
         err.message
       );
     }
@@ -47,12 +46,13 @@ async function updateActiveMapBreakdowns(sport = "cs2") {
   );
 }
 
-// Execute with sport parameter (example: node updateActiveTournamentsMapBreakdowns.js cs2)
-const sport = process.argv[2] || "cs2";
-console.log(`Starting update for sport: ${sport}`);
-updateActiveMapBreakdowns(sport)
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error("Global error:", err);
-    process.exit(1);
-  });
+// If run directly, execute with CLI arguments
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const sport = process.argv[2] || "cs2";
+  console.log(`Starting update for sport: ${sport}`);
+  updateActiveMapBreakdowns(sport)
+    .catch((err) => {
+      console.error("Global error:", err);
+      process.exit(1);
+    });
+}
