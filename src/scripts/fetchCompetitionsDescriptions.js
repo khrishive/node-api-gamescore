@@ -1,17 +1,9 @@
 import axios from 'axios';
-import mysql from 'mysql2/promise';
+import { getDbBySport } from '../utils/dbUtils.js';
 
 // Gemini API Configuration
 const apiKey = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-// MySQL Configuration
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-};
 
 // Function to get the description from Gemini
 async function fetchTournamentDescription(tournamentName) {
@@ -39,25 +31,30 @@ async function fetchTournamentDescription(tournamentName) {
 }
 
 // Main function to update the database
-async function updateTournamentDescriptions() {
+async function updateTournamentDescriptions(sport = 'cs2') {
+    const db = getDbBySport(sport);
     let remainingTournaments;
 
     do {
-        console.log("🚀 Starting description update...");
-        const connection = await mysql.createConnection(dbConfig);
+        console.log(`🚀 Starting description update for ${sport}...`);
 
         try {
             // Get tournaments with NULL description
-            const [tournaments] = await connection.execute("SELECT id, name FROM competitions WHERE description IS NULL");
+            const [tournaments] = await db.execute("SELECT id, name FROM competitions WHERE description IS NULL");
             remainingTournaments = tournaments.length;
             console.log(`🔍 Tournaments found: ${remainingTournaments}`);
+
+            if (remainingTournaments === 0) {
+                console.log('No tournaments to update.');
+                break;
+            }
 
             for (const tournament of tournaments) {
                 const { id, name } = tournament;
                 const description = await fetchTournamentDescription(name);
 
                 // Update the database with the new description
-                await connection.execute("UPDATE competitions SET description = ? WHERE id = ?", [description, id]);
+                await db.execute("UPDATE competitions SET description = ? WHERE id = ?", [description, id]);
                 console.log(`✅ Updated tournament '${name}' with description: ${description || 'NULL'}`);
 
                 // Small delay between requests to avoid blocking
@@ -66,13 +63,13 @@ async function updateTournamentDescriptions() {
         } catch (error) {
             console.error('❌ Error updating descriptions:', error);
             remainingTournaments = 0; // Exit loop in case of error
-        } finally {
-            await connection.end();
         }
     } while (remainingTournaments > 0);
 
-    console.log("🏁 Process completed.");
+    console.log(`🏁 Process completed for ${sport}.`);
 }
 
 // Execute the function
-updateTournamentDescriptions();
+// Get sport from command-line arguments, default to 'cs2'
+const sport = process.argv[2] || 'cs2';
+updateTournamentDescriptions(sport);
