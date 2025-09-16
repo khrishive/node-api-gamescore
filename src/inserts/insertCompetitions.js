@@ -1,16 +1,12 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
-//import { getParticipantsByTournamentId } from '../services/getNoParticipantsFromTournaments.js';
+import { parentPort, workerData } from 'worker_threads';
 
 dotenv.config();
 
-// Get sport from command line argument, default to 'cs2'
-const sportArg = process.argv[2] || 'cs2';
 const SUPPORTED_SPORTS = ['cs2', 'lol'];
-const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
 
-// Select DB config based on sport
 const dbConfigs = {
     cs2: {
         host: process.env.DB_CS2_HOST,
@@ -28,25 +24,21 @@ const dbConfigs = {
     }
 };
 
-const dbConfig = dbConfigs[SPORT];
-
 const API_URL = `${process.env.GAME_SCORE_API}/competitions`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-// Choose table name based on sport
 const COMPETITIONS_TABLE = `competitions`;
 
-// Fetch competitions for the selected sport
-async function fetchCompetitions() {
+async function fetchCompetitions(sport) {
     const now = new Date();
     const startDate = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0];
     const endDate = new Date(now.getFullYear(), 11, 31).toISOString().split("T")[0];
 
     try {
-        const response = await axios.get(`${API_URL}?sport=${SPORT}&from=${startDate}&to=${endDate}`, {
+        const response = await axios.get(`${API_URL}?sport=${sport}&from=${startDate}&to=${endDate}`, {
             headers: { Authorization: AUTH_TOKEN }
         });
-        console.log(`🔍 Competitions fetched from API for sport '${SPORT}':`, response.data.competitions);
+        console.log(`🔍 Competitions fetched from API for sport '${sport}':`, response.data.competitions);
         return response.data.competitions;
     } catch (error) {
         if (error.response) {
@@ -60,119 +52,102 @@ async function fetchCompetitions() {
     }
 }
 
-async function saveCompetitionsToDB(competitions) {
+async function saveCompetitionsToDB(competitions, sport) {
+    const dbConfig = dbConfigs[sport];
+    if (!dbConfig) {
+        throw new Error(`No DB config found for sport: ${sport}`);
+    }
     const pool = mysql.createPool(dbConfig);
 
     const insertCompetitionsQuery = `
         INSERT INTO ${COMPETITIONS_TABLE} (
-            id, 
-            name, 
-            sport_alias, 
-            start_date, 
-            end_date, 
-            prize_pool_usd,
-            location, 
-            organizer, 
-            type, 
-            fixture_count,
-            stage, 
-            time_of_year, 
-            year, 
-            series, 
-            tier, 
-            description
+            id, name, sport_alias, start_date, end_date, prize_pool_usd,
+            location, organizer, type, fixture_count, stage, time_of_year,
+            year, series, tier, description
         ) VALUES ?
         ON DUPLICATE KEY UPDATE
-            name = VALUES(name),
-            sport_alias = VALUES(sport_alias),
-            start_date = VALUES(start_date),
-            end_date = VALUES(end_date),
-            prize_pool_usd = VALUES(prize_pool_usd),
-            location = VALUES(location),
-            organizer = VALUES(organizer),
-            type = VALUES(type),
-            fixture_count = VALUES(fixture_count),
-            stage = VALUES(stage),
-            time_of_year = VALUES(time_of_year),
-            year = VALUES(year),
-            series = VALUES(series),
-            tier = VALUES(tier),
+            name = VALUES(name), sport_alias = VALUES(sport_alias),
+            start_date = VALUES(start_date), end_date = VALUES(end_date),
+            prize_pool_usd = VALUES(prize_pool_usd), location = VALUES(location),
+            organizer = VALUES(organizer), type = VALUES(type),
+            fixture_count = VALUES(fixture_count), stage = VALUES(stage),
+            time_of_year = VALUES(time_of_year), year = VALUES(year),
+            series = VALUES(series), tier = VALUES(tier),
             description = VALUES(description);
     `;
 
-    const updateParticipantsQuery = `
-        UPDATE ${COMPETITIONS_TABLE}
-        SET no_participants = ?
-        WHERE id = ?
-    `;
-
     try {
-        const competitionValues = competitions.map(comp => [
-            comp.id,
-            comp.name || 'TBD',
-            comp.sportAlias || null,
-            comp.startDate || null,
-            comp.endDate || null,
-            comp.prizePoolUSD || 0,
-            comp.location || null,
-            comp.organizer || null,
-            comp.type || null,
-            comp.fixtureCount || 0,
-            comp.derivatives?.stage || null,
-            comp.derivatives?.time_of_year || null,
-            comp.derivatives?.year || null,
-            comp.derivatives?.series || null,
-            comp.metadata?.liquipediaTier || null,
-            comp.description || null,
+        const competitionValues = competitions.map((comp) => [
+          comp.id,
+          comp.name || "TBD",
+          comp.sportAlias || "TBD",
+          comp.startDate || "TBD",
+          comp.endDate || "TBD",
+          comp.prizePoolUSD || 0,
+          comp.location || "TBD",
+          comp.organizer || "TBD",
+          comp.type || "TBD",
+          comp.fixtureCount || 0,
+          comp.derivatives?.stage || "TBD",
+          comp.derivatives?.time_of_year || "TBD",
+          comp.derivatives?.year || new Date().getFullYear(),
+          comp.derivatives?.series || "TBD",
+          comp.metadata?.liquipediaTier || "TBD",
+          comp.description || "TBD",
         ]);
 
         await pool.query(insertCompetitionsQuery, [competitionValues]);
         console.log(`✅ Inserted/updated ${competitionValues.length} competitions in table ${COMPETITIONS_TABLE}`);
-
-        /*
-        for (const comp of competitions) {
-            try {
-                const participantRes = await getParticipantsByTournamentId(comp.id);
-                const no_participants = participantRes?.uniqueParticipantCount || 0;
-                await pool.query(updateParticipantsQuery, [no_participants, comp.id]);
-                console.log(`👥 Updated no_participants for ${comp.id}: ${no_participants}`);
-            } catch (err) {
-                console.error(`❌ Failed to update participants for ${comp.id}:`, err.message);
-            }
-        }
-        */
-
     } catch (error) {
         console.error("❌ saveCompetitionsToDB failed:", error.message);
+        throw error; // re-throw to be caught by main
     } finally {
         await pool.end();
     }
 }
 
-export async function getAndSaveCompetitions() {
-    console.log(`🔄 getAndSaveCompetitions for sport: ${SPORT}`);
-    const competitions = await fetchCompetitions();
-    console.log(`🔄 Filtered competitions for ${SPORT}: ${competitions.length}`);
+export async function getAndSaveCompetitions(sport) {
+    const sportToUse = sport || process.argv[2] || 'cs2';
+    if (!SUPPORTED_SPORTS.includes(sportToUse)) {
+        console.error(`Unsupported sport: ${sportToUse}`);
+        return;
+    }
+
+    console.log(`🔄 getAndSaveCompetitions for sport: ${sportToUse}`);
+    const competitions = await fetchCompetitions(sportToUse);
+    console.log(`🔄 Filtered competitions for ${sportToUse}: ${competitions.length}`);
     if (competitions.length > 0) {
-        await saveCompetitionsToDB(competitions);
-        console.log(`✅ All competitions for ${SPORT} processed.`);
+        await saveCompetitionsToDB(competitions, sportToUse);
+        console.log(`✅ All competitions for ${sportToUse} processed.`);
     } else {
-        console.log(`⚠️ No competitions found for sport: ${SPORT}`);
+        console.log(`⚠️ No competitions found for sport: ${sportToUse}`);
     }
 }
 
-import { parentPort, workerData } from 'worker_threads';
+async function main() {
+    let sport;
+    if (parentPort) {
+        sport = workerData.sport;
+    } else {
+        sport = process.argv[2];
+    }
 
-async function main(sport) {
-    await getAndSaveCompetitions(sport);
+    try {
+        await getAndSaveCompetitions(sport);
+        if (parentPort) {
+            parentPort.postMessage('Competiciones insertadas exitosamente.');
+        } else {
+            console.log('Competiciones insertadas exitosamente.');
+        }
+    } catch (error) {
+        const errorMsg = `Failed to insert competitions for sport ${sport}: ${error.message}`;
+        console.error(errorMsg);
+        if (parentPort) {
+            parentPort.postMessage({ error: errorMsg });
+        } else {
+            process.exit(1);
+        }
+    }
 }
 
-if (parentPort) {
-    main(workerData.sport).then(() => {
-        parentPort.postMessage('Competiciones insertadas exitosamente.');
-    });
-} else {
-    main(process.argv[2]).then(() => {
-        console.log('Competiciones insertadas exitosamente.');
-    });
-}
+main();
