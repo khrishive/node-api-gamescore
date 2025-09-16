@@ -9,17 +9,25 @@ export const getCompetitions = async (offset = 0, limit = 100, filters = {}, spo
   // Flexible date filtering
   if (filters.customRange) {
     const { from, to } = filters.customRange;
-    conditions.push(`start_date BETWEEN ? AND ?`);
-    params.push(from, to);
+    if (from && to) {
+      const fromTimestamp = new Date(from).getTime();
+      const toTimestamp = new Date(`${to}T23:59:59Z`).getTime();
+      conditions.push(`start_date BETWEEN ? AND ?`);
+      params.push(fromTimestamp, toTimestamp);
+    }
   } else if (filters.start_date && filters.end_date) {
+    const fromTimestamp = new Date(filters.start_date).getTime();
+    const toTimestamp = new Date(`${filters.end_date}T23:59:59Z`).getTime();
     conditions.push(`start_date BETWEEN ? AND ?`);
-    params.push(filters.start_date, filters.end_date);
+    params.push(fromTimestamp, toTimestamp);
   } else if (filters.start_date) {
+    const fromTimestamp = new Date(filters.start_date).getTime();
     conditions.push(`start_date >= ?`);
-    params.push(filters.start_date);
+    params.push(fromTimestamp);
   } else if (filters.end_date) {
+    const toTimestamp = new Date(`${filters.end_date}T23:59:59Z`).getTime();
     conditions.push(`start_date <= ?`);
-    params.push(filters.end_date);
+    params.push(toTimestamp);
   }
 
   // All other optional filters except updated_at and sport_alias (merged with sport)
