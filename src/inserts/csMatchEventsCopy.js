@@ -85,7 +85,15 @@ export async function processCsMatchEvents(sport = 'cs2') {
     console.log(`🕒 Searching for fixtures between ${startOfYesterdayUnix} and ${endOfTodayUnix}...`);
 
     const [fixtures] = await db.query(
-      "SELECT id FROM fixtures WHERE start_time BETWEEN ? AND ?",
+      `SELECT id FROM fixtures 
+       WHERE start_time BETWEEN ? AND ? 
+       AND NOT EXISTS (
+        SELECT 
+        1 
+        FROM cs_match_events 
+        WHERE 
+        cs_match_events.fixture_id = fixtures.id
+       )`,
       [startOfYesterdayUnix, endOfTodayUnix]
     );
 
