@@ -105,3 +105,20 @@ This script runs on a daily basis to update the status of competitions (e.g., ch
 4.  **Logging**: It provides logs for each sport being processed and a final summary of the execution.
 
 **Key Dependencies**: `../sync/updateCompetitionStatusDaily.js`, `../db.js`
+
+---
+
+## `runAllInsertCompetitions.js`
+
+### Purpose
+
+This script is designed to fetch and insert new competitions into the database for all supported sports.
+
+### Detailed Workflow
+
+1.  **Import Dependencies**: It imports the core function `getAndSaveCompetitions` from `../inserts/insertCompetitions.js` and the database connections for each sport.
+2.  **Iterate Through Sports**: The script dynamically identifies the configured sports and loops through each one (e.g., CS2, LoL).
+3.  **Execute Insertion**: Inside the loop, it calls `getAndSaveCompetitions(sport)`. This function contains the logic to fetch competition data from an external source and save it into the database for the specified sport.
+4.  **Logging**: It logs the start and end of processing for each sport and provides a final summary report detailing which sports were processed successfully and which failed.
+
+**Key Dependencies**: `../inserts/insertCompetitions.js`, `../db.js`
