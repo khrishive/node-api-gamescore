@@ -93,7 +93,7 @@ async function saveCompetitionsToDB(competitions, sport) {
           comp.derivatives?.year || new Date().getFullYear(),
           comp.derivatives?.series || "TBD",
           comp.metadata?.liquipediaTier || "TBD",
-          comp.description || "TBD",
+          "Waiting for information",
         ]);
 
         await pool.query(insertCompetitionsQuery, [competitionValues]);
