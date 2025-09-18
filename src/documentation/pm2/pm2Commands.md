@@ -3,6 +3,7 @@
 This document explains each PM2 command used in your Node.js API GameScore project, breaking down every parameter and option.
 
 ## Command 1: Main Application Server
+## name:  new-node-api-gamescore
 
 ```bash
 pm2 start npm --name new-node-api-gamescore -- start --prefix /mnt/data/home/master/new-node-api-gamescore/
@@ -21,16 +22,20 @@ pm2 start npm --name new-node-api-gamescore -- start --prefix /mnt/data/home/mas
 ---
 
 ## Command 2: Twice Daily Fixture Updates
+## name: new-insert-other-fixtures-twice-daily
 
 ```bash
-pm2 start src/scripts/runAllOtherFixtures.js --cwd /mnt/data/home/master/new-node-api-gamescore/ --name "twice-daily-fixture-update" --no-autorestart --cron "0 0,12 * * *"
+pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllOtherFixtures.js \
+  --name "new-insert-other-fixtures-twice-daily" \
+  --no-autorestart \
+  --cron "0 0,12 * * *" \
+  --cwd /mnt/data/home/master/new-node-api-gamescore
 ```
 
 ### Breakdown:
 - **`pm2 start`**: PM2 command to start a new process
-- **`src/scripts/runAllOtherFixtures.js`**: The JavaScript file to execute
-- **`--cwd /mnt/data/home/master/new-node-api-gamescore/`**: Sets the current working directory
-- **`--name "twice-daily-fixture-update"`**: Custom name for the process
+- **`/mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllOtherFixtures.js`**: The JavaScript file to execute
+- **`--name "new-insert-other-fixtures-twice-daily"`**: Custom name for the process
 - **`--no-autorestart`**: Prevents PM2 from automatically restarting the process when it exits
 - **`--cron "0 0,12 * * *"`**: Cron expression for scheduling
   - `0`: Minutes (0 = at the top of the hour)
@@ -38,91 +43,129 @@ pm2 start src/scripts/runAllOtherFixtures.js --cwd /mnt/data/home/master/new-nod
   - `*`: Day of month (every day)
   - `*`: Month (every month)
   - `*`: Day of week (every day of the week)
+- **`--cwd /mnt/data/home/master/new-node-api-gamescore`**: Sets the current working directory
 
 **Purpose**: Runs fixture updates twice daily at midnight (00:00) and noon (12:00).
 
 ---
 
-## Command 3: 2-Hourly Map Players Update
+## Command 3: Twice Daily Map Players Update
+## name: new-insert-map-stats-team-players-twice-daily
 
 ```bash
-pm2 start src/scripts/runAllInsertMapTeamPlayers.js \
-  --cwd /mnt/data/home/master/new-node-api-gamescore/ \
-  --name "2-hourly-map-players-update" \
+pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllInsertMapTeamPlayers.js \
+  --name "new-insert-map-stats-team-players-twice-daily" \
   --no-autorestart \
-  --cron "0 */2 * * *"
+  --cron "10 0,12 * * *" \
+  --cwd /mnt/data/home/master/new-node-api-gamescore/
 ```
 
 ### Breakdown:
-- **`src/scripts/runAllInsertMapTeamPlayers.js`**: Script for mapping team players
-- **`--cwd`**: Working directory specification
-- **`--name "2-hourly-map-players-update"`**: Process identifier
+- **`pm2 start`**: PM2 command to start a new process
+- **`/mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllInsertMapTeamPlayers.js`**: Script for mapping team players
+- **`--name "new-insert-map-stats-team-players-twice-daily"`**: Process identifier
 - **`--no-autorestart`**: Disables automatic restart on exit
-- **`--cron "0 */2 * * *"`**: Cron expression
-  - `0`: At minute 0 (top of the hour)
-  - `*/2`: Every 2 hours
+- **`--cron "10 0,12 * * *"`**: Cron expression
+  - `10`: At minute 10
+  - `0,12`: Every 12 hours (at midnight and noon)
   - `*`: Every day of month
   - `*`: Every month
   - `*`: Every day of week
+- **`--cwd /mnt/data/home/master/new-node-api-gamescore/`**: Working directory specification
 
-**Purpose**: Updates player mappings every 2 hours at the top of the hour (00:00, 02:00, 04:00, etc.).
+**Purpose**: Updates player mappings twice a day at 00:10 and 12:10.
 
 ---
 
-## Command 4: 3-Hourly Active Updates
+## Command 4: Once Daily Active Updates
+## name: new-active-updates-once-daily
 
 ```bash
-pm2 start src/scripts/runAllActiveUpdates.js \
-  --cwd /mnt/data/home/master/new-node-api-gamescore/ \
-  --name "3-hourly-active-updates" \
+pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllActiveUpdates.js \
+  --name "new-active-updates-once-daily" \
   --no-autorestart \
-  --cron "0 */3 * * *"
+  --cron "0 3 * * *" \
+  --cwd /mnt/data/home/master/new-node-api-gamescore/
 ```
 
 ### Breakdown:
-- **`src/scripts/runAllActiveUpdates.js`**: Script for active data updates
-- **`--cron "0 */3 * * *"`**: Every 3 hours at minute 0
-  - Runs at: 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00
+- **`pm2 start`**: PM2 command to start a new process
+- **`/mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllActiveUpdates.js`**: Script for active data updates
+- **`--name "new-active-updates-once-daily"`**: Process identifier
+- **`--no-autorestart`**: Disables automatic restart on exit
+- **`--cron "0 3 * * *"`**: Runs once daily at 3:00 AM
+- **`--cwd /mnt/data/home/master/new-node-api-gamescore/`**: Working directory specification
 
-**Purpose**: Performs active data updates every 3 hours.
+**Purpose**: Performs active data updates once every day at 3:00 AM.
 
 ---
 
-## Command 5: 4-Hourly Status Update
+## Command 5: Once Daily Competition Status Update
+## name: new-update-competition-status-once-daily
 
 ```bash
-pm2 start src/scripts/runAllUpdateCompetitionStatusDaily.js \
-  --cwd /mnt/data/home/master/new-node-api-gamescore/ \
-  --name "4-hourly-status-update" \
+pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllUpdateCompetitionStatusDaily.js \
+  --name "new-update-competition-status-once-daily" \
   --no-autorestart \
-  --cron "0 */4 * * *"
+  --cron "0 22 * * *" \
+  --cwd /mnt/data/home/master/new-node-api-gamescore/
 ```
 
 ### Breakdown:
-- **`src/scripts/runAllUpdateCompetitionStatusDaily.js`**: Competition status update script
-- **`--cron "0 */4 * * *"`**: Every 4 hours at minute 0
-  - Runs at: 00:00, 04:00, 08:00, 12:00, 16:00, 20:00
+- **`pm2 start`**: PM2 command to start a new process
+- **`/mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllUpdateCompetitionStatusDaily.js`**: Competition status update script
+- **`--name "new-update-competition-status-once-daily"`**: Process identifier
+- **`--no-autorestart`**: Disables automatic restart on exit
+- **`--cron "0 22 * * *"`**: Runs once daily at 10:00 PM (22:00)
+- **`--cwd /mnt/data/home/master/new-node-api-gamescore/`**: Working directory specification
 
-**Purpose**: Updates competition status every 4 hours.
+**Purpose**: Updates competition status once every day at 10:00 PM.
 
 ---
 
-## Command 6: Hourly Match Events Update
+## Command 6: Six Times Per Hour Match Events Update
+## name: six-times-per-hour-match-events-update
 
 ```bash
-pm2 start src/scripts/runAllCsMatchEventsCopy.js --cwd /mnt/data/home/master/new-node-api-gamescore/ --name "hourly-match-events-update" --no-autorestart --cron "0 * * * *"
+pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllCsMatchEventsCopy.js \
+  --name "six-times-per-hour-match-events-update" \
+  --no-autorestart \
+  --cron "5-59/10 * * * *" \
+  --cwd /mnt/data/home/master/new-node-api-gamescore/
 ```
 
 ### Breakdown:
-- **`src/scripts/runAllCsMatchEventsCopy.js`**: CS (Counter-Strike) match events copying script
-- **`--cron "0 * * * *"`**: Every hour at minute 0
-  - `0`: At minute 0
-  - `*`: Every hour
-  - `*`: Every day of month
-  - `*`: Every month  
-  - `*`: Every day of week
+- **`pm2 start`**: PM2 command to start a new process
+- **`/mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllCsMatchEventsCopy.js`**: CS (Counter-Strike) match events copying script
+- **`--name "six-times-per-hour-match-events-update"`**: Process identifier
+- **`--no-autorestart`**: Disables automatic restart on exit
+- **`--cron "5-59/10 * * * *"`**: Runs 6 times per hour, at minutes 5, 15, 25, 35, 45, and 55.
+- **`--cwd /mnt/data/home/master/new-node-api-gamescore/`**: Working directory specification
 
-**Purpose**: Copies Counter-Strike match events data every hour on the hour.
+**Purpose**: Copies Counter-Strike match events data six times every hour.
+
+---
+
+## Command 7: Create New Competitions Twice Daily
+## name: new-create-competitions-twice-daily
+
+```bash
+pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllInsertCompetitions.js \
+  --name "new-create-competitions-twice-daily" \
+  --no-autorestart \
+  --cron "0 1,13 * * *" \
+  --cwd /mnt/data/home/master/new-node-api-gamescore/
+```
+
+### Breakdown:
+- **`pm2 start`**: PM2 command to start a new process
+- **`/mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllInsertCompetitions.js`**: Script to insert new competitions
+- **`--name "new-create-competitions-twice-daily"`**: Process identifier
+- **`--no-autorestart`**: Disables automatic restart on exit
+- **`--cron "0 1,13 * * *"`**: Runs twice daily at 1:00 AM and 1:00 PM (13:00)
+- **`--cwd /mnt/data/home/master/new-node-api-gamescore/`**: Working directory specification
+
+**Purpose**: Creates new competitions twice a day at 1:00 AM and 1:00 PM.
 
 ---
 
@@ -153,11 +196,12 @@ Enables cron-based scheduling using standard cron syntax:
 
 | Process | Frequency | Times |
 |---------|-----------|-------|
-| twice-daily-fixture-update | Every 12 hours | 00:00, 12:00 |
-| 2-hourly-map-players-update | Every 2 hours | 00:00, 02:00, 04:00, 06:00, 08:00, 10:00, 12:00, 14:00, 16:00, 18:00, 20:00, 22:00 |
-| 3-hourly-active-updates | Every 3 hours | 00:00, 03:00, 06:00, 09:00, 12:00, 15:00, 18:00, 21:00 |
-| 4-hourly-status-update | Every 4 hours | 00:00, 04:00, 08:00, 12:00, 16:00, 20:00 |
-| hourly-match-events-update | Every hour | Every hour at :00 minutes |
+| new-insert-other-fixtures-twice-daily | Every 12 hours | 00:00, 12:00 |
+| new-insert-map-stats-team-players-twice-daily | Twice a day | 00:10, 12:10 |
+| new-active-updates-once-daily | Once a day | 03:00 |
+| new-update-competition-status-once-daily | Once a day | 22:00 |
+| six-times-per-hour-match-events-update | 6 times per hour | Every hour at minutes 5, 15, 25, 35, 45, 55 |
+| new-create-competitions-twice-daily | Twice a day | 01:00, 13:00 |
 
 ## Useful PM2 Management Commands
 
