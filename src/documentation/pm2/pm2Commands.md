@@ -169,6 +169,29 @@ pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllInsertC
 
 ---
 
+## Command 8: AI Competition Descriptions Update
+## name: new-all-competition-descriptions-ai
+
+```bash
+pm2 start /mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllCompetitionDescriptionsAI.js \
+  --name "new-all-competition-descriptions-ai" \
+  --no-autorestart \
+  --cron "*/20 * * * *" \
+  --cwd /mnt/data/home/master/new-node-api-gamescore/
+```
+
+### Breakdown:
+- **`pm2 start`**: PM2 command to start a new process
+- **`/mnt/data/home/master/new-node-api-gamescore/src/scripts/runAllCompetitionDescriptionsAI.js`**: The script that generates AI descriptions for competitions.
+- **`--name "new-all-competition-descriptions-ai"`**: Custom name for the process.
+- **`--no-autorestart`**: Prevents PM2 from automatically restarting the process upon completion.
+- **`--cron "*/20 * * * *"`**: A cron pattern that schedules the script to run every 20 minutes.
+- **`--cwd /mnt/data/home/master/new-node-api-gamescore/`**: Sets the script's working directory.
+
+**Purpose**: Periodically generates and updates competition descriptions using an AI model. It runs every 20 minutes to process competitions that are missing a description.
+
+---
+
 ## Common PM2 Options Explained
 
 ### `--cwd` (Current Working Directory)
@@ -194,14 +217,15 @@ Enables cron-based scheduling using standard cron syntax:
 
 ## Schedule Summary
 
-| Process | Frequency | Times |
-|---------|-----------|-------|
+| Process |
+|-----------|-----------|----------------------------------------------------|
 | new-insert-other-fixtures-twice-daily | Every 12 hours | 00:00, 12:00 |
 | new-insert-map-stats-team-players-twice-daily | Twice a day | 00:10, 12:10 |
 | new-active-updates-once-daily | Once a day | 03:00 |
 | new-update-competition-status-once-daily | Once a day | 22:00 |
 | six-times-per-hour-match-events-update | 6 times per hour | Every hour at minutes 5, 15, 25, 35, 45, 55 |
 | new-create-competitions-twice-daily | Twice a day | 01:00, 13:00 |
+| new-all-competition-descriptions-ai | 3 times per hour | Every hour at minutes 0, 20, 40 |
 
 ## Useful PM2 Management Commands
 
