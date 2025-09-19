@@ -30,16 +30,41 @@ const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 const COMPETITIONS_TABLE = `competitions`;
 
 async function fetchCompetitions(sport) {
+    // Set startDate to today and endDate to tomorrow
     const now = new Date();
-    const startDate = new Date(now.getFullYear(), 0, 1).toISOString().split("T")[0];
-    const endDate = new Date(now.getFullYear(), 11, 31).toISOString().split("T")[0];
+    const startDate = now.toISOString().split("T")[0];
+    const tomorrow = new Date(now);
+    tomorrow.setDate(now.getDate() + 1);
+    const endDate = tomorrow.toISOString().split("T")[0];
+
+    console.log(`🗓️ Fetching competitions for sport '${sport}' from ${startDate} to ${endDate}`);
+
+    let allCompetitions = [];
+    let page = 1;
+    let keepFetching = true;
 
     try {
-        const response = await axios.get(`${API_URL}?sport=${sport}&from=${startDate}&to=${endDate}`, {
-            headers: { Authorization: AUTH_TOKEN }
-        });
-        console.log(`🔍 Competitions fetched from API for sport '${sport}':`, response.data.competitions);
-        return response.data.competitions;
+        while (keepFetching) {
+            const response = await axios.get(
+                `${API_URL}?sport=${sport}&from=${startDate}&to=${endDate}&page=${page}`,
+                { headers: { Authorization: AUTH_TOKEN } }
+            );
+
+            const competitions = response.data.competitions;
+
+            if (competitions && competitions.length > 0) {
+                allCompetitions = allCompetitions.concat(competitions);
+                console.log(`🔍 Page ${page}: Fetched ${competitions.length} competitions for sport '${sport}'.`);
+            }
+
+            if (!competitions || competitions.length < 50) {
+                keepFetching = false;
+            } else {
+                page++;
+            }
+        }
+        console.log(`✅ Total competitions fetched for sport '${sport}': ${allCompetitions.length}`);
+        return allCompetitions;
     } catch (error) {
         if (error.response) {
             console.error("Request failed:", error.response.status, error.response.data);
