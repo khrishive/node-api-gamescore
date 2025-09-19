@@ -122,3 +122,44 @@ This script is designed to fetch and insert new competitions into the database f
 4.  **Logging**: It logs the start and end of processing for each sport and provides a final summary report detailing which sports were processed successfully and which failed.
 
 **Key Dependencies**: `../inserts/insertCompetitions.js`, `../db.js`
+
+---
+
+## `runAllCompetitionDescriptionsAI.js`
+
+### Purpose
+
+This script orchestrates the generation of AI-powered descriptions for competitions across all supported sports (e.g., CS2, LoL). It iterates through each sport and runs a dedicated script to handle the description generation for that sport's database.
+
+### Detailed Workflow
+
+1.  **Import Dependencies**: It imports the database connections (`dbCS2`, `dbLOL`) to dynamically identify the configured sports.
+2.  **Iterate Through Sports**: The script loops through each sport identified from the database connections.
+3.  **Execute Child Script**: For each sport, it spawns a new Node.js child process to execute `src/inserts/insertCompetitionDescriptionsGeneralAI.js`, passing the current sport as an argument. This ensures that each sport is processed in isolation.
+4.  **Logging**: It provides real-time output from the child script to the console. It logs the start and end of processing for each sport and provides a final summary of which sports were processed successfully or unsuccessfully.
+
+**Key Dependencies**: `child_process`, `path`, `../inserts/insertCompetitionDescriptionsGeneralAI.js`, `../db.js`
+
+---
+
+## `insertCompetitionDescriptionsGeneralAI.js`
+
+*Note: This script is located in `src/inserts` and is typically executed by `runAllCompetitionDescriptionsAI.js`.*
+
+### Purpose
+
+This script generates descriptive text for tournaments using a configurable AI provider (Google Gemini or OpenAI) and saves it to the database. It is designed to be run for a specific sport.
+
+### Detailed Workflow
+
+1.  **Configuration**: The script determines the target sport (e.g., 'cs2', 'lol') and AI provider ('gemini' or 'openai') from command-line arguments or environment variables. It selects the appropriate database configuration based on the sport.
+2.  **Database Connection**: It connects to the specified sport's database.
+3.  **Identify Missing Descriptions**: It queries the `competitions` table to find records where the `description` is `NULL` or set to a placeholder like `'Waiting for information'`.
+4.  **Process in Batches**: The script processes a limited number of records in each run (`TOTAL_RECORDS_LIMIT`) and fetches them in batches (`BATCH_SIZE`) to avoid overwhelming the database or API.
+5.  **Generate Prompt**: For each competition, it constructs a detailed prompt for the AI, asking for a concise and informative description based on the tournament's name and sport.
+6.  **Call AI API**: It sends a request to the configured AI provider's API (Gemini or OpenAI). It includes error handling and retry logic, especially for rate-limiting (429) errors.
+7.  **Update Database**: If a valid description is returned from the AI, the script updates the corresponding row in the `competitions` table.
+8.  **Optional File Saving**: If enabled via an environment variable (`SAVE_TOURNAMENTS_TO_FILE`), it saves the generated descriptions to a local JSON file for review.
+9.  **Logging**: It logs the progress for each tournament, including which AI is being used, and reports success or failure for each operation.
+
+**Key Dependencies**: `axios`, `mysql2/promise`, `dotenv`
