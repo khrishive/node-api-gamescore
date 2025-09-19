@@ -1,0 +1,214 @@
+import mysql from 'mysql2/promise';
+import axios from 'axios';
+import dotenv from 'dotenv';
+import { parentPort, workerData } from 'worker_threads';
+
+dotenv.config();
+
+const SUPPORTED_SPORTS = ['cs2', 'lol'];
+
+const dbConfigs = {
+    cs2: {
+        host: process.env.DB_CS2_HOST,
+        user: process.env.DB_CS2_USER,
+        password: process.env.DB_CS2_PASSWORD,
+        database: process.env.DB_CS2_NAME,
+        port: process.env.DB_CS2_PORT || 3306
+    },
+    lol: {
+        host: process.env.DB_LOL_HOST,
+        user: process.env.DB_LOL_USER,
+        password: process.env.DB_LOL_PASSWORD,
+        database: process.env.DB_LOL_NAME,
+        port: process.env.DB_LOL_PORT || 3306
+    }
+};
+
+const API_URL = `${process.env.GAME_SCORE_API}/competitions`;
+const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
+
+const COMPETITIONS_TABLE = `competitions`;
+const DATE_RANGES_TABLE = `date_ranges_script_competitions`;
+
+async function getNextDateRange(pool, sport) {
+    const [rows] = await pool.execute(
+        `SELECT * FROM ${DATE_RANGES_TABLE} 
+         WHERE execution_status = 0 AND sport = ? 
+         ORDER BY start_date ASC 
+         LIMIT 1`,
+        [sport]
+    );
+    return rows[0];
+}
+
+async function updateDateRangeStatus(pool, rangeId, recordsCreated) {
+    await pool.execute(
+        `UPDATE ${DATE_RANGES_TABLE} 
+         SET execution_status = 1, records_created = ? 
+         WHERE id = ?`,
+        [recordsCreated, rangeId]
+    );
+}
+
+async function fetchCompetitions(sport, startDate, endDate) {
+    let allCompetitions = [];
+    let page = 1;
+    let keepFetching = true;
+
+    console.log(`🗓️ Fetching competitions for sport '${sport}' from ${startDate} to ${endDate}`);
+
+    try {
+        while (keepFetching) {
+            const response = await axios.get(`${API_URL}?sport=${sport}&from=${startDate}&to=${endDate}&page=${page}`, {
+                headers: { Authorization: AUTH_TOKEN }
+            });
+
+            const competitions = response.data.competitions;
+
+            if (competitions && competitions.length > 0) {
+                allCompetitions = allCompetitions.concat(competitions);
+                console.log(`🔍 Page ${page}: Fetched ${competitions.length} competitions for sport '${sport}'.`);
+            }
+
+            if (!competitions || competitions.length < 50) {
+                keepFetching = false;
+            } else {
+                page++;
+            }
+        }
+        console.log(`✅ Total competitions fetched for sport '${sport}' in this range: ${allCompetitions.length}`);
+        return allCompetitions;
+    } catch (error) {
+        if (error.response) {
+            console.error("Request failed:", error.response.status, error.response.data);
+        } else if (error.request) {
+            console.error("No response received:", error.request);
+        } else {
+            console.error("Error:", error.message);
+        }
+        return [];
+    }
+}
+
+async function saveCompetitionsToDB(competitions, pool) {
+    if (!competitions || competitions.length === 0) {
+        console.log('✅ No new competitions to insert.');
+        return 0;
+    }
+
+    const insertCompetitionsQuery = `
+        INSERT INTO ${COMPETITIONS_TABLE} (
+            id, name, sport_alias, start_date, end_date, prize_pool_usd,
+            location, organizer, type, fixture_count, stage, time_of_year,
+            year, series, tier, description
+        ) VALUES ?
+        ON DUPLICATE KEY UPDATE
+            name = VALUES(name), sport_alias = VALUES(sport_alias),
+            start_date = VALUES(start_date), end_date = VALUES(end_date),
+            prize_pool_usd = VALUES(prize_pool_usd), location = VALUES(location),
+            organizer = VALUES(organizer), type = VALUES(type),
+            fixture_count = VALUES(fixture_count), stage = VALUES(stage),
+            time_of_year = VALUES(time_of_year), year = VALUES(year),
+            series = VALUES(series), tier = VALUES(tier),
+            description = VALUES(description);
+    `;
+
+    try {
+        const competitionValues = competitions.map((comp) => [
+          comp.id,
+          comp.name || "TBD",
+          comp.sportAlias || "TBD",
+          comp.startDate || "TBD",
+          comp.endDate || "TBD",
+          comp.prizePoolUSD || 0,
+          comp.location || "TBD",
+          comp.organizer || "TBD",
+          comp.type || "TBD",
+          comp.fixtureCount || 0,
+          comp.derivatives?.stage || "TBD",
+          comp.derivatives?.time_of_year || "TBD",
+          comp.derivatives?.year || new Date().getFullYear(),
+          comp.derivatives?.series || "TBD",
+          comp.metadata?.liquipediaTier || "TBD",
+          "Waiting for information",
+        ]);
+
+        await pool.query(insertCompetitionsQuery, [competitionValues]);
+        console.log(`✅ Inserted/updated ${competitionValues.length} competitions in table ${COMPETITIONS_TABLE}`);
+        return competitionValues.length;
+    } catch (error) {
+        console.error("❌ saveCompetitionsToDB failed:", error.message);
+        throw error; // re-throw to be caught by main
+    }
+}
+
+export async function processCompetitionsForDateRange(sport) {
+    const sportToUse = sport || process.argv[2] || 'cs2';
+    if (!SUPPORTED_SPORTS.includes(sportToUse)) {
+        console.error(`Unsupported sport: ${sportToUse}`);
+        return;
+    }
+
+    const dbConfig = dbConfigs[sportToUse];
+    if (!dbConfig) {
+        throw new Error(`No DB config found for sport: ${sportToUse}`);
+    }
+    const pool = mysql.createPool(dbConfig);
+
+    try {
+        console.log(`🔄 Checking for next available date range for sport: ${sportToUse}`);
+        const dateRange = await getNextDateRange(pool, sportToUse);
+
+        if (!dateRange) {
+            console.log(`✅ No pending date ranges found for sport '${sportToUse}'. Exiting.`);
+            return;
+        }
+
+        console.log(`🗓️ Processing date range ID ${dateRange.id}: ${dateRange.start_date} to ${dateRange.end_date}`);
+
+        const startDate = new Date(dateRange.start_date).toISOString().split("T")[0];
+        const endDate = new Date(dateRange.end_date).toISOString().split("T")[0];
+
+        const competitions = await fetchCompetitions(sportToUse, startDate, endDate);
+        
+        const recordsCreated = await saveCompetitionsToDB(competitions, pool);
+        
+        await updateDateRangeStatus(pool, dateRange.id, recordsCreated);
+        
+        console.log(`✅ Successfully processed date range ID ${dateRange.id}. Created/updated ${recordsCreated} records.`);
+
+    } catch (error) {
+        console.error("❌ An error occurred during the process:", error.message);
+        throw error;
+    } finally {
+        await pool.end();
+    }
+}
+
+async function main() {
+    let sport;
+    if (parentPort) {
+        sport = workerData.sport;
+    } else {
+        sport = process.argv[2];
+    }
+
+    try {
+        await processCompetitionsForDateRange(sport);
+        if (parentPort) {
+            parentPort.postMessage('Competition processing for date range completed successfully.');
+        } else {
+            console.log('Competition processing for date range completed successfully.');
+        }
+    } catch (error) {
+        const errorMsg = `Failed to process competitions for sport ${sport}: ${error.message}`;
+        console.error(errorMsg);
+        if (parentPort) {
+            parentPort.postMessage({ error: errorMsg });
+        } else {
+            process.exit(1);
+        }
+    }
+}
+
+main();
