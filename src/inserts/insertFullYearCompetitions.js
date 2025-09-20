@@ -63,7 +63,7 @@ async function fetchCompetitions(sport, startDate, endDate) {
                 headers: { Authorization: AUTH_TOKEN }
             });
 
-            const competitions = response.data.competitions;
+            const competitions = response?.data?.competitions;
 
             if (competitions && competitions.length > 0) {
                 allCompetitions = allCompetitions.concat(competitions);
