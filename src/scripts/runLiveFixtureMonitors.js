@@ -34,10 +34,12 @@ async function fetchStartedFixturesForSport(sport) {
     for (const fixture of fixtures) {
       const fixtureId = fixture.id;
 
-      if (!trackedFixtures.has(fixtureId)) {
+      if (fixtureId && !trackedFixtures.has(fixtureId)) {
         console.log(`[MONITOR] [${sport.toUpperCase()}] Started fixture detected: ${fixtureId} - Connecting...`);
         connectWebSocket(fixtureId);
         trackedFixtures.add(fixtureId);
+      } else if (!fixtureId) {
+        console.warn(`[MONITOR] [${sport.toUpperCase()}] Found a fixture with an undefined ID.`);
       }
     }
   } catch (error) {

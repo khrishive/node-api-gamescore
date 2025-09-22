@@ -345,4 +345,4 @@ export function connectWebSocket(fixture_id) {
 }
 
 // Start the test connection
-connectWebSocket();
+// connectWebSocket();
