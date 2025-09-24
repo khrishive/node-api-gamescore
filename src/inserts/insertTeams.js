@@ -65,13 +65,13 @@ async function fetchUniqueParticipants(connection) {
     console.log('🔄 Fetching unique participants from the fixtures table...');
     try {
         const [rows] = await connection.execute(
-            'SELECT participants0_id, participants1_id FROM fixtures'
+            'SELECT participants0_id, participants1_id FROM fixtures WHERE participants0_id IS NOT NULL OR participants1_id IS NOT NULL'
         );
-        // Flatten and filter unique IDs
+        // Flatten and filter unique IDs, removing null, undefined, empty strings, and '0'
         const uniqueIds = [
             ...new Set(
                 rows.flatMap(row => [row.participants0_id, row.participants1_id])
-                    .filter(id => !!id)
+                    .filter(id => id && id !== null && id !== undefined && id !== '' && id !== '0' && String(id).trim() !== '')
             )
         ];
         console.log(`🎯 ${uniqueIds.length} unique participants found.`);
@@ -154,12 +154,14 @@ export async function main() {
         connection = await pool.getConnection();
         const uniqueIds = await fetchUniqueParticipants(connection);
 
-        for (const id of uniqueIds) {
+        const promises = uniqueIds.map(async (id) => {
             const teamInfo = await fetchTeamInfo(id);
             if (teamInfo && teamInfo.id) {
                 await saveParticipant(connection, teamInfo);
             }
-        }
+        });
+
+        await Promise.all(promises);
         console.log('✅ Process completed.');
     } catch (error) {
         console.error('❌ Error in the main process:', error);
