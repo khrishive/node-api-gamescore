@@ -88,7 +88,7 @@ async function saveCompetitionsToDB(competitions, sport) {
         INSERT INTO ${COMPETITIONS_TABLE} (
             id, name, sport_alias, start_date, end_date, prize_pool_usd,
             location, organizer, type, fixture_count, stage, time_of_year,
-            year, series, tier, description
+            year, series, tier, description, stage_type, number, region
         ) VALUES ?
         ON DUPLICATE KEY UPDATE
             name = VALUES(name), sport_alias = VALUES(sport_alias),
@@ -98,7 +98,8 @@ async function saveCompetitionsToDB(competitions, sport) {
             fixture_count = VALUES(fixture_count), stage = VALUES(stage),
             time_of_year = VALUES(time_of_year), year = VALUES(year),
             series = VALUES(series), tier = VALUES(tier),
-            description = VALUES(description);
+            description = VALUES(description), stage_type = VALUES(stage_type),
+            number = VALUES(number), region = VALUES(region);
     `;
 
     try {
@@ -119,6 +120,9 @@ async function saveCompetitionsToDB(competitions, sport) {
           comp.derivatives?.series || "TBD",
           comp.metadata?.liquipediaTier || "TBD",
           "Waiting for information",
+          comp.derivatives?.stage_type || "TBD",
+          comp.derivatives?.number || "TBD",
+          comp.derivatives?.region || "TBD",
         ]);
 
         await pool.query(insertCompetitionsQuery, [competitionValues]);
