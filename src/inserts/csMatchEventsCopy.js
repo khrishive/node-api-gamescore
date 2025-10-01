@@ -1,15 +1,21 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { db } from '../db.js'; // Reutilizar pool de conexiones
+import { dbCS2, dbLOL } from '../db.js'; // Import all DB connections
 
 dotenv.config();
 
-// 🔐 Configuración de API
+// 🔐 API Configuration
 const API_BASE_URL = "https://api.gamescorekeeper.com/v2/live/historic/";
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-// 🧠 Formatea valores según tipo
+// Helper to select DB by sport
+function getDbBySport(sport = 'cs2') {
+  if (sport === 'lol') return dbLOL;
+  return dbCS2;
+}
+
+// 🧠 Format values by type
 function normalize(value, type) {
   if (value === null || value === undefined) {
     if (type === 'text') return 'TBD';
@@ -19,7 +25,7 @@ function normalize(value, type) {
   return value;
 }
 
-// 🧠 Extrae y normaliza los campos del evento
+// 🧠 Extract and normalize event fields
 function extractEventData(payload, fixtureId, event) {
   const name = payload.name ?? null;
   const actor = payload.killer ?? payload.planter ?? payload.assister ?? payload.defuser ?? null;
@@ -58,45 +64,46 @@ function extractEventData(payload, fixtureId, event) {
   };
 }
 
-async function fetchAndStoreFixtureEvents() {
+export async function processCsMatchEvents(sport = 'cs2') {
+  const db = getDbBySport(sport); // <-- Use the correct DB connection
+
   const now = new Date();
 
-  //🟡 Ayer 00:00:00
+  //🟡 Yesterday 00:00:00
   const startOfYesterday = new Date(now);
   startOfYesterday.setDate(now.getDate() - 1);
   startOfYesterday.setHours(0, 0, 0, 0);
   const startOfYesterdayUnix = startOfYesterday.getTime();
 
-/**
- * // 🟢 Inicio del 1 de junio de 2025 (00:00:00) en milisegundos
-  const startOfJuneFirst = new Date();
-  startOfJuneFirst.setFullYear(2025, 5, 1); // Junio (mes 5 porque empieza desde 0)
-  startOfJuneFirst.setHours(0, 0, 0, 0);
-  const startOfYesterdayUnix = startOfJuneFirst.getTime();
- */
-
-
-  // 🟢 Hoy 23:59:59
-  const hoy = new Date(); // Asegúrate de tener esta línea si no está antes
+  // 🟢 Today 23:59:59
+  const hoy = new Date();
   const endOfToday = new Date(hoy);
   endOfToday.setHours(23, 59, 59, 999);
   const endOfTodayUnix = endOfToday.getTime();
 
   try {
-    console.log(`🕒 Buscando fixtures entre ${startOfYesterdayUnix} y ${endOfTodayUnix}...`);
+    console.log(`🕒 Searching for fixtures between ${startOfYesterdayUnix} and ${endOfTodayUnix}...`);
 
     const [fixtures] = await db.query(
-      "SELECT id FROM fixtures WHERE start_time BETWEEN ? AND ?",
+      `SELECT id FROM fixtures 
+       WHERE start_time BETWEEN ? AND ? 
+       AND NOT EXISTS (
+        SELECT 
+        1 
+        FROM cs_match_events 
+        WHERE 
+        cs_match_events.fixture_id = fixtures.id
+       )`,
       [startOfYesterdayUnix, endOfTodayUnix]
     );
 
-    console.log(`🔍 Se encontraron ${fixtures.length} fixtures.`);
+    console.log(`🔍 Found ${fixtures.length} fixtures for ${sport}.`);
 
-    let fixturesProcesados = 0;
+    let processedFixtures = 0;
 
     for (const fixture of fixtures) {
       const fixtureId = fixture.id;
-      console.log(`🧩 Procesando fixture ID: ${fixtureId}`);
+      console.log(`🧩 Processing fixture ID: ${fixtureId}`);
 
       const [existing] = await db.query(
         "SELECT COUNT(*) AS total FROM cs_match_events WHERE fixture_id = ?",
@@ -104,7 +111,7 @@ async function fetchAndStoreFixtureEvents() {
       );
 
       if (existing[0].total > 0) {
-        console.log(`⏭️  Ya existe info para fixture ${fixtureId}. Saltando.`);
+        console.log(`⏭️  Info already exists for fixture ${fixtureId}. Skipping.`);
         continue;
       }
 
@@ -116,11 +123,11 @@ async function fetchAndStoreFixtureEvents() {
         const events = response.data.events;
 
         if (!Array.isArray(events) || events.length === 0) {
-          console.warn(`⚠️  Fixture ${fixtureId} no tiene eventos.`);
+          console.warn(`⚠️  Fixture ${fixtureId} has no events.`);
           continue;
         }
 
-        let insertados = 0;
+        let inserted = 0;
 
         for (const event of events) {
           const payload = event.payload ?? {};
@@ -128,7 +135,7 @@ async function fetchAndStoreFixtureEvents() {
           const insertValues = Object.values(valuesObj);
 
           if (insertValues.length !== 26) {
-            console.error(`❌ Fixture ${fixtureId}: cantidad de valores inesperada (${insertValues.length})`);
+            console.error(`❌ Fixture ${fixtureId}: unexpected number of values (${insertValues.length})`);
             continue;
           }
 
@@ -144,23 +151,31 @@ async function fetchAndStoreFixtureEvents() {
             insertValues
           );
 
-          insertados++;
+          inserted++;
         }
 
-        console.log(`✅ Fixture ${fixtureId} insertado con ${insertados} eventos.`);
-        fixturesProcesados++;
+        console.log(`✅ Fixture ${fixtureId} inserted with ${inserted} events.`);
+        processedFixtures++;
       } catch (apiErr) {
-        console.error(`❌ Error al obtener eventos para fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
+        console.error(`❌ Error getting events for fixture ${fixtureId}:`, apiErr.response?.data || apiErr.message);
       }
     }
 
-    console.log(`🎯 Proceso finalizado. Fixtures procesados: ${fixturesProcesados} de ${fixtures.length}.`);
+    console.log(`🎯 Process finished for ${sport}. Processed fixtures: ${processedFixtures} of ${fixtures.length}.`);
   } catch (err) {
-    console.error('❌ Error general:', err.message);
+    console.error(`❌ General error for ${sport}:`, err.message);
   } finally {
-    await db.end();
-    console.log('🔌 Conexión cerrada.');
+    // We don't end the connection here, as the pool is managed globally
+    // await db.end();
+    // console.log('🔌 Connection closed.');
   }
 }
 
-fetchAndStoreFixtureEvents();
+// If called directly from the command line, run the function
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const sport = process.argv[2] || 'cs2';
+  processCsMatchEvents(sport).catch(error => {
+    console.error("❌ Error during direct execution:", error.message);
+    process.exit(1);
+  });
+}

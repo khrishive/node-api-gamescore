@@ -6,6 +6,6 @@ export function apiKeyAuth(req, res, next) {
   if (apiKey && apiKey === process.env.API_KEY) {
     next();
   } else {
-    res.status(401).json({ error: 'No autorizado: API Key inválida' });
+    res.status(401).json({ error: 'Unauthorized: Invalid API Key' });
   }
 }

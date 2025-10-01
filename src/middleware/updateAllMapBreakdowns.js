@@ -1,8 +1,9 @@
-import { db } from '../db.js';
+import { getDbBySport } from "../utils/dbUtils.js";
 import { saveOrUpdateMapBreakdown } from './saveOrUpdateMapBreakdown.js';
 
-async function updateAllMapBreakdowns() {
-  // 🔍 Obtener todos los pares únicos (team, competition)
+async function updateAllMapBreakdowns(sport = "cs2") {
+  const db = getDbBySport(sport);
+  // 🔍 Get all unique pairs (team, competition)
   const [rows] = await db.execute(`
     SELECT DISTINCT competition_id, participants0_id AS team_id
     FROM fixtures
@@ -13,26 +14,27 @@ async function updateAllMapBreakdowns() {
     WHERE participants1_id IS NOT NULL
   `);
 
-  console.log(`Encontrados ${rows.length} equipos-torneos únicos`);
+  console.log(`Found ${rows.length} unique team-tournaments`);
 
   for (const row of rows) {
     const { team_id, competition_id } = row;
 
     try {
-      console.log(`➡ Procesando team_id=${team_id}, competition_id=${competition_id}`);
-      await saveOrUpdateMapBreakdown(team_id, competition_id);
+      console.log(`➡ Processing team_id=${team_id}, competition_id=${competition_id}`);
+      await saveOrUpdateMapBreakdown(team_id, competition_id, sport);
     } catch (err) {
-      console.error(`❌ Error con team_id=${team_id}, competition_id=${competition_id}`, err.message);
+      console.error(`❌ Error with team_id=${team_id}, competition_id=${competition_id}`, err.message);
     }
   }
 
-  console.log('✅ Actualización terminada');
+  console.log(`✅ Update finished for ${sport}`);
 }
 
-// Ejecutar
-updateAllMapBreakdowns()
+// Execute with sport parameter (example: node updateAllMapBreakdowns.js cs2)
+const sport = process.argv[2] || "cs2";
+updateAllMapBreakdowns(sport)
   .then(() => process.exit(0))
   .catch(err => {
-    console.error('Error global:', err);
+    console.error('Global error:', err);
     process.exit(1);
   });

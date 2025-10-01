@@ -1,11 +1,15 @@
-import { db } from '../db.js'; // Asegúrate de importar tu conexión a la base de datos
+import { getDbBySport } from '../utils/dbUtils.js'; // Centralized DB selector
 
-async function updateCompetitionStatus() {
+export async function updateCompetitionStatus(sport = 'cs2') {
+  const db = getDbBySport(sport); // Use the correct DB connection
+  console.log(`[${sport}] 🚀 Starting competition status update...`);
+
   try {
-    // Fecha actual en segundos (UNIX timestamp * 1000 porque tus campos están en milisegundos)
+    // Current date in milliseconds
     const today = Date.now();
 
-    // 1️⃣ Actualizar upcoming → started
+    // --- Step 1: Update upcoming → started ---
+    console.log(`[${sport}] 1/2: Checking for 'upcoming' competitions to move to 'started'...`);
     const [upcomingToStarted] = await db.query(
       `UPDATE competitions 
        SET status = 'started' 
@@ -14,9 +18,14 @@ async function updateCompetitionStatus() {
       [today]
     );
 
-    console.log(`✅ Competitions actualizadas a started: ${upcomingToStarted.affectedRows}`);
+    if (upcomingToStarted.affectedRows > 0) {
+      console.log(`[${sport}] ✅ Updated ${upcomingToStarted.affectedRows} competitions from 'upcoming' to 'started'.`);
+    } else {
+      console.log(`[${sport}] ℹ️  No 'upcoming' competitions needed to be updated.`);
+    }
 
-    // 2️⃣ Actualizar started → ended
+    // --- Step 2: Update started → ended ---
+    console.log(`[${sport}] 2/2: Checking for 'started' competitions to move to 'ended'...`);
     const [startedToEnded] = await db.query(
       `UPDATE competitions 
        SET status = 'ended' 
@@ -25,13 +34,27 @@ async function updateCompetitionStatus() {
       [today]
     );
 
-    console.log(`✅ Competitions actualizadas a ended: ${startedToEnded.affectedRows}`);
+    if (startedToEnded.affectedRows > 0) {
+      console.log(`[${sport}] ✅ Updated ${startedToEnded.affectedRows} competitions from 'started' to 'ended'.`);
+    } else {
+      console.log(`[${sport}] ℹ️  No 'started' competitions needed to be updated.`);
+    }
+
+    console.log(`[${sport}] 🏁 Finished competition status update.`);
 
   } catch (err) {
-    console.error('❌ Error al actualizar competiciones:', err);
+    console.error(`[${sport}] ❌ Error during competition status update:`, err);
+    throw err; // Re-throw the error so the runner script can catch it
   } finally {
-    db.end(); // cerrar conexión cuando termine
+    // The connection pool should not be ended here to allow reuse.
   }
 }
 
-updateCompetitionStatus();
+// If run directly, execute with CLI arguments
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const sportArg = process.argv[2] || 'cs2';
+  updateCompetitionStatus(sportArg).catch(err => {
+    // Error is already logged in the function, just exit
+    process.exit(1);
+  });
+}

@@ -1,16 +1,16 @@
 import { db } from '../../db.js';
 import utilsLogger from './loggers/utilsLogger.js';
 
-// Inserta un player si no existe
+// Insert a player if it does not exist
 export async function ensurePlayerExists(player) {
   utilsLogger.debug({
-    msg: '[ensurePlayerExists] Datos recibidos para insert',
+    msg: '[ensurePlayerExists] Data received for insert',
     player
   });
 
   if (!player || !player.id) {
     utilsLogger.warn({
-      msg: '[ensurePlayerExists] Player inválido, se omite insert',
+      msg: '[ensurePlayerExists] Invalid player, skipping insert',
       player
     });
     return;
@@ -21,29 +21,29 @@ export async function ensurePlayerExists(player) {
       VALUES (?, ?)
     `, [player.id, player.name || player.nickname || null]);
     utilsLogger.debug({
-      msg: '[ensurePlayerExists] Player insertado o ya existente',
+      msg: '[ensurePlayerExists] Player inserted or already exists',
       playerId: player.id,
       nickname: player.name || player.nickname || null
     });
   } catch (error) {
     utilsLogger.error({
-      msg: '[ensurePlayerExists] Error al insertar player',
+      msg: '[ensurePlayerExists] Error inserting player',
       error: error.message,
       player
     });
   }
 }
 
-// Inserta un equipo si no existe
+// Insert a team if it does not exist
 export async function ensureTeamExists(teamId, teamName) {
   utilsLogger.debug({
-    msg: '[ensureTeamExists] Datos recibidos para insert',
+    msg: '[ensureTeamExists] Data received for insert',
     teamId, teamName
   });
 
   if (!teamId) {
     utilsLogger.warn({
-      msg: '[ensureTeamExists] teamId inválido, se omite insert',
+      msg: '[ensureTeamExists] Invalid teamId, skipping insert',
       teamId, teamName
     });
     return;
@@ -54,13 +54,13 @@ export async function ensureTeamExists(teamId, teamName) {
       VALUES (?, ?)
     `, [teamId, teamName || null]);
     utilsLogger.debug({
-      msg: '[ensureTeamExists] Equipo insertado o ya existente',
+      msg: '[ensureTeamExists] Team inserted or already exists',
       teamId,
       teamName: teamName || null
     });
   } catch (error) {
     utilsLogger.error({
-      msg: '[ensureTeamExists] Error al insertar equipo',
+      msg: '[ensureTeamExists] Error inserting team',
       error: error.message,
       teamId, teamName
     });

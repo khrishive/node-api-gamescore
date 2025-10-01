@@ -1,13 +1,15 @@
-import { db } from '../db.js';
-import { getMapBreakdownByTeam } from './mapBreakdownDataProcess.js';
+import { getDbBySport } from "../utils/dbUtils.js";
+import { getMapBreakdownByTeam } from "./mapBreakdownDataProcess.js";
 
-export async function saveOrUpdateMapBreakdown(teamId, competitionId) {
+export async function saveOrUpdateMapBreakdown(teamId, competitionId, sport = "cs2") {
   try {
-    // 1️⃣ Obtener breakdown del equipo
-    const mapData = await getMapBreakdownByTeam(teamId, 100, competitionId);
+    console.log(`Starting saveOrUpdateMapBreakdown for teamId=${teamId}, competitionId=${competitionId}, sport=${sport}`);
+    const db = getDbBySport(sport);
+    // 1️⃣ Get team breakdown
+    const mapData = await getMapBreakdownByTeam(teamId, 100, competitionId, sport);
     const { totalFixtures, breakdown } = mapData;
 
-    // 2️⃣ Verificar si ya existe la combinación teamId + competitionId
+    // 2️⃣ Check if the teamId + competitionId combination already exists
     const [[existing]] = await db.execute(
       `SELECT id FROM team_stats WHERE team_id = ? AND competition_id = ?`,
       [teamId, competitionId]
@@ -16,7 +18,7 @@ export async function saveOrUpdateMapBreakdown(teamId, competitionId) {
     let teamStatsId;
 
     if (existing) {
-      // 🔄 Actualizar
+      // 🔄 Update
       teamStatsId = existing.id;
       await db.execute(
         `UPDATE team_stats 
@@ -25,13 +27,13 @@ export async function saveOrUpdateMapBreakdown(teamId, competitionId) {
         [totalFixtures, teamStatsId]
       );
 
-      // 🔄 Eliminar breakdown viejo para volver a insertar
+      // 🔄 Delete old breakdown to re-insert
       await db.execute(
         `DELETE FROM team_stats_breakdown WHERE team_stats_id = ?`,
         [teamStatsId]
       );
     } else {
-      // ➕ Insertar nuevo
+      // ➕ Insert new
       const [result] = await db.execute(
         `INSERT INTO team_stats (team_id, competition_id, total_fixtures)
          VALUES (?, ?, ?)`,
@@ -40,14 +42,14 @@ export async function saveOrUpdateMapBreakdown(teamId, competitionId) {
       teamStatsId = result.insertId;
     }
 
-    // 3️⃣ Insertar los breakdowns
-    const insertValues = breakdown.map(b => [
+    // 3️⃣ Insert the breakdowns
+    const insertValues = breakdown.map((b) => [
       teamStatsId,
       b.map,
       b.played,
       b.w,
       b.l,
-      parseFloat(b.win_pct.replace('%', '')) // convertir a número
+      parseFloat(b.win_pct.replace("%", "")), // convert to number
     ]);
 
     if (insertValues.length > 0) {
@@ -58,8 +60,10 @@ export async function saveOrUpdateMapBreakdown(teamId, competitionId) {
       );
     }
 
-    console.log(`✅ Map breakdown guardado o actualizado para team ${teamId}, competition ${competitionId}`);
+    console.log(
+      `✅ Map breakdown saved or updated for team ${teamId}, competition ${competitionId}`
+    );
   } catch (err) {
-    console.error('❌ Error guardando/actualizando map breakdown:', err);
+    console.error("❌ Error saving/updating map breakdown:", err);
   }
 }

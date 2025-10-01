@@ -20,13 +20,13 @@ function isValidKillEvent(killEvent, fixtureId, mapId, roundId) {
 
 export async function insertKill(killEvent, fixtureId, mapId, roundId) {
   KillsLogger.debug({
-    msg: '[insertKill] Datos recibidos para insert',
+    msg: '[insertKill] Data received for insert',
     killEvent, fixtureId, mapId, roundId
   });
 
   if (!isValidKillEvent(killEvent, fixtureId, mapId, roundId)) {
     KillsLogger.warn({
-      msg: '[insertKill] Datos incompletos, se omite insert',
+      msg: '[insertKill] Incomplete data, skipping insert',
       killEvent, fixtureId, mapId, roundId
     });
     return;
@@ -54,7 +54,7 @@ export async function insertKill(killEvent, fixtureId, mapId, roundId) {
       throughSmoke, whileBlinded, timestamp
     ]);
     KillsLogger.debug({
-      msg: '[insertKill] Kill insertado',
+      msg: '[insertKill] Kill inserted',
       killId, roundId, mapId, fixtureId,
       killerId: killer.id,
       victimId: victim.id,
@@ -63,7 +63,7 @@ export async function insertKill(killEvent, fixtureId, mapId, roundId) {
     });
   } catch (error) {
     KillsLogger.error({
-      msg: '[insertKill] Error al insertar kill',
+      msg: '[insertKill] Error inserting kill',
       error: error.message,
       killEvent, fixtureId, mapId, roundId
     });

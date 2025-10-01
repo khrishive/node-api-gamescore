@@ -1,22 +1,14 @@
 import axios from 'axios';
-import mysql from 'mysql2/promise';
+import { getDbBySport } from '../utils/dbUtils.js';
 
-// Configuración de la API de Gemini
+// Gemini API Configuration
 const apiKey = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
-// Configuración de MySQL
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-};
-
-// Función para obtener la descripción desde Gemini
+// Function to get the description from Gemini
 async function fetchTournamentDescription(tournamentName) {
     try {
-        console.log(`🔍 Enviando solicitud a Gemini para el torneo: ${tournamentName}`);
+        console.log(`🔍 Sending request to Gemini for the tournament: ${tournamentName}`);
         const response = await axios.post(GEMINI_API_URL, {
             contents: [{
                 parts: [{ text: `Describe briefly the tournament '${tournamentName}'. Return a JSON object with 'description' as key.` }]
@@ -25,7 +17,7 @@ async function fetchTournamentDescription(tournamentName) {
             headers: { "Content-Type": "application/json" }
         });
 
-        console.log(`🔍 Respuesta de Gemini para ${tournamentName}:`, response.data);
+        console.log(`🔍 Response from Gemini for ${tournamentName}:`, response.data);
 
         const responseText = response.data.candidates[0].content.parts[0].text;
         const extractedJson = responseText.match(/```json\n([\s\S]+?)\n```/);
@@ -33,46 +25,51 @@ async function fetchTournamentDescription(tournamentName) {
 
         return jsonData.description || null;
     } catch (error) {
-        console.error(`❌ Error obteniendo datos de Gemini para ${tournamentName}:`, error.message);
+        console.error(`❌ Error getting data from Gemini for ${tournamentName}:`, error.message);
         return null;
     }
 }
 
-// Función principal para actualizar la base de datos
-async function updateTournamentDescriptions() {
+// Main function to update the database
+async function updateTournamentDescriptions(sport = 'cs2') {
+    const db = getDbBySport(sport);
     let remainingTournaments;
 
     do {
-        console.log("🚀 Iniciando la actualización de descripciones...");
-        const connection = await mysql.createConnection(dbConfig);
+        console.log(`🚀 Starting description update for ${sport}...`);
 
         try {
-            // Obtener torneos con descripción NULL
-            const [tournaments] = await connection.execute("SELECT id, name FROM competitions WHERE description IS NULL");
+            // Get tournaments with NULL description
+            const [tournaments] = await db.execute("SELECT id, name FROM competitions WHERE description IS NULL");
             remainingTournaments = tournaments.length;
-            console.log(`🔍 Torneos encontrados: ${remainingTournaments}`);
+            console.log(`🔍 Tournaments found: ${remainingTournaments}`);
+
+            if (remainingTournaments === 0) {
+                console.log('No tournaments to update.');
+                break;
+            }
 
             for (const tournament of tournaments) {
                 const { id, name } = tournament;
                 const description = await fetchTournamentDescription(name);
 
-                // Actualizar la base de datos con la nueva descripción
-                await connection.execute("UPDATE competitions SET description = ? WHERE id = ?", [description, id]);
-                console.log(`✅ Actualizado torneo '${name}' con descripción: ${description || 'NULL'}`);
+                // Update the database with the new description
+                await db.execute("UPDATE competitions SET description = ? WHERE id = ?", [description, id]);
+                console.log(`✅ Updated tournament '${name}' with description: ${description || 'NULL'}`);
 
-                // Pequeño retraso entre solicitudes para evitar bloqueos
+                // Small delay between requests to avoid blocking
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         } catch (error) {
-            console.error('❌ Error al actualizar las descripciones:', error);
-            remainingTournaments = 0; // Salir del bucle en caso de error
-        } finally {
-            await connection.end();
+            console.error('❌ Error updating descriptions:', error);
+            remainingTournaments = 0; // Exit loop in case of error
         }
     } while (remainingTournaments > 0);
 
-    console.log("🏁 Proceso completado.");
+    console.log(`🏁 Process completed for ${sport}.`);
 }
 
-// Ejecutar la función
-updateTournamentDescriptions();
+// Execute the function
+// Get sport from command-line arguments, default to 'cs2'
+const sport = process.argv[2] || 'cs2';
+updateTournamentDescriptions(sport);

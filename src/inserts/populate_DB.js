@@ -5,7 +5,7 @@ import { main } from "./insertTeams.js";
 import { processTeams } from "./insertTeamsAndPlayers.js";
 
 async function runAll() {
-    console.log('🚀 Iniciando población de DB...');
+    console.log('🚀 Starting DB population...');
     await getAndSaveCompetitions();
     await actualizarParticipantes();
     await processFixtures();
@@ -14,8 +14,8 @@ async function runAll() {
 }
 
 runAll()
-    .then(() => console.log('✅ Todos los procesos completados.'))
+    .then(() => console.log('✅ All processes completed.'))
     .catch(err => {
-        console.error('❌ Error en la ejecución:', err);
+        console.error('❌ Execution error:', err);
         process.exit(1);
     });
