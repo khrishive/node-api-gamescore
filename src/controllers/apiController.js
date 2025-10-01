@@ -2,14 +2,14 @@ import axios from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-// Cargar la configuración desde config.json
+// Load configuration from config.json
 const API_URL = process.env.GAME_SCORE_API;
 const API_KEY = process.env.GAME_SCORE_APIKEY;
 
 export const fetchFromApi = async (endpoint, params = {}) => {
     try {
         if (!API_URL || !API_KEY) {
-            throw new Error("API_URL o API_KEY no están definidos en config.json");
+            throw new Error("API_URL or API_KEY are not defined in config.json");
         }
 
         const queryString = new URLSearchParams(params).toString();
@@ -25,7 +25,7 @@ export const fetchFromApi = async (endpoint, params = {}) => {
 
         return response.data;
     } catch (error) {
-        console.error("❌ Error en fetchFromApi:", error.response?.data || error.message);
-        return { error: "Error al obtener datos de la API", details: error.response?.data || error.message };
+        console.error("❌ Error in fetchFromApi:", error.response?.data || error.message);
+        return { error: "Error fetching data from API", details: error.response?.data || error.message };
     }
 };

@@ -1,39 +1,34 @@
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
+import { getDbBySport } from '../utils/dbUtils.js'; // <-- Import your helper
 
 dotenv.config();
 
-const requiredEnv = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME', 'DB_PORT', 'GAME_SCORE_API', 'GAME_SCORE_APIKEY'];
+const requiredEnv = ['GAME_SCORE_API', 'GAME_SCORE_APIKEY'];
 requiredEnv.forEach(name => {
-  if (!process.env[name]) throw new Error(`❌ Falta la variable de entorno ${name}`);
+  if (!process.env[name]) throw new Error(`❌ Missing environment variable ${name}`);
 });
-
-
-const dbConfig = {
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    port: process.env.DB_PORT
-};
 
 const API_URL = `${process.env.GAME_SCORE_API}/fixtures`;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
+// Accept sport as a parameter (default to 'cs2')
+const sport = process.argv[2] || 'cs2';
+
 /**
- * Generar rangos de fechas día por día entre dos fechas.
+ * Generate date ranges day by day between two dates.
  */
 function generateDateRanges(startDate, endDate) {
     const ranges = [];
     let currentDate = new Date(startDate);
 
     while (currentDate <= new Date(endDate)) {
-        const from = currentDate.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-        const to = from; // El mismo día para from y to
+        const from = currentDate.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const to = from; // The same day for from and to
         ranges.push({ from, to });
 
-        // Incrementar en un día
+        // Increment by one day
         currentDate.setDate(currentDate.getDate() + 1);
     }
 
@@ -41,28 +36,28 @@ function generateDateRanges(startDate, endDate) {
 }
 
 /**
- * Llamada a la API para obtener los fixtures de una fecha específica.
+ * API call to get fixtures for a specific date.
  */
-async function fetchFixtures(from, to) {
+async function fetchFixtures(from, to, sport) { // <-- Accept sport
     try {
         const response = await axios.get(API_URL, {
             headers: {
                 Authorization: AUTH_TOKEN,
             },
-            params: { sport: 'cs2', from, to },
+            params: { sport, from, to },
         });
         return response.data.fixtures || [];
     } catch (error) {
-        console.error(`❌ Error al obtener datos de la API para el rango ${from} a ${to}:`, error.message);
+        console.error(`❌ Error getting data from the API for the range ${from} to ${to}:`, error.message);
         return [];
     }
 }
 
 /**
- * Guardar fixtures en la base de datos.
+ * Save fixtures to the database using the correct DB connection for the sport.
  */
-async function saveFixturesToDB(fixtures) {
-    const connection = await mysql.createConnection(dbConfig);
+async function saveFixturesToDB(fixtures, sport) { // <-- Accept sport
+    const db = getDbBySport(sport); // <-- Use the helper to get the correct DB connection
 
     const fixtureQuery = `
         INSERT INTO fixtures (
@@ -91,7 +86,7 @@ async function saveFixturesToDB(fixtures) {
 
     try {
         for (const fixture of fixtures) {
-            await connection.execute(fixtureQuery, [
+            await db.execute(fixtureQuery, [
                 fixture.id,
                 fixture.competition.id,
                 fixture.competition.name,
@@ -110,58 +105,61 @@ async function saveFixturesToDB(fixtures) {
                 fixture.participants[1]?.name,
                 fixture.participants[1]?.score
             ]);
-            console.log(`✅ Fixture guardado: ${fixture.id}`);
+            console.log(`✅ Fixture saved: ${fixture.id}`);
         }
     } catch (error) {
-        console.error('❌ Error al guardar en la base de datos:', error.message);
-    } finally {
-        await connection.end();
+        console.error('❌ Error saving to the database:', error.message);
     }
 }
 
 /**
- * Procesa rangos de fechas, obtiene fixtures y los guarda en la base de datos.
- * @ param {string} [endDate='2025-11-03'] - Fecha de fin para los rangos.
+ * Process date ranges, get fixtures and save them to the database.
  */
-export async function processFixtures() {
-    console.log('🔄 Generando rangos de fechas...');
+export async function processFixtures(sport) { // <-- Accept sport as a parameter
+    console.log('🔄 Generating date ranges...');
 
-    // 📅 Calcula ayer y mañana
+    // 📅 Calculate yesterday and tomorrow
     const now = new Date();
     
     const yesterday = new Date(now);
-    yesterday.setDate(yesterday.getDate() - 1);
-    yesterday.setHours(0, 0, 0, 0); // inicio del día
+    yesterday.setDate(now.getDate() - 1);
+    yesterday.setHours(0, 0, 0, 0); // start of the day
 
     const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(23, 59, 59, 999); // fin del día
+    tomorrow.setDate(now.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999); // end of the day
 
-    // 🗓 Formatea a YYYY-MM-DD
+    // 🗓 Format to YYYY-MM-DD
     const formatDate = (date) => date.toISOString().split('T')[0];
     const fromDate = formatDate(yesterday);
     const toDate = formatDate(tomorrow);
 
-    console.log(`📅 Rango calculado: ${fromDate} → ${toDate}`);
+    console.log(`📅 Calculated range: ${fromDate} → ${toDate}`);
 
-    // 📌 Genera rangos con las fechas calculadas
+    // 📌 Generate ranges with the calculated dates
     const dateRanges = generateDateRanges(fromDate, toDate);
 
     for (const range of dateRanges) {
-        console.log(`🔄 Obteniendo fixtures para el rango: ${range.from} a ${range.to}`);
+        console.log(`🔄 Getting fixtures for the range: ${range.from} to ${range.to}`);
 
-        const fixtures = await fetchFixtures(range.from, range.to);
+        const fixtures = await fetchFixtures(range.from, range.to, sport); // <-- Pass sport
 
         if (fixtures.length > 0) {
-            console.log(`📥 ${fixtures.length} fixtures encontrados, guardando en la base de datos...`);
-            await saveFixturesToDB(fixtures);
+            console.log(`📥 ${fixtures.length} fixtures found, saving to the database...`);
+            await saveFixturesToDB(fixtures, sport); // <-- Pass sport
         } else {
-            console.log(`⚠️ No se encontraron fixtures para la fecha: ${range.from}`);
+            console.log(`⚠️ No fixtures found for the date: ${range.from}`);
         }
     }
 
-    console.log('✅ Proceso completado.');
+    console.log('✅ Process completed.');
 }
 
-
-await processFixtures()
+// If called directly, get sport from CLI
+if (import.meta.url === `file://${process.argv[1]}`) {
+    const sport = process.argv[2] || 'cs2';
+    processFixtures(sport).catch(err => {
+        console.error("❌ Error during direct execution:", err.message);
+        process.exit(1);
+    });
+}

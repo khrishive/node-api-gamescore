@@ -1,10 +1,10 @@
-import { db } from '../db.js'; // Asegúrate de importar tu conexión a la base de datos
+import { db } from '../db.js'; // Make sure to import your database connection
 
 async function updateCompetitionStatus() {
-  const today = Date.now(); // fecha actual en milisegundos
+  const today = Date.now(); // current date in milliseconds
 
   try {
-    // upcoming → todavía no inicia
+    // upcoming → not yet started
     await db.execute(
       `UPDATE competitions 
        SET status = 'upcoming' 
@@ -12,7 +12,7 @@ async function updateCompetitionStatus() {
       [today]
     );
 
-    // ended → ya terminó
+    // ended → already finished
     await db.execute(
       `UPDATE competitions 
        SET status = 'ended' 
@@ -20,7 +20,7 @@ async function updateCompetitionStatus() {
       [today]
     );
 
-    // started → ya inició pero aún no termina
+    // started → already started but not yet finished
     await db.execute(
       `UPDATE competitions 
        SET status = 'started' 
@@ -28,14 +28,14 @@ async function updateCompetitionStatus() {
       [today, today]
     );
 
-    console.log("✅ Status actualizado correctamente.");
+    console.log("✅ Status updated successfully.");
   } catch (error) {
-    console.error("❌ Error al actualizar status:", error.message);
+    console.error("❌ Error updating status:", error.message);
   } finally {
-    // importante: cerrar pool al terminar si se corre como script suelto
+    // important: close pool when finished if run as a loose script
     await db.end();
   }
 }
 
-// Ejecutar
+// Execute
 updateCompetitionStatus();

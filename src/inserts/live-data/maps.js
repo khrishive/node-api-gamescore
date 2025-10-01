@@ -13,13 +13,13 @@ function isValidMapEvent(mapEvent, fixtureId) {
 
 export async function insertMap(mapEvent, fixtureId) {
   mapsLogger.debug({
-    msg: '[insertMap] Datos recibidos para insert',
+    msg: '[insertMap] Data received for insert',
     mapEvent, fixtureId
   });
 
   if (!isValidMapEvent(mapEvent, fixtureId)) {
     mapsLogger.warn({
-      msg: '[insertMap] Datos incompletos, se omite insert',
+      msg: '[insertMap] Incomplete data, skipping insert',
       mapEvent, fixtureId
     });
     return null;
@@ -36,13 +36,13 @@ export async function insertMap(mapEvent, fixtureId) {
       fixtureId, mapNumber, mapName, status
     ]);
     mapsLogger.debug({
-      msg: '[insertMap] Mapa insertado/actualizado',
+      msg: '[insertMap] Map inserted/updated',
       fixtureId, mapNumber, mapName, status, insertId: result.insertId
     });
     return result.insertId;
   } catch (error) {
     mapsLogger.error({
-      msg: '[insertMap] Error al insertar/actualizar mapa',
+      msg: '[insertMap] Error inserting/updating map',
       error: error.message,
       mapEvent, fixtureId
     });

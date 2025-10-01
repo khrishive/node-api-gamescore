@@ -1,48 +1,19 @@
 import dotenv from 'dotenv';
-import mysql from 'mysql2/promise';
 import axios from 'axios';
+import { getDbBySport } from '../utils/dbUtils.js';
 
 dotenv.config();
-
-// Get sport from command line argument, default to 'cs2'
-const sportArg = process.argv[2] || 'cs2';
-const SUPPORTED_SPORTS = ['cs2', 'lol'];
-const SPORT = SUPPORTED_SPORTS.includes(sportArg) ? sportArg : 'cs2';
-
-// Select DB config based on sport
-const dbConfigs = {
-    cs2: {
-        host: process.env.DB_CS2_HOST,
-        user: process.env.DB_CS2_USER,
-        password: process.env.DB_CS2_PASSWORD,
-        database: process.env.DB_CS2_NAME,
-        port: process.env.DB_CS2_PORT || 3306
-    },
-    lol: {
-        host: process.env.DB_LOL_HOST,
-        user: process.env.DB_LOL_USER,
-        password: process.env.DB_LOL_PASSWORD,
-        database: process.env.DB_LOL_NAME,
-        port: process.env.DB_LOL_PORT || 3306
-    }
-};
-
-const dbConfig = dbConfigs[SPORT];
-const db = await mysql.createPool(dbConfig);
 
 const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-async function getFixtureIds() {
-  // 📅 Hoy 00:00:00
+async function getFixtureIds(db) {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  // 📅 Mañana 00:00:00
   const startOfTomorrow = new Date(startOfToday);
   startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
 
-  // 🔢 Convertimos a timestamp en milisegundos
   const startTimestamp = startOfToday.getTime();
   const endTimestamp = startOfTomorrow.getTime();
 
@@ -61,16 +32,13 @@ async function getFixtureIds() {
   return rows.map(row => row.id);
 }
 
-
 async function fetchMapTeamPlayers(fixtureId) {
   try {
-    // 1️⃣ Obtener fixture principal (esto sí es obligatorio)
     const response = await axios.get(`${API_URL}/fixtures/${fixtureId}`, {
       headers: { Authorization: AUTH_TOKEN }
     });
     const fixtureData = response.data;
 
-    // 2️⃣ Intentar obtener pickBan (si falla, seguimos con vacío)
     let pickBanData = { pickBan: [] };
     try {
       const pickBan = await axios.get(`${API_URL}/pickban/${fixtureId}/maps`, {
@@ -79,9 +47,9 @@ async function fetchMapTeamPlayers(fixtureId) {
       pickBanData = pickBan.data;
     } catch (err) {
       if (err.response?.status === 404) {
-        console.warn(`[INFO] Pick/Ban no encontrado para fixture ${fixtureId}, continuando...`);
+        console.warn(`[INFO] Pick/Ban not found for fixture ${fixtureId}, continuing...`);
       } else {
-        console.error(`[ERROR] Pick/Ban para fixture ${fixtureId}:`, err.message);
+        console.error(`[ERROR] Pick/Ban for fixture ${fixtureId}:`, err.message);
       }
     }
 
@@ -89,7 +57,6 @@ async function fetchMapTeamPlayers(fixtureId) {
       return { teamStatsResult: [], teamRoundScores: [] };
     }
 
-    // Crear mapa de picks { mapNameLower: teamId }
     const pickMap = {};
     for (const item of pickBanData.pickBan || []) {
       if (item.pickOrBan === 'pick' && item.teamId) {
@@ -104,7 +71,6 @@ async function fetchMapTeamPlayers(fixtureId) {
       const mapNumber = map.mapNumber;
       const mapName = map.mapName;
 
-      // ---- Stats de jugadores ----
       for (const team of map.teamStats || []) {
         const teamId = team.teamId ?? 0;
 
@@ -132,14 +98,12 @@ async function fetchMapTeamPlayers(fixtureId) {
         }
       }
 
-      // ---- Rondas de equipos ----
       for (const team of map.roundScores || []) {
         const teamId = team.id ?? 0;
         const roundsWon = team.roundsWon ?? 0;
         const half1 = team.halfScores?.[0] ?? 0;
         const half2 = team.halfScores?.[1] ?? 0;
 
-        // Normalizar nombre de mapa para comparar picks
         const normalizeMapName = name => name.toLowerCase().replace(/^de_/, '');
         const mapKey = normalizeMapName(mapName);
         const pickTeamId = pickMap[mapKey] ?? null;
@@ -169,10 +133,8 @@ async function fetchMapTeamPlayers(fixtureId) {
   }
 }
 
-
-async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
+async function insertMapTeamPlayers(db, { teamStatsResult, teamRoundScores }) {
   try {
-    // Insert map_team_players
     if (teamStatsResult.length > 0) {
       const playerQuery = `
         INSERT INTO map_team_players (
@@ -190,10 +152,9 @@ async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
       `;
 
       await db.query(playerQuery, [teamStatsResult]);
-      console.log(`[✓] Insertados ${teamStatsResult.length} registros en map_team_players`);
+      console.log(`[✓] Inserted ${teamStatsResult.length} records in map_team_players`);
     }
 
-    // Insert map_team_round_scores
     if (teamRoundScores.length > 0) {
       const roundQuery = `
         INSERT INTO map_team_round_scores (
@@ -207,25 +168,33 @@ async function insertMapTeamPlayers({ teamStatsResult, teamRoundScores }) {
       `;
 
       await db.query(roundQuery, [teamRoundScores]);
-      console.log(`[✓] Insertados ${teamRoundScores.length} registros en map_team_round_scores`);
+      console.log(`[✓] Inserted ${teamRoundScores.length} records in map_team_round_scores`);
     }
 
   } catch (err) {
-    console.error(`[ERROR INSERT]`, err.message);
+    console.error(`[INSERT ERROR]`, err.message);
   }
 }
 
-async function main() {
-  const fixtureIds = await getFixtureIds();
+export async function processMapTeamPlayers(sport = 'cs2') {
+  const db = getDbBySport(sport);
+  const fixtureIds = await getFixtureIds(db);
+  console.log(`Found ${fixtureIds.length} fixtures for ${sport} to process.`);
 
   for (const fixtureId of fixtureIds) {
-    console.log(`Procesando fixture ${fixtureId}`);
+    console.log(`Processing fixture ${fixtureId}`);
     const data = await fetchMapTeamPlayers(fixtureId);
-    await insertMapTeamPlayers(data);
+    await insertMapTeamPlayers(db, data);
   }
 
-  console.log('✓ Proceso finalizado');
-  process.exit();
+  console.log(`✓ Process finished for ${sport}`);
 }
 
-main();
+// If run directly, execute with CLI arguments
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const sportArg = process.argv[2] || 'cs2';
+  processMapTeamPlayers(sportArg).catch(err => {
+    console.error("Error during direct execution:", err.message);
+    process.exit(1);
+  });
+}

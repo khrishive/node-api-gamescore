@@ -9,17 +9,25 @@ export const getFixtures = async (offset = 0, limit = 100, filters = {}, sport =
   // Flexible date filtering for start_time and end_time only
   if (filters.customRange) {
     const { from, to } = filters.customRange;
-    conditions.push(`start_time BETWEEN ? AND ?`);
-    params.push(from, to);
+    if (from && to) {
+        const fromTimestamp = new Date(from).getTime();
+        const toTimestamp = new Date(`${to}T23:59:59Z`).getTime();
+        conditions.push(`start_time BETWEEN ? AND ?`);
+        params.push(fromTimestamp, toTimestamp);
+    }
   } else if (filters.from && filters.to) {
+    const fromTimestamp = new Date(filters.from).getTime();
+    const toTimestamp = new Date(`${filters.to}T23:59:59Z`).getTime();
     conditions.push(`start_time BETWEEN ? AND ?`);
-    params.push(filters.from, filters.to);
+    params.push(fromTimestamp, toTimestamp);
   } else if (filters.from) {
+    const fromTimestamp = new Date(filters.from).getTime();
     conditions.push(`start_time >= ?`);
-    params.push(filters.from);
+    params.push(fromTimestamp);
   } else if (filters.to) {
+    const toTimestamp = new Date(`${filters.to}T23:59:59Z`).getTime();
     conditions.push(`start_time <= ?`);
-    params.push(filters.to);
+    params.push(toTimestamp);
   }
 
   // Direct filter for end_time if provided

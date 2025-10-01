@@ -41,6 +41,7 @@ const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 const BATCH_SIZE = 50;
+const TOTAL_RECORDS_LIMIT = 100;
 
 // Prompt builder
 const buildPrompt = (name, sport) => {
@@ -147,23 +148,31 @@ export async function updateTournamentDescriptionsGeneralAI() {
   const connection = await mysql.createConnection(dbConfig);
   let batchNumber = 1;
   let firstRecord = true;
+  let processedRecords = 0;
 
   try {
-    while (true) {
+    while (processedRecords < TOTAL_RECORDS_LIMIT) {
       const remaining = await countRemainingTournaments(connection);
       if (remaining === 0) {
         console.log('✅ All tournaments already have a description.');
         break;
       }
 
-      console.log(`📦 Batch #${batchNumber} | Pending tournaments: ${remaining}`);
+      const limit = Math.min(BATCH_SIZE, TOTAL_RECORDS_LIMIT - processedRecords);
+
+      console.log(`📦 Batch #${batchNumber} | Pending tournaments: ${remaining} | Fetching up to ${limit} records.`);
       const [rows] = await connection.execute(
         `SELECT id, name FROM competitions 
           WHERE description IS NULL OR description = 'Waiting for information'
           ORDER BY id ASC 
-          LIMIT ${BATCH_SIZE}
+          LIMIT ${limit}
         `
       );
+
+      if (rows.length === 0) {
+        console.log('No more records found to process.');
+        break;
+      }
 
       for (const { id, name } of rows) {
         console.log(`\n🎯 Processing tournament [${id}] ${name}...`);
@@ -197,10 +206,15 @@ export async function updateTournamentDescriptionsGeneralAI() {
           console.warn(`⚠️ Could not generate description for ${name}`);
         }
 
+        processedRecords++;
         await new Promise(res => setTimeout(res, 3000));
       }
 
       batchNumber++;
+    }
+
+    if (processedRecords >= TOTAL_RECORDS_LIMIT) {
+      console.log(`\n🏁 Reached processing limit of ${TOTAL_RECORDS_LIMIT} records for this run.`);
     }
 
     if (SAVE_TO_FILE) {

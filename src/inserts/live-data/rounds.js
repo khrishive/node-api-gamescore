@@ -9,19 +9,19 @@ function isValidRoundEvent(roundEvent, mapId, fixtureId) {
     typeof roundEvent.winnerId !== 'undefined' &&
     typeof roundEvent.winCondition !== 'undefined' &&
     mapId &&
-    fixtureId // Ahora también valida fixtureId
+    fixtureId // Now also validates fixtureId
   );
 }
 
 export async function insertRound(roundEvent, mapId, fixtureId) {
   roundsLogger.debug({
-    msg: '[insertRound] Datos recibidos para insert',
+    msg: '[insertRound] Data received for insert',
     roundEvent, mapId, fixtureId
   });
 
   if (!isValidRoundEvent(roundEvent, mapId, fixtureId)) {
     roundsLogger.warn({
-      msg: '[insertRound] Datos incompletos, se omite insert',
+      msg: '[insertRound] Incomplete data, skipping insert',
       roundEvent, mapId, fixtureId
     });
     return null;
@@ -37,13 +37,13 @@ export async function insertRound(roundEvent, mapId, fixtureId) {
       fixtureId, mapId, roundNumber, halfNumber, winnerId, winCondition
     ]);
     roundsLogger.debug({
-      msg: '[insertRound] Ronda insertada',
+      msg: '[insertRound] Round inserted',
       fixtureId, mapId, roundNumber, halfNumber, winnerId, winCondition, insertId: result.insertId
     });
     return result.insertId;
   } catch (error) {
     roundsLogger.error({
-      msg: '[insertRound] Error al insertar ronda',
+      msg: '[insertRound] Error inserting round',
       error: error.message,
       roundEvent, mapId, fixtureId
     });
