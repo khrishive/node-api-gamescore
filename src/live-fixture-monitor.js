@@ -13,22 +13,31 @@ const trackedFixtures = new Set(); // Fixture IDs for which WebSocket has alread
 const POLL_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
 
 async function fetchStartedFixtures() {
-  // 👉 Recalculate date and URL in each execution
   const now = new Date();
   const dateStr = now.toISOString().split('T')[0]; // YYYY-MM-DD
-  const API = `${API_URL}/fixtures?status=started&from=${dateStr}&sport=cs2&to=${dateStr}`;
+  const sports = ['cs2', 'lol']; // 🎮 Agregamos los deportes que queremos monitorear
 
   try {
-    const response = await axios.get(API, {
-      headers: {
-        Authorization: `Bearer ${API_KEY}`
-      }
-    });
+    const allFixtures = [];
 
-    const fixtures = response.data.fixtures || [];
-    console.log(`[MONITOR] [${dateStr}] Started fixtures found: ${fixtures.length}`);
+    // 🔁 Hacemos una petición por cada deporte
+    for (const sport of sports) {
+      const API = `${API_URL}/fixtures?status=started&from=${dateStr}&sport=${sport}&to=${dateStr}`;
+      const response = await axios.get(API, {
+        headers: {
+          Authorization: `Bearer ${API_KEY}`
+        }
+      });
 
-    for (const fixture of fixtures) {
+      const fixtures = response.data.fixtures || [];
+      console.log(`[MONITOR] [${dateStr}] Started fixtures found for ${sport}: ${fixtures.length}`);
+      allFixtures.push(...fixtures);
+    }
+
+    console.log(`[MONITOR] Total started fixtures found: ${allFixtures.length}`);
+
+    // 🚀 Procesamos todos los fixtures combinados
+    for (const fixture of allFixtures) {
       const fixtureId = fixture.id;
 
       if (!trackedFixtures.has(fixtureId)) {
