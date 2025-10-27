@@ -122,11 +122,11 @@ async function insertMapTeamPlayers(db, { teamStatsResult }) {
         kills = VALUES(kills),
         deaths = VALUES(deaths),
         assists = VALUES(assists),
-        gold_spent = VALUES(gold_spent),
-        baron_kills = VALUES(baron_kills),
-        dragon_kills = VALUES(dragon_kills),
-        champion_damage = VALUES(champion_damage),
-        towers_destroyed = VALUES(towers_destroyed),
+        goldSpent = VALUES(gold_spent),
+        baronKills = VALUES(baron_kills),
+        dragonKills = VALUES(dragon_kills),
+        championDamage = VALUES(champion_damage),
+        towersDestroyed = VALUES(towers_destroyed),
         side = VALUES(side),
         map_name = VALUES(map_name)
     `;
