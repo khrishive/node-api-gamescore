@@ -111,7 +111,7 @@ async function insertMapTeamPlayers(db, { teamStatsResult }) {
         goldSpent,
         baronKills,
         dragonKills,
-        championKamage,
+        championDamage,
         towersDestroyed
       )
       VALUES ?
