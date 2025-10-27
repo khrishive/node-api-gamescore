@@ -108,11 +108,11 @@ async function insertMapTeamPlayers(db, { teamStatsResult }) {
         kills,
         deaths,
         assists,
-        gold_spent,
-        baron_kills,
-        dragon_kills,
-        champion_damage,
-        towers_destroyed
+        goldSpent,
+        baronKills,
+        dragonKills,
+        championKamage,
+        towersDestroyed
       )
       VALUES ?
       ON DUPLICATE KEY UPDATE
