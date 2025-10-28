@@ -122,14 +122,15 @@ async function insertMapTeamPlayers(db, { teamStatsResult }) {
         kills = VALUES(kills),
         deaths = VALUES(deaths),
         assists = VALUES(assists),
-        goldSpent = VALUES(gold_spent),
-        baronKills = VALUES(baron_kills),
-        dragonKills = VALUES(dragon_kills),
-        championDamage = VALUES(champion_damage),
-        towersDestroyed = VALUES(towers_destroyed),
-        side = VALUES(side),
-        map_name = VALUES(map_name)
+        \`goldSpent\` = VALUES(\`goldSpent\`),
+        \`baronKills\` = VALUES(\`baronKills\`),
+        \`dragonKills\` = VALUES(\`dragonKills\`),
+        \`championDamage\` = VALUES(\`championDamage\`),
+        \`towersDestroyed\` = VALUES(\`towersDestroyed\`),
+        \`side\` = VALUES(\`side\`),
+        \`map_name\` = VALUES(\`map_name\`)
     `;
+
 
     await db.query(playerQuery, [teamStatsResult]);
     console.log(`[✓] Inserted ${teamStatsResult.length} records into map_team_players`);
