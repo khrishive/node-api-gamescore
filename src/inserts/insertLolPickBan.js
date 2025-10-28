@@ -8,157 +8,84 @@ const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 async function getFixtureIds(db) {
-
-  let sportAlias = 'lol';
-
+  const sportAlias = 'lol';
   const [rows] = await db.query(
-    `
-      SELECT id 
-      FROM fixtures 
-      WHERE 
-         sport_alias = ?
-
-    `,
+    `SELECT id FROM fixtures WHERE sport_alias = ?`,
     [sportAlias]
   );
-
   return rows.map(row => row.id);
 }
 
-
-async function fetchMapTeamPlayers(fixtureId) {
+async function fetchPickBanData(fixtureId) {
   try {
     const response = await axios.get(`${API_URL}/pickban/${fixtureId}/hero`, {
-      headers: { Authorization: AUTH_TOKEN }
+      headers: { Authorization: AUTH_TOKEN },
     });
-    const fixtureData = response.data;
 
-    
-   
-
-    if (!fixtureData?.maps || !Array.isArray(fixtureData.maps)) {
-      return { pickBan: []};
+    const data = response.data;
+    if (!data?.pickBan || !Array.isArray(data.pickBan)) {
+      return [];
     }
 
- 
-    const pickBan = [];
+    // Convertimos cada entrada en un array listo para insertar en SQL
+    const pickBan = data.pickBan.map(entry => [
+      fixtureId,
+      entry.mapNumber ?? 0,
+      entry.order ?? 0,
+      entry.teamId ?? 0,
+      entry.heroId ?? 0,
+      entry.type ?? '',
+    ]);
 
-    for (const map of fixtureData.maps) {
-      const mapNumber = map.mapNumber;
-      const mapName = map.mapName ?? 'Unknown';
-
-
-      for (const team of map.teamStats || []) {
-        const teamId = team.teamId ?? 0;
-        const side = team.side;
-
-            for (const player of team.players || []) {
-                
-
-                pickBan.push([
-                    fixtureId,
-                    mapNumber,
-                    mapName,
-                    teamId,
-                    side,
-                    player.playerId,
-                    player.name,
-                    player.cs ?? 0,
-                    player.gold ?? 0,
-                    player.kills ?? 0,
-                    player.deaths ?? 0,
-                    player.assists ?? 0,
-                    player.goldSpent ?? 0,
-                    player.baronKills ?? 0,
-                    player.dragonKills ?? 0,
-                    player.championDamage ?? 0,
-                    player.towersDestroyed ?? 0,
-                ]);
-            }
-        }
-
-      
-    }
-
-    return {
-      pickBan
-    };
-
+    return pickBan;
   } catch (error) {
     console.error(`[ERROR] Fixture ${fixtureId}:`, error.message);
-    return { pickBan: [] };
+    return [];
   }
 }
 
-async function insertMapTeamPlayers(db, { pickBan }) {
+async function insertLolPickBan(db, pickBan) {
   try {
     if (pickBan.length === 0) return;
 
-    const playerQuery = `
-      INSERT INTO map_team_players (
-        fixture_id,
-        map_number,
-        map_name,
-        team_id,
-        side,
-        player_id,
-        player_name,
-        cs,
-        gold,
-        kills,
-        deaths,
-        assists,
-        goldSpent,
-        baronKills,
-        dragonKills,
-        championDamage,
-        towersDestroyed
+    const insertQuery = `
+      INSERT INTO lol_pick_ban (
+        fixture_id, map_number, \`order\`, team_id, hero_id, type
       )
       VALUES ?
       ON DUPLICATE KEY UPDATE
-        player_name = VALUES(player_name),
-        cs = VALUES(cs),
-        gold = VALUES(gold),
-        kills = VALUES(kills),
-        deaths = VALUES(deaths),
-        assists = VALUES(assists),
-        \`goldSpent\` = VALUES(\`goldSpent\`),
-        \`baronKills\` = VALUES(\`baronKills\`),
-        \`dragonKills\` = VALUES(\`dragonKills\`),
-        \`championDamage\` = VALUES(\`championDamage\`),
-        \`towersDestroyed\` = VALUES(\`towersDestroyed\`),
-        \`side\` = VALUES(\`side\`),
-        \`map_name\` = VALUES(\`map_name\`)
+        team_id = VALUES(team_id),
+        hero_id = VALUES(hero_id),
+        type = VALUES(type)
     `;
 
-
-    await db.query(playerQuery, [pickBan]);
-    console.log(`[✓] Inserted ${pickBan.length} records into map_team_players`);
+    await db.query(insertQuery, [pickBan]);
+    console.log(`[✓] Inserted ${pickBan.length} records into lol_pick_ban`);
   } catch (err) {
-    console.error(`[INSERT ERROR]`, err.message);
+    console.error('[INSERT ERROR]', err.message);
   }
 }
 
-
-export async function processMapTeamPlayers(sport = 'cs2') {
+export async function processLolPickBan(sport = 'lol') {
   const db = getDbBySport(sport);
   const fixtureIds = await getFixtureIds(db);
+
   console.log(`Found ${fixtureIds.length} fixtures for ${sport} to process.`);
 
   for (const fixtureId of fixtureIds) {
     console.log(`Processing fixture ${fixtureId}`);
-    const data = await fetchMapTeamPlayers(fixtureId);
-    await insertMapTeamPlayers(db, data);
+    const pickBan = await fetchPickBanData(fixtureId);
+    await insertLolPickBan(db, pickBan);
   }
 
   console.log(`✓ Process finished for ${sport}`);
 }
 
-// If run directly, execute with CLI arguments
+// Ejecutar directamente desde CLI
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const sportArg = process.argv[2] || 'cs2';
-  processMapTeamPlayers(sportArg).catch(err => {
-    console.error("Error during direct execution:", err.message);
+  const sportArg = process.argv[2] || 'lol';
+  processLolPickBan(sportArg).catch(err => {
+    console.error('Error during direct execution:', err.message);
     process.exit(1);
   });
 }
