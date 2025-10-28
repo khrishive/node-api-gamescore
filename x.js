@@ -14,13 +14,12 @@ const db = getDbBySport('lol');
 export async function getMapTeamPlayersByFixture(fixtureId) {
   let connection;
 
-  try {
-    connection = await mysql.createConnection(db);
+  const Query = `
+      SELECT * FROM map_team_players WHERE fixture_id = ?
+    `;
 
-    const [rows] = await connection.query(
-      `SELECT * FROM map_team_players WHERE fixture_id = ?`,
-      [fixtureId]
-    );
+  try {
+    const [rows] = await db.query(Query, [fixtureId]);
 
     return rows; // Devuelve un array de objetos
   } catch (error) {
@@ -32,3 +31,5 @@ export async function getMapTeamPlayersByFixture(fixtureId) {
 }
 
 console.log(getMapTeamPlayersByFixture(950332));
+
+
