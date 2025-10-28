@@ -12,7 +12,7 @@ function renderMapResultsLOL(lolPickBanData, lolFixtureData) {
     lolPickBanData
         .filter(entry => entry.type === 'pick')
         .forEach(entry => {
-            const { map_number, team_id, heroId } = entry;
+            const { map_number, team_id, hero_id } = entry;
 
             if (!mapsData[map_number]) {
                 mapsData[map_number] = { teams: {}, picks: {}, duration: null, winnerId: null };
@@ -22,7 +22,7 @@ function renderMapResultsLOL(lolPickBanData, lolFixtureData) {
                 mapsData[map_number].teams[team_id] = { picks: [], kills: 0, gold: 0 };
             }
 
-            mapsData[map_number].teams[team_id].picks.push(heroId);
+            mapsData[map_number].teams[team_id].picks.push(hero_id);
         });
 
     // 🔹 2. Procesar resultados del mapa
@@ -62,7 +62,8 @@ function renderMapResultsLOL(lolPickBanData, lolFixtureData) {
         mapsData[map_number].winnerId = winner_id;
     });
 
-    console.log(mapsData);
+    console.dir(mapsData, { depth: null });
+
     return mapsData;
 }
 
