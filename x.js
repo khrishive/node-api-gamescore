@@ -1,6 +1,32 @@
-import {getMapBreakdownByTeam} from './src/middleware/mapBreakdownDataProcess.js';
-import { getMatchMapResults } from './src/services/getMatchMapResults.js';
+import {getDbBySport} from './src/utils/dbUtils.js';
+import dotenv from 'dotenv';
 
-const breakdown = await getMatchMapResults(925931);
-//console.table(breakdown);
-console.log(breakdown);
+
+dotenv.config();
+
+const db = getDbBySport('lol');
+
+/**
+ * Obtiene todos los jugadores del mapa asociados a un fixture_id
+ * @param {number} fixtureId - ID del fixture
+ * @returns {Promise<Array<Object>>} - Array de objetos con los datos de map_team_players
+ */
+export async function getMapTeamPlayersByFixture(fixtureId) {
+  let connection;
+
+  try {
+    connection = await mysql.createConnection(db);
+
+    const [rows] = await connection.query(
+      `SELECT * FROM map_team_players WHERE fixture_id = ?`,
+      [fixtureId]
+    );
+
+    return rows; // Devuelve un array de objetos
+  } catch (error) {
+    console.error('❌ Error al obtener datos de map_team_players:', error.message);
+    return [];
+  } finally {
+    if (connection) await connection.end();
+  }
+}
