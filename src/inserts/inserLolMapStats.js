@@ -8,16 +8,13 @@ const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
 async function getFixtureIds(db) {
-
-  let sportAlias = 'lol';
+  const sportAlias = 'lol';
 
   const [rows] = await db.query(
     `
       SELECT id 
       FROM fixtures 
-      WHERE 
-         sport_alias = ?
-
+      WHERE sport_alias = ?
     `,
     [sportAlias]
   );
@@ -25,64 +22,57 @@ async function getFixtureIds(db) {
   return rows.map(row => row.id);
 }
 
-
 async function fetchMapTeamPlayers(fixtureId) {
   try {
     const response = await axios.get(`${API_URL}/fixtures/${fixtureId}`, {
       headers: { Authorization: AUTH_TOKEN }
     });
+
     const fixtureData = response.data;
 
-    
-   
-
     if (!fixtureData?.maps || !Array.isArray(fixtureData.maps)) {
-      return { teamStatsResult: []};
+      return { teamStatsResult: [] };
     }
 
- 
     const teamStatsResult = [];
 
     for (const map of fixtureData.maps) {
-      const mapNumber = map.mapNumber;
+      const mapNumber = map.mapNumber ?? 0;
       const mapName = map.mapName ?? 'Unknown';
-
+      const duration = map.duration ?? 0;
+      const winnerId = map.winnerId ?? null;
 
       for (const team of map.teamStats || []) {
         const teamId = team.teamId ?? 0;
-        const side = team.side;
+        const side = team.side ?? null;
 
-            for (const player of team.players || []) {
-                
-
-                teamStatsResult.push([
-                    fixtureId,
-                    mapNumber,
-                    mapName,
-                    teamId,
-                    side,
-                    player.playerId,
-                    player.name,
-                    player.cs ?? 0,
-                    player.gold ?? 0,
-                    player.kills ?? 0,
-                    player.deaths ?? 0,
-                    player.assists ?? 0,
-                    player.goldSpent ?? 0,
-                    player.baronKills ?? 0,
-                    player.dragonKills ?? 0,
-                    player.championDamage ?? 0,
-                    player.towersDestroyed ?? 0,
-                ]);
-            }
+        for (const player of team.players || []) {
+          teamStatsResult.push([
+            fixtureId,
+            mapNumber,
+            mapName,
+            teamId,
+            player.playerId,
+            player.name ?? 'Unknown',
+            side,
+            player.cs ?? 0,
+            player.gold ?? 0,
+            player.goldSpent ?? 0,
+            player.baronKills ?? 0,
+            player.dragonKills ?? 0,
+            player.championDamage ?? 0,
+            player.towersDestroyed ?? 0,
+            player.kills ?? 0,
+            player.deaths ?? 0,
+            player.assists ?? 0,
+            duration,
+            winnerId
+          ]);
         }
-
-      
+      }
     }
 
-    return {
-      teamStatsResult
-    };
+    return { teamStatsResult };
 
   } catch (error) {
     console.error(`[ERROR] Fixture ${fixtureId}:`, error.message);
@@ -94,53 +84,55 @@ async function insertMapTeamPlayers(db, { teamStatsResult }) {
   try {
     if (teamStatsResult.length === 0) return;
 
-    const playerQuery = `
+    const query = `
       INSERT INTO map_team_players (
         fixture_id,
         map_number,
         map_name,
         team_id,
-        side,
         player_id,
         player_name,
+        side,
         cs,
         gold,
-        kills,
-        deaths,
-        assists,
         goldSpent,
         baronKills,
         dragonKills,
         championDamage,
-        towersDestroyed
+        towersDestroyed,
+        kills,
+        deaths,
+        assists,
+        duration,
+        winner_id
       )
       VALUES ?
       ON DUPLICATE KEY UPDATE
         player_name = VALUES(player_name),
+        side = VALUES(side),
         cs = VALUES(cs),
         gold = VALUES(gold),
+        goldSpent = VALUES(goldSpent),
+        baronKills = VALUES(baronKills),
+        dragonKills = VALUES(dragonKills),
+        championDamage = VALUES(championDamage),
+        towersDestroyed = VALUES(towersDestroyed),
         kills = VALUES(kills),
         deaths = VALUES(deaths),
         assists = VALUES(assists),
-        \`goldSpent\` = VALUES(\`goldSpent\`),
-        \`baronKills\` = VALUES(\`baronKills\`),
-        \`dragonKills\` = VALUES(\`dragonKills\`),
-        \`championDamage\` = VALUES(\`championDamage\`),
-        \`towersDestroyed\` = VALUES(\`towersDestroyed\`),
-        \`side\` = VALUES(\`side\`),
-        \`map_name\` = VALUES(\`map_name\`)
+        duration = VALUES(duration),
+        winner_id = VALUES(winner_id),
+        map_name = VALUES(map_name)
     `;
 
-
-    await db.query(playerQuery, [teamStatsResult]);
+    await db.query(query, [teamStatsResult]);
     console.log(`[✓] Inserted ${teamStatsResult.length} records into map_team_players`);
   } catch (err) {
     console.error(`[INSERT ERROR]`, err.message);
   }
 }
 
-
-export async function processMapTeamPlayers(sport = 'cs2') {
+export async function processMapTeamPlayers(sport = 'lol') {
   const db = getDbBySport(sport);
   const fixtureIds = await getFixtureIds(db);
   console.log(`Found ${fixtureIds.length} fixtures for ${sport} to process.`);
@@ -154,9 +146,9 @@ export async function processMapTeamPlayers(sport = 'cs2') {
   console.log(`✓ Process finished for ${sport}`);
 }
 
-// If run directly, execute with CLI arguments
+// Ejecutar directamente con argumento opcional de deporte
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const sportArg = process.argv[2] || 'cs2';
+  const sportArg = process.argv[2] || 'lol';
   processMapTeamPlayers(sportArg).catch(err => {
     console.error("Error during direct execution:", err.message);
     process.exit(1);
