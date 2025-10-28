@@ -76,4 +76,5 @@ async function main() {
 }
 
 // Ejecutar para probar
-main().then(result => console.log('✅ Resultado final:', result));
+main().then(result => console.dir(result, { depth: null }));
+
