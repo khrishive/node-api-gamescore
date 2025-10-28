@@ -67,14 +67,14 @@ function renderMapResultsLOL(lolPickBanData, lolFixtureData) {
     return mapsData;
 }
 
-async function main() {
-    const mapResultsLol = await getMapResultsLol(950332);
-    const pickBanLol = await getPickBanLol(950332);
+export async function lolMapStats(fixture_id) {
+    const mapResultsLol = await getMapResultsLol(fixture_id);
+    const pickBanLol = await getPickBanLol(fixture_id);
 
     const result = renderMapResultsLOL(pickBanLol, mapResultsLol);
     return result;
 }
 
 // Ejecutar para probar
-main()
+lolMapStats()
 
