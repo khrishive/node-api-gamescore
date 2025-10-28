@@ -77,7 +77,7 @@ export async function lolPickBan(fixture_id) {
     const mapResultsLol = await getMapResultsLol(fixture_id);
     const pickBanLol = await getPickBanLol(fixture_id);
 
-    const result = renderMapResultsLOL(pickBanLol, mapResultsLol);
+    const result = renderPickBanLol(pickBanLol, mapResultsLol);
     return result;
 }
 
