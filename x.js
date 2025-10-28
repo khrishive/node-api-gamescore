@@ -30,3 +30,5 @@ export async function getMapTeamPlayersByFixture(fixtureId) {
     if (connection) await connection.end();
   }
 }
+
+console.log(getMapTeamPlayersByFixture(950332));
