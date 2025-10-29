@@ -46,7 +46,7 @@ export async function getPlayerBuild(fixtureId) {
 }
 
 (async () => {
-  const data = await getPickBanLol(950332);
+  const data = await getPlayerBuild(950332);
   console.log(data);
 })();
 
