@@ -117,10 +117,11 @@ export function renderPlayerBuildsLol(lolPlayerBuild, lolFixtureData, lolPickBan
 
 // 🔹 Controlador principal
 export async function mainPlayerBuild(fixture_id, team1, team2) {
-    const mapResultsLol = await getMapResultsLol(fixture_id);
-    const pickBanLol = await getPickBanLol(fixture_id);
-    const playerBuildLol = await getPlayerBuild(fixture_id);
-    
+    const [mapResultsLol, pickBanLol, playerBuildLol] = await Promise.all([
+        getMapResultsLol(fixture_id),
+        getPickBanLol(fixture_id),
+        getPlayerBuild(fixture_id),
+    ]);
 
     return renderPlayerBuildsLol(playerBuildLol, mapResultsLol, pickBanLol, team1, team2);
 }
