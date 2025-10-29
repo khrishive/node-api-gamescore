@@ -1,6 +1,10 @@
 import { getMapResultsLol, getPickBanLol, getPlayerBuild } from './lolControllers.js';
 
 export function renderPlayerBuildsLol(lolPlayerBuild, lolFixtureData, lolPickBanData, team1, team2) {
+    console.log("🔍 lolPlayerBuild:", Array.isArray(lolPlayerBuild) ? lolPlayerBuild.length : typeof lolPlayerBuild);
+    console.log("🔍 lolFixtureData:", Array.isArray(lolFixtureData) ? lolFixtureData.length : typeof lolFixtureData);
+    console.log("🔍 lolPickBanData:", lolPickBanData ? Object.keys(lolPickBanData) : "undefined");
+
     if (!lolPlayerBuild?.length || !lolFixtureData?.length || !lolPickBanData?.pickBan?.length) {
         console.log('No data available');
         return [];
