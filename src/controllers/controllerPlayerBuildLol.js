@@ -3,9 +3,10 @@ import { getMapResultsLol, getPickBanLol, getPlayerBuild } from './lolController
 export function renderPlayerBuildsLol(lolPlayerBuild, lolFixtureData, lolPickBanData, team1, team2) {
     console.log("🔍 lolPlayerBuild:", Array.isArray(lolPlayerBuild) ? lolPlayerBuild.length : typeof lolPlayerBuild);
     console.log("🔍 lolFixtureData:", Array.isArray(lolFixtureData) ? lolFixtureData.length : typeof lolFixtureData);
-    console.log("🔍 lolPickBanData:", lolPickBanData ? Object.keys(lolPickBanData) : "undefined");
+    console.log("🔍 lolPickBanData:", Array.isArray(lolPickBanData) ? `Array(${lolPickBanData.length})` : typeof lolPickBanData);
 
-    if (!lolPlayerBuild?.length || !lolFixtureData?.length || !lolPickBanData?.pickBan?.length) {
+    // ✅ Ajuste: lolPickBanData es un array directo, no tiene propiedad pickBan
+    if (!lolPlayerBuild?.length || !lolFixtureData?.length || !lolPickBanData?.length) {
         console.log('No data available');
         return [];
     }
@@ -19,16 +20,19 @@ export function renderPlayerBuildsLol(lolPlayerBuild, lolFixtureData, lolPickBan
         const teamsRaw = {};
 
         // Obtener teams por map
-        const teamIds = [...new Set(lolPlayerBuild
-            .filter(p => p.map_number === mapNumber)
-            .map(p => p.team_id))];
+        const teamIds = [...new Set(
+            lolPlayerBuild
+                .filter(p => p.map_number === mapNumber)
+                .map(p => p.team_id)
+        )];
 
         teamIds.forEach(teamId => {
             // Picks y bans
             const teamPicks = [];
             const teamBans = [];
 
-            (lolPickBanData.pickBan || []).forEach(pb => {
+            // ✅ Ajuste: usar directamente lolPickBanData (no .pickBan)
+            (lolPickBanData || []).forEach(pb => {
                 if (pb.mapNumber === mapNumber && pb.teamId === teamId) {
                     if (pb.type === 'pick') teamPicks.push(pb.heroId);
                     else if (pb.type === 'ban') teamBans.push(pb.heroId);
@@ -130,6 +134,7 @@ export async function mainPlayerBuild(fixture_id, team1, team2) {
     return renderPlayerBuildsLol(playerBuildLol, mapResultsLol, pickBanLol, team1, team2);
 }
 
+// 🔹 Ejecución directa para prueba
 (async () => {
   const fixtureId = 950332;
 
