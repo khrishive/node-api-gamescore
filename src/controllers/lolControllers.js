@@ -32,3 +32,17 @@ export async function getPickBanLol(fixtureId) {
   }
 }
 
+export async function getPlayerBuild(fixtureId) {
+  const db = getDbBySport('lol');
+  const query = `SELECT * FROM lol_players_build WHERE fixture_id = ?`;
+
+  try {
+    const [rows] = await db.query(query, [fixtureId]);
+    return rows;
+  } catch (error) {
+    console.error(`❌ Error al obtener lol_pick_ban para fixture ${fixtureId}:`, error.message);
+    return [];
+  }
+}
+
+
