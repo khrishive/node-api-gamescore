@@ -139,8 +139,8 @@ export async function mainPlayerBuild(fixture_id, team1, team2) {
   const fixtureId = 950332;
 
   // Define tus equipos (los ids deben existir en los datos que ya tienes)
-  const team1 = { id: 223728, name: 'Team Blue' };
-  const team2 = { id: 229552, name: 'Team Red' };
+  const team1 = { id: 223728, name: 'Inferno Esports' };
+  const team2 = { id: 229552, name: 'Saving OCE' };
 
   const result = await mainPlayerBuild(fixtureId, team1, team2);
 
