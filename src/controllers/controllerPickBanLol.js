@@ -43,8 +43,7 @@ export function renderPickBanLol(lolPickBanData, lolFixtureData) {
                 barons: 0,
                 dragons: 0,
                 gold: 0,
-                duration,
-                players: []
+                duration
             };
         }
 
@@ -57,7 +56,6 @@ export function renderPickBanLol(lolPickBanData, lolFixtureData) {
         teamStats.barons += playerData.baronKills ?? 0;
         teamStats.dragons += playerData.dragonKills ?? 0;
         teamStats.gold += playerData.gold ?? 0;
-        teamStats.players.push(playerData);
     }
 
     // 🔹 Ordenar mapas por número (ascendente)
