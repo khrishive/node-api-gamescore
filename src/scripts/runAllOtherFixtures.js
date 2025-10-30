@@ -13,19 +13,31 @@ async function runAllOtherFixtures() {
   let failedCount = 0;
   const failedDatabases = [];
 
+  // 👇 Aquí guardaremos los IDs procesados por cada deporte
+  const allProcessedFixtures = {};
+
   for (const sport of sports) {
     console.log(`--- Processing sport: ${sport} ---`);
     try {
-      await processFixtures(sport);
+      const processedIds = await processFixtures(sport); // 👈 Guardamos el resultado aquí
+      allProcessedFixtures[sport] = processedIds; // lo guardamos por deporte
+
       executedCount++;
       executedDatabases.push(sport);
-      console.log(`--- Finished processing sport: ${sport} ---`);
+      console.log(`--- Finished processing sport: ${sport}, ${processedIds.length} fixtures processed ---`);
     } catch (error) {
       failedCount++;
       failedDatabases.push(sport);
       console.error(`--- Error processing ${sport}:`, error.message);
     }
   }
+
+  // ✅ Ahora puedes usar `allProcessedFixtures` para otra función
+  console.log("\n📦 All processed fixture IDs by sport:");
+  console.log(allProcessedFixtures);
+
+  // 👉 Ejemplo: pasar los IDs a otra función
+  await nextStep(allProcessedFixtures);
 
   // Final summary
   console.log(`
@@ -35,6 +47,17 @@ async function runAllOtherFixtures() {
     console.log(`❌ Failed in ${failedCount} database(s): ${failedDatabases.join(', ')}`);
   }
   console.log("🎉 End of runAllOtherFixtures script.");
+}
+
+/**
+ * 🔁 Ejemplo de función que recibe los IDs procesados
+ */
+async function nextStep(allProcessedFixtures) {
+  for (const [sport, fixtureIds] of Object.entries(allProcessedFixtures)) {
+    console.log(`⚙️ ${sport}: received ${fixtureIds.length} processed fixture IDs`);
+    // Aquí puedes hacer lo que necesites con esos IDs
+    // Por ejemplo, actualizar estadísticas, llamar otra API, etc.
+  }
 }
 
 runAllOtherFixtures().catch((error) => {
