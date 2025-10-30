@@ -66,16 +66,40 @@ async function insertLolPickBan(db, pickBan) {
   }
 }
 
-export async function processLolPickBan(sport = 'lol') {
+export async function processLolPickBan(sport = 'lol', data) {
   const db = getDbBySport(sport);
-  const fixtureIds = await getFixtureIds(db);
+  let fixtureIds = [];
+
+ // Si recibimos un objeto con varios deportes
+  if (data && typeof data === 'object') {
+    // Extraemos solo los IDs del deporte actual (por defecto 'lol')
+    fixtureIds = Array.isArray(data[sport]) ? data[sport] : [];
+  } else if (Array.isArray(data)) {
+    // En caso de que directamente pasen un arreglo
+    fixtureIds = data;
+  } else {
+    // Si no se pasa nada, tomamos los IDs desde la BD
+    fixtureIds = await getFixtureIds(db);
+  }
+
+  if (!fixtureIds.length) {
+    console.log(`⚠️ No fixture IDs found for ${sport}. Skipping.`);
+    return;
+  }
 
   console.log(`Found ${fixtureIds.length} fixtures for ${sport} to process.`);
 
-  for (const fixtureId of fixtureIds) {
-    console.log(`Processing fixture ${fixtureId}`);
-    const pickBan = await fetchPickBanData(fixtureId);
-    await insertLolPickBan(db, pickBan);
+
+
+    for (const fixtureId of fixtureIds) {
+    console.log(`⚙️ Processing fixture ${fixtureId} (${sport})...`);
+    try {
+      const mapData = await fetchPickBanData(fixtureId);
+      await insertLolPickBan(db, mapData);
+      console.log(`✅ Map team players inserted for fixture ${fixtureId}`);
+    } catch (err) {
+      console.error(`❌ Error processing fixture ${fixtureId}:`, err.message);
+    }
   }
 
   console.log(`✓ Process finished for ${sport}`);
