@@ -96,7 +96,7 @@ export async function processLolPickBan(sport = 'lol', data) {
     try {
       const mapData = await fetchPickBanData(fixtureId);
       await insertLolPickBan(db, mapData);
-      console.log(`✅ Map team players inserted for fixture ${fixtureId}`);
+      console.log(`✅ Players build inserted for fixture ${fixtureId}`);
     } catch (err) {
       console.error(`❌ Error processing fixture ${fixtureId}:`, err.message);
     }
