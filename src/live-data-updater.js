@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import axios from 'axios';
-import updateFixtureFields from '../inserts/insertUpdatesOnLiveFixturesScores.js';
+import {updateFixtureFields} from '../inserts/insertUpdatesOnLiveFixturesScores.js';
 
 dotenv.config();
 
