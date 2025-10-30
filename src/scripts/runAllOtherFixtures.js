@@ -1,6 +1,8 @@
 import { processFixtures } from '../inserts/insertOnlyOtherFixtures.js';
 import { dbCS2, dbLOL } from "../db.js";
 import {processMapTeamPlayers} from '../inserts/inserLolMapStats.js';
+import {processLolPickBan} from '../inserts/insertLolPickBan.js';
+import {processLolPlayersBuild} from '../inserts/inserLolPlayersBuild.js';
 
 // Dynamically get sports from db.js exports
 const dbConnections = { cs2: dbCS2, lol: dbLOL };
@@ -58,12 +60,32 @@ async function nextStep(allProcessedFixtures) {
   if (allProcessedFixtures.lol && allProcessedFixtures.lol.length > 0) {
     console.log(`🎯 Starting map/team player processing for LOL (${allProcessedFixtures.lol.length} fixtures)...`);
 
+    // inserting map team players
     try {
       await processMapTeamPlayers('lol', allProcessedFixtures);
       console.log('✅ Map/team player processing for LOL completed.');
     } catch (err) {
       console.error('❌ Error processing LOL map/team players:', err.message);
     }
+
+    // inserting pick/ban data
+    try {
+      await processLolPickBan('lol', allProcessedFixtures);
+      console.log('✅ Map/team player processing for LOL completed.');
+    } catch (err) {
+      console.error('❌ Error processing LOL map/team players:', err.message);
+    }
+
+    //inserting players build data
+    try {
+      await processLolPlayersBuild('lol', allProcessedFixtures);
+      console.log('✅ Players build processing for LOL completed.');
+    } catch (err) {
+      console.error('❌ Error processing LOL players build:', err.message);
+    }
+
+
+
   } else {
     console.log('⚠️ No LOL fixture IDs found to process.');
   }
