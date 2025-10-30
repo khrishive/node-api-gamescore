@@ -1,5 +1,6 @@
 import { processFixtures } from '../inserts/insertOnlyOtherFixtures.js';
 import { dbCS2, dbLOL } from "../db.js";
+import {processMapTeamPlayers} from '../inserts/inserLolMapStats.js';
 
 // Dynamically get sports from db.js exports
 const dbConnections = { cs2: dbCS2, lol: dbLOL };
@@ -53,12 +54,21 @@ async function runAllOtherFixtures() {
  * 🔁 Ejemplo de función que recibe los IDs procesados
  */
 async function nextStep(allProcessedFixtures) {
-  for (const [sport, fixtureIds] of Object.entries(allProcessedFixtures)) {
-    console.log(`⚙️ ${sport}: received ${fixtureIds.length} processed fixture IDs`);
-    // Aquí puedes hacer lo que necesites con esos IDs
-    // Por ejemplo, actualizar estadísticas, llamar otra API, etc.
+  // Procesamos solo 'lol' una vez
+  if (allProcessedFixtures.lol && allProcessedFixtures.lol.length > 0) {
+    console.log(`🎯 Starting map/team player processing for LOL (${allProcessedFixtures.lol.length} fixtures)...`);
+
+    try {
+      await processMapTeamPlayers('lol', allProcessedFixtures);
+      console.log('✅ Map/team player processing for LOL completed.');
+    } catch (err) {
+      console.error('❌ Error processing LOL map/team players:', err.message);
+    }
+  } else {
+    console.log('⚠️ No LOL fixture IDs found to process.');
   }
 }
+
 
 runAllOtherFixtures().catch((error) => {
   console.error("\n❌ A global error occurred:", error.message);
