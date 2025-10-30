@@ -1,6 +1,7 @@
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import axios from 'axios';
+import updateFixtureFields from '../inserts/insertUpdatesOnLiveFixturesScores.js';
 
 dotenv.config();
 
@@ -57,6 +58,16 @@ export function connectWebSocket(fixture_id) {
           external_id: fixtureId,
           status: 'Started'
         };
+
+        
+        // --- Send to DB ---
+
+        try {
+          const res = await updateFixtureFields( 'cs2' , payload)
+          console.log('[UPDATE ON DB] Response:', res.data);
+        } catch (err) {
+          console.error('[UPDATE ON DB] Error sending:', err.message);
+        }
 
         // --- Send to WP DEV ---
         try {
@@ -126,6 +137,15 @@ export function connectWebSocket(fixture_id) {
           status: 'Ended'
         };
 
+        // --- Send to DB ---
+
+        try {
+          const res = await updateFixtureFields( 'cs2' , payload)
+          console.log('[UPDATE ON DB] Response:', res.data);
+        } catch (err) {
+          console.error('[UPDATE ON DB] Error sending:', err.message);
+        }
+
         // --- Send to WP DEV ---
         try {
           const res = await axios.post(WP_DEV_URL, payload, {
@@ -191,6 +211,22 @@ export function connectWebSocket(fixture_id) {
         const scores = message.payload.scores;
 
         console.log('[WebSocket] score_changed event detected:', { fixtureId, scores });
+
+
+        // --- Send to DB ---
+
+        try {
+          const res = await updateFixtureFields( 'cs2' , {
+            external_id: fixtureId,
+            participants0_id: scores[0]?.id || null,
+            participants0_score: scores[0]?.score ?? null,
+            participants1_id: scores[1]?.id || null,
+            participants1_score: scores[1]?.score ?? null
+          })
+          console.log('[UPDATE ON DB] Response:', res.data);
+        } catch (err) {
+          console.error('[UPDATE ON DB] Error sending:', err.message);
+        }
 
         // --- Send to WP DEV ---
         try {
