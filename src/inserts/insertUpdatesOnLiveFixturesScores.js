@@ -25,7 +25,7 @@ export async function updateFixtureFields(game, requestBody) {
         participants1_id,
         sport_alias
       FROM fixtures 
-      WHERE external_id = ? 
+      WHERE id = ? 
       LIMIT 1
     `,
     [external_id]
