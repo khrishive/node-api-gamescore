@@ -1,6 +1,6 @@
 import axios from 'axios';
 import dotenv from 'dotenv';
-import { dbCS2, dbLOL } from './db.js';
+import { dbCS2, dbLOL } from '../db.js';
 
 dotenv.config();
 
