@@ -117,3 +117,5 @@ export async function syncAllParticipants() {
 
     console.log('\n✅ Sincronización de participants finalizada');
 }
+
+syncAllParticipants()
