@@ -1,3 +1,5 @@
+// node-api-gamescore/src/inserts/csMatchEventsCopy.js
+
 import mysql from 'mysql2/promise';
 import axios from 'axios';
 import dotenv from 'dotenv';
