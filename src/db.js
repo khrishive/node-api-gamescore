@@ -25,6 +25,7 @@ const dbConfigLOL = {
 
 export const dbCS2 = mysql.createPool({
     ...dbConfigCS2,
+    charset: 'utf8mb4',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
@@ -32,6 +33,7 @@ export const dbCS2 = mysql.createPool({
 
 export const dbLOL = mysql.createPool({
     ...dbConfigLOL,
+    charset: 'utf8mb4',
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
