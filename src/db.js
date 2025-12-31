@@ -23,6 +23,15 @@ const dbConfigLOL = {
     port: process.env.DB_LOL_PORT || 3306
 };
 
+// DOTA2 DB config
+const dbConfigDOTA2 = {
+    host: process.env.DB_DOTA2_HOST,
+    user: process.env.DB_DOTA2_USER,
+    password: process.env.DB_DOTA2_PASSWORD,
+    database: process.env.DB_DOTA2_NAME,
+    port: process.env.DB_DOTA2_PORT || 3306
+};
+
 export const dbCS2 = mysql.createPool({
     ...dbConfigCS2,
     charset: 'utf8mb4',
@@ -38,3 +47,12 @@ export const dbLOL = mysql.createPool({
     connectionLimit: 10,
     queueLimit: 0
 });
+
+export const dbDOTA2 = mysql.createPool({
+    ...dbConfigDOTA2,
+    charset: 'utf8mb4',
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
