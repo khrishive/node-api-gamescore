@@ -5,7 +5,7 @@ import { dbCS2, dbLOL, dbDOTA2 } from '../db.js';
 const DBS = {
     cs2: dbCS2,
     lol: dbLOL,
-    dota2: dbDOTA2,
+    //dota2: dbDOTA2,
 };
 
 /**
@@ -48,7 +48,7 @@ export const getTeams = async ({ sport }) => {
     const results = await Promise.all([
         getTeamsFromDb(dbCS2),
         getTeamsFromDb(dbLOL),
-        getTeamsFromDb(dbDOTA2),
+        //getTeamsFromDb(dbDOTA2),
     ]);
 
     // Unificamos todo en un solo array
