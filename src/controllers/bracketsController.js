@@ -106,6 +106,9 @@ export const getProcessedTournamentData = async (
 
         // Obtener participantes y fixtures del stage
         try {
+          console.log(
+            `🔍 Fetching data for stage ${stageId} (${stageName})...`
+          );
           const [stageParticipantsData, stageFixturesData] = await Promise.all([
             fetchFromApi(`competitions/stage/${stageId}/participants`),
             fetchFromApi(`competitions/stage/${stageId}/stagefixtures`),
@@ -116,6 +119,12 @@ export const getProcessedTournamentData = async (
 
           const stageFixtures = stageFixturesData?.stageFixtures || [];
           result.stageFixtures[stageId] = stageFixtures;
+
+          console.log(
+            `   ✅ Stage ${stageId}: ${stageFixtures.length} fixtures, ${
+              result.stageParticipants[stageId]?.length || 0
+            } participants`
+          );
 
           // Obtener detalles completos de cada fixture del stage
           const fixtureIds = stageFixtures
@@ -195,8 +204,18 @@ export const getProcessedTournamentData = async (
           result.stagesData[stageId].detectedType = detectedStageType;
           result.stagesData[stageId].fullFixtures = fullStageFixtures;
         } catch (error) {
-          console.error(`❌ Error processing stage ${stageId}:`, error);
-          // Continuar con otros stages
+          console.error(
+            `❌ Error processing stage ${stageId} (${stageName}):`,
+            error
+          );
+          console.error(`   Error message:`, error.message);
+          if (error.stack) {
+            console.error(`   Stack trace:`, error.stack);
+          }
+          // Continuar con otros stages - pero al menos tenemos el stage básico creado
+          console.log(
+            `   ⚠️ Stage ${stageId} will have no processedData due to error`
+          );
         }
       }
     }
