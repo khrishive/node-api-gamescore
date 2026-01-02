@@ -74,10 +74,16 @@ export const getProcessedTournamentData = async (
 
     // Procesar cada stage
     if (result.stages && Array.isArray(result.stages)) {
+      console.log(`📊 Processing ${result.stages.length} stages...`);
       for (const stage of result.stages) {
         const stageId = stage.id;
         const stageType = stage.type || "Unknown";
         const stageName = stage.name || `Stage ${stageId}`;
+
+        if (!stageId) {
+          console.error(`⚠️ Stage without ID:`, stage);
+          continue;
+        }
 
         // Detectar si es Swiss desde el tipo
         const isSwissFromAPI =
@@ -93,6 +99,10 @@ export const getProcessedTournamentData = async (
             stageType.toLowerCase().includes("playoff") ||
             stageType.toLowerCase().includes("knockout"),
         };
+
+        console.log(
+          `✅ Created stagesData[${stageId}] for stage: ${stageName}`
+        );
 
         // Obtener participantes y fixtures del stage
         try {
@@ -214,6 +224,20 @@ export const getProcessedTournamentData = async (
 
     console.log(
       `✅ Tournament data collection complete for ID: ${tournamentId}`
+    );
+    console.log(`📊 Final result summary:`);
+    console.log(`   - stages: ${result.stages?.length || 0}`);
+    console.log(
+      `   - stagesData keys: ${Object.keys(result.stagesData).length}`
+    );
+    console.log(
+      `   - stagesData keys: [${Object.keys(result.stagesData).join(", ")}]`
+    );
+    console.log(
+      `   - competitionFixtures: ${result.competitionFixtures?.length || 0}`
+    );
+    console.log(
+      `   - allFixtures: ${result.processedData?.allFixtures?.length || 0}`
     );
     return result;
   } catch (error) {
