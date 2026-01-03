@@ -36,6 +36,10 @@ export const getProcessedTournamentData = async (
       stagesData: {},
       stageFixtures: {},
       stageParticipants: {},
+      debug: {
+        stageErrors: {},
+        stageFetchInfo: {},
+      },
     };
 
     // Indexar participantes por ID
@@ -109,10 +113,40 @@ export const getProcessedTournamentData = async (
           console.log(
             `🔍 Fetching data for stage ${stageId} (${stageName})...`
           );
+
+          // Guardar información de debugging
+          result.debug.stageFetchInfo[stageId] = {
+            stageId,
+            stageName,
+            fetching: true,
+            participantsEndpoint: `competitions/stage/${stageId}/participants`,
+            fixturesEndpoint: `competitions/stage/${stageId}/stagefixtures`,
+          };
+
           const [stageParticipantsData, stageFixturesData] = await Promise.all([
             fetchFromApi(`competitions/stage/${stageId}/participants`),
             fetchFromApi(`competitions/stage/${stageId}/stagefixtures`),
           ]);
+
+          // Guardar información sobre las respuestas
+          result.debug.stageFetchInfo[stageId].participantsResponse = {
+            hasData: !!stageParticipantsData,
+            hasError: !!stageParticipantsData?.error,
+            keys: stageParticipantsData
+              ? Object.keys(stageParticipantsData)
+              : [],
+            participantsCount: stageParticipantsData?.participants?.length || 0,
+          };
+
+          result.debug.stageFetchInfo[stageId].fixturesResponse = {
+            hasData: !!stageFixturesData,
+            hasError: !!stageFixturesData?.error,
+            keys: stageFixturesData ? Object.keys(stageFixturesData) : [],
+            stageFixturesCount: stageFixturesData?.stageFixtures?.length || 0,
+            rawData: stageFixturesData
+              ? JSON.stringify(stageFixturesData).substring(0, 200)
+              : "null",
+          };
 
           result.stageParticipants[stageId] =
             stageParticipantsData?.participants || [];
@@ -120,11 +154,25 @@ export const getProcessedTournamentData = async (
           const stageFixtures = stageFixturesData?.stageFixtures || [];
           result.stageFixtures[stageId] = stageFixtures;
 
+          result.debug.stageFetchInfo[stageId].fetching = false;
+          result.debug.stageFetchInfo[stageId].success = true;
+          result.debug.stageFetchInfo[stageId].fixturesCount =
+            stageFixtures.length;
+          result.debug.stageFetchInfo[stageId].participantsCount =
+            result.stageParticipants[stageId]?.length || 0;
+
           console.log(
             `   ✅ Stage ${stageId}: ${stageFixtures.length} fixtures, ${
               result.stageParticipants[stageId]?.length || 0
             } participants`
           );
+
+          if (stageFixtures.length === 0) {
+            console.log(
+              `   ⚠️ Stage ${stageId} has NO fixtures - stageFixturesData:`,
+              stageFixturesData ? Object.keys(stageFixturesData) : "null"
+            );
+          }
 
           // Obtener detalles completos de cada fixture del stage
           const fixtureIds = stageFixtures
@@ -212,6 +260,27 @@ export const getProcessedTournamentData = async (
           if (error.stack) {
             console.error(`   Stack trace:`, error.stack);
           }
+
+          // Guardar información del error en la respuesta
+          result.debug.stageErrors[stageId] = {
+            stageId,
+            stageName,
+            error: error.message,
+            stack: error.stack?.substring(0, 500) || "No stack trace",
+            timestamp: new Date().toISOString(),
+          };
+
+          if (result.debug.stageFetchInfo[stageId]) {
+            result.debug.stageFetchInfo[stageId].fetching = false;
+            result.debug.stageFetchInfo[stageId].success = false;
+            result.debug.stageFetchInfo[stageId].error = error.message;
+          }
+
+          // Asegurar que stageFixtures existe incluso si hay error
+          if (!result.stageFixtures[stageId]) {
+            result.stageFixtures[stageId] = [];
+          }
+
           // Continuar con otros stages - pero al menos tenemos el stage básico creado
           console.log(
             `   ⚠️ Stage ${stageId} will have no processedData due to error`
@@ -253,11 +322,33 @@ export const getProcessedTournamentData = async (
       `   - stagesData keys: [${Object.keys(result.stagesData).join(", ")}]`
     );
     console.log(
+      `   - stageFixtures keys: ${Object.keys(result.stageFixtures).length}`
+    );
+    console.log(
+      `   - stageFixtures keys: [${Object.keys(result.stageFixtures).join(
+        ", "
+      )}]`
+    );
+    if (Object.keys(result.stageFixtures).length > 0) {
+      const firstStageId = Object.keys(result.stageFixtures)[0];
+      const firstStageFixtures = result.stageFixtures[firstStageId];
+      console.log(
+        `   - stageFixtures[${firstStageId}]: ${
+          Array.isArray(firstStageFixtures) ? firstStageFixtures.length : 0
+        } fixtures`
+      );
+    } else {
+      console.log(
+        `   ⚠️ stageFixtures is EMPTY - no fixtures were fetched for any stage`
+      );
+    }
+    console.log(
       `   - competitionFixtures: ${result.competitionFixtures?.length || 0}`
     );
     console.log(
       `   - allFixtures: ${result.processedData?.allFixtures?.length || 0}`
     );
+    console.log(`   - Result keys: [${Object.keys(result).join(", ")}]`);
     return result;
   } catch (error) {
     console.error("❌ Error getting processed tournament data:", error);
