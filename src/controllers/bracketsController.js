@@ -349,6 +349,17 @@ export const getProcessedTournamentData = async (
       `   - allFixtures: ${result.processedData?.allFixtures?.length || 0}`
     );
     console.log(`   - Result keys: [${Object.keys(result).join(", ")}]`);
+    console.log(`   - debug exists: ${!!result.debug}`);
+    console.log(
+      `   - debug.stageFetchInfo keys: [${Object.keys(
+        result.debug?.stageFetchInfo || {}
+      ).join(", ")}]`
+    );
+    console.log(
+      `   - debug.stageErrors keys: [${Object.keys(
+        result.debug?.stageErrors || {}
+      ).join(", ")}]`
+    );
     return result;
   } catch (error) {
     console.error("❌ Error getting processed tournament data:", error);
