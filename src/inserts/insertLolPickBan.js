@@ -1,3 +1,5 @@
+// src/inserts/insertLolPickBan.js
+
 import dotenv from 'dotenv';
 import axios from 'axios';
 import { getDbBySport } from '../utils/dbUtils.js';
@@ -7,28 +9,34 @@ dotenv.config();
 const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-async function getFixtureIds(db) {
-  const sportAlias = 'lol';
+const PICK_BAN_TABLE_BY_SPORT = {
+  lol: 'lol_pick_ban',
+  dota2: 'dota2_pick_ban',
+};
+
+
+/**
+ * Obtiene fixture IDs por deporte
+ */
+async function getFixtureIds(db, sport) {
   const [rows] = await db.query(
     `SELECT id FROM fixtures WHERE sport_alias = ?`,
-    [sportAlias]
+    [sport]
   );
   return rows.map(row => row.id);
 }
 
 async function fetchPickBanData(fixtureId) {
   try {
-    const response = await axios.get(`${API_URL}/pickban/${fixtureId}/hero`, {
-      headers: { Authorization: AUTH_TOKEN },
-    });
+    const response = await axios.get(
+      `${API_URL}/pickban/${fixtureId}/hero`,
+      { headers: { Authorization: AUTH_TOKEN } }
+    );
 
     const data = response.data;
-    if (!data?.pickBan || !Array.isArray(data.pickBan)) {
-      return [];
-    }
+    if (!Array.isArray(data?.pickBan)) return [];
 
-    // Convertimos cada entrada en un array listo para insertar en SQL
-    const pickBan = data.pickBan.map(entry => [
+    return data.pickBan.map(entry => [
       fixtureId,
       entry.mapNumber ?? 0,
       entry.order ?? 0,
@@ -36,80 +44,64 @@ async function fetchPickBanData(fixtureId) {
       entry.heroId ?? 0,
       entry.type ?? '',
     ]);
-
-    return pickBan;
   } catch (error) {
     console.error(`[ERROR] Fixture ${fixtureId}:`, error.message);
     return [];
   }
 }
 
-async function insertLolPickBan(db, pickBan) {
-  try {
-    if (pickBan.length === 0) return;
+async function insertPickBan(db, pickBan, sport) {
+  if (!pickBan.length) return;
 
-    const insertQuery = `
-      INSERT INTO lol_pick_ban (
-        fixture_id, map_number, \`order\`, team_id, hero_id, type
-      )
-      VALUES ?
-      ON DUPLICATE KEY UPDATE
-        team_id = VALUES(team_id),
-        hero_id = VALUES(hero_id),
-        type = VALUES(type)
-    `;
+  const table = PICK_BAN_TABLE_BY_SPORT[sport];
 
-    await db.query(insertQuery, [pickBan]);
-    console.log(`[✓] Inserted ${pickBan.length} records into lol_pick_ban`);
-  } catch (err) {
-    console.error('[INSERT ERROR]', err.message);
+  if (!table) {
+    throw new Error(`Pick/Ban not supported for sport: ${sport}`);
   }
+
+  const query = `
+    INSERT INTO ${table} (
+      fixture_id, map_number, \`order\`, team_id, hero_id, type
+    )
+    VALUES ?
+    ON DUPLICATE KEY UPDATE
+      team_id = VALUES(team_id),
+      hero_id = VALUES(hero_id),
+      type = VALUES(type)
+  `;
+
+  await db.query(query, [pickBan]);
 }
+
 
 export async function processLolPickBan(sport = 'lol', data) {
   const db = getDbBySport(sport);
   let fixtureIds = [];
 
- // Si recibimos un objeto con varios deportes
   if (data && typeof data === 'object') {
-    // Extraemos solo los IDs del deporte actual (por defecto 'lol')
     fixtureIds = Array.isArray(data[sport]) ? data[sport] : [];
   } else if (Array.isArray(data)) {
-    // En caso de que directamente pasen un arreglo
     fixtureIds = data;
   } else {
-    // Si no se pasa nada, tomamos los IDs desde la BD
-    fixtureIds = await getFixtureIds(db);
+    fixtureIds = await getFixtureIds(db, sport);
   }
 
   if (!fixtureIds.length) {
-    console.log(`⚠️ No fixture IDs found for ${sport}. Skipping.`);
+    console.log(`⚠️ No fixture IDs for ${sport}. Pick/Ban skipped.`);
     return;
   }
 
-  console.log(`Found ${fixtureIds.length} fixtures for ${sport} to process.`);
+  console.log(`🎯 Pick/Ban processing ${fixtureIds.length} fixtures (${sport.toUpperCase()})`);
 
-
-
-    for (const fixtureId of fixtureIds) {
-    console.log(`⚙️ Processing fixture ${fixtureId} (${sport})...`);
+  for (const fixtureId of fixtureIds) {
     try {
-      const mapData = await fetchPickBanData(fixtureId);
-      await insertLolPickBan(db, mapData);
-      console.log(`✅ Players build inserted for fixture ${fixtureId}`);
+      const pickBan = await fetchPickBanData(fixtureId);
+      await insertPickBan(db, pickBan, sport);
     } catch (err) {
-      console.error(`❌ Error processing fixture ${fixtureId}:`, err.message);
+      console.error(`❌ Pick/Ban failed for fixture ${fixtureId}:`, err.message);
     }
   }
 
-  console.log(`✓ Process finished for ${sport}`);
+  console.log(`✓ Pick/Ban finished for ${sport.toUpperCase()}`);
 }
 
-// Ejecutar directamente desde CLI
-if (import.meta.url === `file://${process.argv[1]}`) {
-  const sportArg = process.argv[2] || 'lol';
-  processLolPickBan(sportArg).catch(err => {
-    console.error('Error during direct execution:', err.message);
-    process.exit(1);
-  });
-}
