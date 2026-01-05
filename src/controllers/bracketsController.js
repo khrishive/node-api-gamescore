@@ -22,7 +22,7 @@ export const getProcessedTournamentData = async (
         fetchFromApi(`competitions/${tournamentId}`),
         fetchFromApi(`competitions/${tournamentId}/participants`),
         fetchFromApi(`competitions/${tournamentId}/stages`),
-        fetchFromApi(`fixtures`, { competitionId: tournamentId }),
+        fetchFromApi(`competitions/${tournamentId}/fixtures`),
       ]);
 
     // Log what we received from fixtures endpoint
