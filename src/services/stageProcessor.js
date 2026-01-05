@@ -28,6 +28,8 @@ export function processStageFixtures(fixtures, stageType) {
     case "Playoffs":
       processed.brackets = buildPlayoffsBracket(fixtures);
       processed.rounds = organizePlayoffsRounds(fixtures);
+      processed.fixturesByRound = organizePlayoffsFixturesByRound(fixtures);
+      processed.playoffsType = detectPlayoffsType(fixtures);
       break;
 
     case "GSL":
@@ -206,6 +208,50 @@ function buildPlayoffsBracket(fixtures) {
  */
 function organizePlayoffsRounds(fixtures) {
   return buildPlayoffsBracket(fixtures);
+}
+
+/**
+ * Organiza fixtures de Playoffs por round
+ */
+function organizePlayoffsFixturesByRound(fixtures) {
+  const fixturesByRound = {};
+
+  fixtures.forEach((fixture) => {
+    const section =
+      fixture.section || fixture.round_name || fixture.roundName || "Unknown";
+    if (!fixturesByRound[section]) {
+      fixturesByRound[section] = [];
+    }
+    fixturesByRound[section].push(fixture);
+  });
+
+  return fixturesByRound;
+}
+
+/**
+ * Detecta el tipo de Playoffs (Single Elimination, Double Elimination, etc.)
+ */
+function detectPlayoffsType(fixtures) {
+  // Por ahora, asumimos Single Elimination por defecto
+  // Se puede mejorar detectando si hay upper/lower bracket
+  const hasUpperBracket = fixtures.some(
+    (f) =>
+      f.section &&
+      (f.section.toLowerCase().includes("upper") ||
+        f.section.toLowerCase().includes("winner"))
+  );
+  const hasLowerBracket = fixtures.some(
+    (f) =>
+      f.section &&
+      (f.section.toLowerCase().includes("lower") ||
+        f.section.toLowerCase().includes("loser"))
+  );
+
+  if (hasUpperBracket && hasLowerBracket) {
+    return "DOUBLE_ELIMINATION";
+  }
+
+  return "SINGLE_ELIMINATION";
 }
 
 /**
