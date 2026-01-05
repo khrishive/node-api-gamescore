@@ -107,3 +107,13 @@ These endpoints provide statistics aggregated at the map level for a given fixtu
 
 - `GET /map-stats/map-stats/:fixtureId`: Retrieves overall statistics for each map in a fixture.
 - `GET /map-stats/map-round-scores/:fixtureId`: Retrieves the score for each individual round within each map of a fixture.
+
+---
+
+## Tournament Brackets Endpoints (`/brackets`)
+
+These endpoints provide processed tournament data with stage detection and bracket organization. They consolidate multiple API calls into a single request.
+
+- `GET /brackets/tournament/:tournamentId`: Retrieves all processed tournament data including competition info, participants, stages, fixtures, and processed data (stage types, rounds, standings, brackets). Query parameter: `?sport=cs2` (default: cs2).
+- `GET /brackets/tournament/:tournamentId/stage/:stageId`: Retrieves processed data for a specific stage including participants, fixtures, and processed data (rounds, brackets, standings). Query parameter: `?sport=cs2` (default: cs2).
+- `GET /brackets/tournament/:tournamentId/simple`: Retrieves basic tournament data without heavy processing. Query parameter: `?sport=cs2` (default: cs2).

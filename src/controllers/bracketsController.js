@@ -4,6 +4,370 @@ import { detectStageType } from "../services/stageDetector.js";
 import { processStageFixtures } from "../services/stageProcessor.js";
 
 /**
+ * Obtiene datos completos y procesados de un torneo
+ * Este endpoint reemplaza todas las llamadas múltiples del plugin
+ */
+export const getProcessedTournamentData = async (
+  tournamentId,
+  sport = "cs2"
+) => {
+  try {
+    console.log(
+      `🔍 Starting tournament data collection for ID: ${tournamentId}`
+    );
+
+    // Obtener datos básicos del torneo en paralelo
+    const [competition, participantsData, stagesData, fixturesData] =
+      await Promise.all([
+        fetchFromApi(`competitions/${tournamentId}`),
+        fetchFromApi(`competitions/${tournamentId}/participants`),
+        fetchFromApi(`competitions/${tournamentId}/stages`),
+        fetchFromApi(`fixtures?competitionId=${tournamentId}`),
+      ]);
+
+    // Estructura de datos similar al plugin
+    const result = {
+      competition: competition || null,
+      competitionParticipants: participantsData?.participants || [],
+      stages: stagesData?.stages || [],
+      competitionFixtures: fixturesData?.fixtures || [],
+      allFixturesIndexedById: {},
+      participantsDataIndexedById: {},
+      stagesData: {},
+      stageFixtures: {},
+      stageParticipants: {},
+      debug: {
+        stageErrors: {},
+        stageFetchInfo: {},
+      },
+    };
+
+    // Indexar participantes por ID
+    if (
+      result.competitionParticipants &&
+      Array.isArray(result.competitionParticipants)
+    ) {
+      result.competitionParticipants.forEach((participant) => {
+        const participantId = participant.id || participant.participantId;
+        if (participantId) {
+          result.participantsDataIndexedById[participantId] = {
+            id: participantId,
+            name: participant.name || "",
+            color: participant.color || "",
+            image_url: participant.image_url || participant.logoUrl || "",
+            logoUrl: participant.logoUrl || participant.image_url || "",
+          };
+        }
+      });
+    }
+
+    // Indexar fixtures por ID y almacenar todas
+    const allFixtures = [];
+    if (
+      result.competitionFixtures &&
+      Array.isArray(result.competitionFixtures)
+    ) {
+      result.competitionFixtures.forEach((fixture) => {
+        const fixtureId = fixture.id || fixture.fixtureId;
+        if (fixtureId) {
+          result.allFixturesIndexedById[fixtureId] = fixture;
+          allFixtures.push(fixture);
+        }
+      });
+    }
+
+    // Procesar cada stage
+    if (result.stages && Array.isArray(result.stages)) {
+      console.log(`📊 Processing ${result.stages.length} stages...`);
+      for (const stage of result.stages) {
+        const stageId = stage.id;
+        const stageType = stage.type || "Unknown";
+        const stageName = stage.name || `Stage ${stageId}`;
+
+        if (!stageId) {
+          console.error(`⚠️ Stage without ID:`, stage);
+          continue;
+        }
+
+        // Detectar si es Swiss desde el tipo
+        const isSwissFromAPI =
+          stageType.toLowerCase().includes("swiss") ||
+          stageName.toLowerCase().includes("swiss");
+
+        result.stagesData[stageId] = {
+          id: stageId,
+          name: stageName,
+          type: stageType,
+          isSwiss: isSwissFromAPI,
+          isPlayoffs:
+            stageType.toLowerCase().includes("playoff") ||
+            stageType.toLowerCase().includes("knockout"),
+        };
+
+        console.log(
+          `✅ Created stagesData[${stageId}] for stage: ${stageName}`
+        );
+
+        // Obtener participantes y fixtures del stage
+        try {
+          console.log(
+            `🔍 Fetching data for stage ${stageId} (${stageName})...`
+          );
+
+          // Guardar información de debugging
+          result.debug.stageFetchInfo[stageId] = {
+            stageId,
+            stageName,
+            fetching: true,
+            participantsEndpoint: `competitions/stage/${stageId}/participants`,
+            fixturesEndpoint: `competitions/stage/${stageId}/stagefixtures`,
+          };
+
+          const [stageParticipantsData, stageFixturesData] = await Promise.all([
+            fetchFromApi(`competitions/stage/${stageId}/participants`),
+            fetchFromApi(`competitions/stage/${stageId}/stagefixtures`),
+          ]);
+
+          // Guardar información sobre las respuestas
+          result.debug.stageFetchInfo[stageId].participantsResponse = {
+            hasData: !!stageParticipantsData,
+            hasError: !!stageParticipantsData?.error,
+            keys: stageParticipantsData
+              ? Object.keys(stageParticipantsData)
+              : [],
+            participantsCount: stageParticipantsData?.participants?.length || 0,
+          };
+
+          result.debug.stageFetchInfo[stageId].fixturesResponse = {
+            hasData: !!stageFixturesData,
+            hasError: !!stageFixturesData?.error,
+            keys: stageFixturesData ? Object.keys(stageFixturesData) : [],
+            stageFixturesCount: stageFixturesData?.stageFixtures?.length || 0,
+            rawData: stageFixturesData
+              ? JSON.stringify(stageFixturesData).substring(0, 200)
+              : "null",
+          };
+
+          result.stageParticipants[stageId] =
+            stageParticipantsData?.participants || [];
+
+          const stageFixtures = stageFixturesData?.stageFixtures || [];
+          result.stageFixtures[stageId] = stageFixtures;
+
+          result.debug.stageFetchInfo[stageId].fetching = false;
+          result.debug.stageFetchInfo[stageId].success = true;
+          result.debug.stageFetchInfo[stageId].fixturesCount =
+            stageFixtures.length;
+          result.debug.stageFetchInfo[stageId].participantsCount =
+            result.stageParticipants[stageId]?.length || 0;
+
+          console.log(
+            `   ✅ Stage ${stageId}: ${stageFixtures.length} fixtures, ${
+              result.stageParticipants[stageId]?.length || 0
+            } participants`
+          );
+
+          if (stageFixtures.length === 0) {
+            console.log(
+              `   ⚠️ Stage ${stageId} has NO fixtures - stageFixturesData:`,
+              stageFixturesData ? Object.keys(stageFixturesData) : "null"
+            );
+          }
+
+          // Obtener detalles completos de cada fixture del stage
+          const fixtureIds = stageFixtures
+            .map((f) => f.fixtureId || f.id)
+            .filter((id) => id);
+
+          // Obtener detalles de fixtures que no tenemos ya
+          const missingFixtureIds = fixtureIds.filter(
+            (id) => !result.allFixturesIndexedById[id]
+          );
+
+          if (missingFixtureIds.length > 0) {
+            const fixtureDetails = await Promise.all(
+              missingFixtureIds.map((id) => fetchFromApi(`fixtures/${id}`))
+            );
+
+            fixtureDetails.forEach((fixture, index) => {
+              if (fixture && !fixture.error) {
+                const fixtureId = missingFixtureIds[index];
+                result.allFixturesIndexedById[fixtureId] = fixture;
+                allFixtures.push(fixture);
+              }
+            });
+          }
+
+          // Combinar datos de stage fixtures con detalles completos
+          const fullStageFixtures = stageFixtures.map((stageFixture) => {
+            const fixtureId = stageFixture.fixtureId || stageFixture.id;
+            const fullFixture =
+              result.allFixturesIndexedById[fixtureId] || stageFixture;
+
+            return {
+              ...fullFixture,
+              ...stageFixture,
+              _stageInfo: {
+                section: stageFixture.section || null,
+                advancement: stageFixture.advancement || null,
+              },
+            };
+          });
+
+          // Indexar participantes del stage
+          if (result.stageParticipants[stageId]) {
+            result.stageParticipants[stageId].forEach((participant) => {
+              const participantId = participant.id || participant.participantId;
+              if (
+                participantId &&
+                !result.participantsDataIndexedById[participantId]
+              ) {
+                result.participantsDataIndexedById[participantId] = {
+                  id: participantId,
+                  name: participant.name || "",
+                  color: participant.color || "",
+                  image_url: participant.image_url || participant.logoUrl || "",
+                  logoUrl: participant.logoUrl || participant.image_url || "",
+                };
+              }
+            });
+          }
+
+          // Procesar fixtures del stage (detección y procesamiento)
+          // Por ahora, usar la detección básica - luego mejoraremos con la lógica completa del plugin
+          const detectedStageType = detectStageType(
+            fullStageFixtures,
+            result.stageParticipants[stageId] || [],
+            stageType
+          );
+
+          // Procesar fixtures del stage
+          const processedStageData = processStageFixtures(
+            fullStageFixtures,
+            detectedStageType
+          );
+
+          // Agregar datos procesados al stage
+          result.stagesData[stageId].processedData = processedStageData;
+          result.stagesData[stageId].detectedType = detectedStageType;
+          result.stagesData[stageId].fullFixtures = fullStageFixtures;
+        } catch (error) {
+          console.error(
+            `❌ Error processing stage ${stageId} (${stageName}):`,
+            error
+          );
+          console.error(`   Error message:`, error.message);
+          if (error.stack) {
+            console.error(`   Stack trace:`, error.stack);
+          }
+
+          // Guardar información del error en la respuesta
+          result.debug.stageErrors[stageId] = {
+            stageId,
+            stageName,
+            error: error.message,
+            stack: error.stack?.substring(0, 500) || "No stack trace",
+            timestamp: new Date().toISOString(),
+          };
+
+          if (result.debug.stageFetchInfo[stageId]) {
+            result.debug.stageFetchInfo[stageId].fetching = false;
+            result.debug.stageFetchInfo[stageId].success = false;
+            result.debug.stageFetchInfo[stageId].error = error.message;
+          }
+
+          // Asegurar que stageFixtures existe incluso si hay error
+          if (!result.stageFixtures[stageId]) {
+            result.stageFixtures[stageId] = [];
+          }
+
+          // Continuar con otros stages - pero al menos tenemos el stage básico creado
+          console.log(
+            `   ⚠️ Stage ${stageId} will have no processedData due to error`
+          );
+        }
+      }
+    }
+
+    // Separar torneo híbrido si es necesario (cuando no hay stages definidos)
+    let hybridSeparation = null;
+    if (
+      (!result.stages || result.stages.length === 0) &&
+      result.competitionFixtures &&
+      result.competitionFixtures.length > 0
+    ) {
+      hybridSeparation = separateHybridTournament(
+        result.competitionFixtures,
+        result,
+        tournamentId
+      );
+    }
+
+    // Agregar datos procesados al resultado
+    result.processedData = {
+      hybridSeparation,
+      stagesData: result.stagesData,
+      allFixtures,
+    };
+
+    console.log(
+      `✅ Tournament data collection complete for ID: ${tournamentId}`
+    );
+    console.log(`📊 Final result summary:`);
+    console.log(`   - stages: ${result.stages?.length || 0}`);
+    console.log(
+      `   - stagesData keys: ${Object.keys(result.stagesData).length}`
+    );
+    console.log(
+      `   - stagesData keys: [${Object.keys(result.stagesData).join(", ")}]`
+    );
+    console.log(
+      `   - stageFixtures keys: ${Object.keys(result.stageFixtures).length}`
+    );
+    console.log(
+      `   - stageFixtures keys: [${Object.keys(result.stageFixtures).join(
+        ", "
+      )}]`
+    );
+    if (Object.keys(result.stageFixtures).length > 0) {
+      const firstStageId = Object.keys(result.stageFixtures)[0];
+      const firstStageFixtures = result.stageFixtures[firstStageId];
+      console.log(
+        `   - stageFixtures[${firstStageId}]: ${
+          Array.isArray(firstStageFixtures) ? firstStageFixtures.length : 0
+        } fixtures`
+      );
+    } else {
+      console.log(
+        `   ⚠️ stageFixtures is EMPTY - no fixtures were fetched for any stage`
+      );
+    }
+    console.log(
+      `   - competitionFixtures: ${result.competitionFixtures?.length || 0}`
+    );
+    console.log(
+      `   - allFixtures: ${result.processedData?.allFixtures?.length || 0}`
+    );
+    console.log(`   - Result keys: [${Object.keys(result).join(", ")}]`);
+    console.log(`   - debug exists: ${!!result.debug}`);
+    console.log(
+      `   - debug.stageFetchInfo keys: [${Object.keys(
+        result.debug?.stageFetchInfo || {}
+      ).join(", ")}]`
+    );
+    console.log(
+      `   - debug.stageErrors keys: [${Object.keys(
+        result.debug?.stageErrors || {}
+      ).join(", ")}]`
+    );
+    return result;
+  } catch (error) {
+    console.error("❌ Error getting processed tournament data:", error);
+    throw error;
+  }
+};
+
+/**
  * Obtiene datos básicos de un torneo sin procesamiento pesado
  */
 export const getTournamentData = async (
@@ -54,39 +418,9 @@ export const getTournamentData = async (
       });
     }
 
-    // Si se requiere procesamiento, agregarlo
-    if (includeProcessed) {
-      result.processedData = await processTournamentData(result, tournamentId);
-    }
-
     return result;
   } catch (error) {
     console.error("❌ Error getting tournament data:", error);
-    throw error;
-  }
-};
-
-/**
- * Obtiene datos completos y procesados de un torneo
- * Incluye separación híbrida, detección de stages, etc.
- */
-export const getProcessedTournamentData = async (
-  tournamentId,
-  sport = "cs2"
-) => {
-  try {
-    // Obtener datos básicos
-    const basicData = await getTournamentData(tournamentId, sport, false);
-
-    // Procesar datos pesados
-    const processedData = await processTournamentData(basicData, tournamentId);
-
-    return {
-      ...basicData,
-      processedData,
-    };
-  } catch (error) {
-    console.error("❌ Error getting processed tournament data:", error);
     throw error;
   }
 };
@@ -153,43 +487,3 @@ export const getStageData = async (tournamentId, stageId, sport = "cs2") => {
     throw error;
   }
 };
-
-/**
- * Procesa datos del torneo (separación híbrida, detección, etc.)
- */
-async function processTournamentData(basicData, tournamentId) {
-  const processed = {
-    hybridSeparation: null,
-    stagesData: {},
-    detectionResults: {},
-  };
-
-  // Separar torneo híbrido si es necesario
-  if (basicData.fixtures && basicData.fixtures.length > 0) {
-    processed.hybridSeparation = separateHybridTournament(
-      basicData.fixtures,
-      basicData,
-      tournamentId
-    );
-  }
-
-  // Procesar cada stage
-  if (basicData.stages && Array.isArray(basicData.stages)) {
-    for (const stage of basicData.stages) {
-      const stageId = stage.id;
-      const stageType = stage.type || "Unknown";
-
-      processed.stagesData[stageId] = {
-        id: stageId,
-        name: stage.name || `Stage ${stageId}`,
-        type: stageType,
-        isSwiss: stageType.toLowerCase().includes("swiss"),
-        isPlayoffs:
-          stageType.toLowerCase().includes("playoff") ||
-          stageType.toLowerCase().includes("knockout"),
-      };
-    }
-  }
-
-  return processed;
-}
