@@ -510,7 +510,7 @@ export const getProcessedTournamentData = async (
 
         hybridSeparation.playoffsProcessedData = {
           ...playoffsProcessedData,
-          stageType: playoffsProcessedData.playoffsType || "Playoffs", // Plugin expects stageType, not playoffsType
+          stageType: "Playoffs", // Plugin expects "Playoffs", not "SINGLE_ELIMINATION" or "DOUBLE_ELIMINATION"
           rounds: roundsForPlugin, // Converted to {name, fixtures} format
           // fixturesByRound should already be in processedData
           upperBracketRounds: playoffsProcessedData.upperBracketRounds || [],
@@ -567,13 +567,19 @@ export const getProcessedTournamentData = async (
       // Crear stage virtual para Playoffs si existe
       if (hybridSeparation.playoffsCount > 0) {
         const playoffsStageId = `playoffs_${tournamentId}`;
+        // Ensure processedData has stageType as "Playoffs" for plugin compatibility
+        const playoffsProcessedDataForStage = {
+          ...hybridSeparation.playoffsProcessedData,
+          stageType: "Playoffs", // Plugin expects "Playoffs", not "SINGLE_ELIMINATION" or "DOUBLE_ELIMINATION"
+        };
+
         result.stagesData[playoffsStageId] = {
           id: playoffsStageId,
           name: "Playoffs",
           type: "Playoffs",
           isSwiss: false,
           isPlayoffs: true,
-          processedData: hybridSeparation.playoffsProcessedData,
+          processedData: playoffsProcessedDataForStage,
           detectedType: "Playoffs",
           fullFixtures: hybridSeparation.playoffs,
         };
