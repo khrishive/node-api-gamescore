@@ -27,22 +27,30 @@ export const getProcessedTournamentData = async (
 
     // Log what we received from fixtures endpoint
     console.log(
-      `📊 Fixtures endpoint response for tournament ${tournamentId}:`,
-      {
-        hasData: !!fixturesData,
-        isArray: Array.isArray(fixturesData),
-        keys:
-          fixturesData && !Array.isArray(fixturesData)
-            ? Object.keys(fixturesData)
-            : [],
-        fixturesCount: fixturesData?.fixtures?.length || 0,
-        directArrayCount: Array.isArray(fixturesData) ? fixturesData.length : 0,
-        hasError: !!fixturesData?.error,
-      }
+      `📊 Fixtures endpoint response for tournament ${tournamentId}:`
     );
-
+    console.log(`   - hasData: ${!!fixturesData}`);
+    console.log(`   - isArray: ${Array.isArray(fixturesData)}`);
+    console.log(`   - type: ${typeof fixturesData}`);
+    if (fixturesData && !Array.isArray(fixturesData)) {
+      console.log(`   - keys: ${Object.keys(fixturesData).join(", ")}`);
+    }
+    console.log(`   - fixturesCount: ${fixturesData?.fixtures?.length || 0}`);
+    console.log(
+      `   - directArrayCount: ${
+        Array.isArray(fixturesData) ? fixturesData.length : 0
+      }`
+    );
+    console.log(`   - hasError: ${!!fixturesData?.error}`);
     if (fixturesData?.error) {
-      console.error(`❌ Error fetching fixtures:`, fixturesData.error);
+      console.error(`   ❌ Error details:`, fixturesData.error);
+    }
+    if (fixturesData && !Array.isArray(fixturesData) && fixturesData.data) {
+      console.log(
+        `   - data property exists: ${Array.isArray(fixturesData.data)} (${
+          fixturesData.data?.length || 0
+        } items)`
+      );
     }
 
     // Estructura de datos similar al plugin
@@ -52,17 +60,37 @@ export const getProcessedTournamentData = async (
       if (Array.isArray(fixturesData)) {
         // If response is directly an array
         competitionFixtures = fixturesData;
+        console.log(
+          `   ✅ Using fixtures as direct array (${competitionFixtures.length} items)`
+        );
       } else if (
         fixturesData.fixtures &&
         Array.isArray(fixturesData.fixtures)
       ) {
         // If response has fixtures property
         competitionFixtures = fixturesData.fixtures;
+        console.log(
+          `   ✅ Using fixturesData.fixtures (${competitionFixtures.length} items)`
+        );
       } else if (fixturesData.data && Array.isArray(fixturesData.data)) {
         // If response has data property
         competitionFixtures = fixturesData.data;
+        console.log(
+          `   ✅ Using fixturesData.data (${competitionFixtures.length} items)`
+        );
+      } else {
+        console.log(
+          `   ⚠️ Could not extract fixtures from response. Response structure:`,
+          JSON.stringify(fixturesData).substring(0, 200)
+        );
       }
+    } else {
+      console.log(`   ⚠️ fixturesData is null or undefined`);
     }
+
+    console.log(
+      `   📊 Final competitionFixtures count: ${competitionFixtures.length}`
+    );
 
     const result = {
       competition: competition || null,
@@ -78,8 +106,46 @@ export const getProcessedTournamentData = async (
         stageErrors: {},
         stageFetchInfo: {},
         fixturesEndpointResponse: {
-          raw: fixturesData,
+          hasData: !!fixturesData,
+          isArray: Array.isArray(fixturesData),
+          type: typeof fixturesData,
+          keys:
+            fixturesData && !Array.isArray(fixturesData)
+              ? Object.keys(fixturesData)
+              : [],
+          fixturesCount: fixturesData?.fixtures?.length || 0,
+          directArrayCount: Array.isArray(fixturesData)
+            ? fixturesData.length
+            : 0,
+          hasError: !!fixturesData?.error,
+          errorDetails: fixturesData?.error || null,
+          dataPropertyExists:
+            fixturesData && !Array.isArray(fixturesData) && fixturesData.data
+              ? {
+                  isArray: Array.isArray(fixturesData.data),
+                  length: fixturesData.data?.length || 0,
+                }
+              : null,
           processedCount: competitionFixtures.length,
+          extractionMethod: Array.isArray(fixturesData)
+            ? "direct_array"
+            : fixturesData?.fixtures
+            ? "fixtures_property"
+            : fixturesData?.data
+            ? "data_property"
+            : "none",
+        },
+        fixturesIndexing: {
+          competitionFixturesType: typeof competitionFixtures,
+          competitionFixturesIsArray: Array.isArray(competitionFixtures),
+          competitionFixturesLength: competitionFixtures?.length || 0,
+          indexedCount: 0, // Will be updated after indexing
+        },
+        hybridSeparationCheck: {
+          stagesCount: 0, // Will be updated later
+          competitionFixturesCount: 0, // Will be updated later
+          allFixturesCount: 0, // Will be updated later
+          fixturesForHybridCount: 0, // Will be updated later
         },
       },
     };
@@ -117,6 +183,9 @@ export const getProcessedTournamentData = async (
         }
       });
     }
+
+    // Update debug info with indexing results
+    result.debug.fixturesIndexing.indexedCount = allFixtures.length;
 
     // Procesar cada stage
     if (result.stages && Array.isArray(result.stages)) {
@@ -338,6 +407,14 @@ export const getProcessedTournamentData = async (
       result.competitionFixtures && result.competitionFixtures.length > 0
         ? result.competitionFixtures
         : allFixtures;
+
+    // Update debug info with hybrid separation check
+    result.debug.hybridSeparationCheck.stagesCount = result.stages?.length || 0;
+    result.debug.hybridSeparationCheck.competitionFixturesCount =
+      result.competitionFixtures?.length || 0;
+    result.debug.hybridSeparationCheck.allFixturesCount = allFixtures.length;
+    result.debug.hybridSeparationCheck.fixturesForHybridCount =
+      fixturesForHybrid.length;
 
     if (
       (!result.stages || result.stages.length === 0) &&
