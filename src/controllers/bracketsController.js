@@ -22,15 +22,53 @@ export const getProcessedTournamentData = async (
         fetchFromApi(`competitions/${tournamentId}`),
         fetchFromApi(`competitions/${tournamentId}/participants`),
         fetchFromApi(`competitions/${tournamentId}/stages`),
-        fetchFromApi(`fixtures?competitionId=${tournamentId}`),
+        fetchFromApi(`fixtures`, { competitionId: tournamentId }),
       ]);
 
+    // Log what we received from fixtures endpoint
+    console.log(
+      `📊 Fixtures endpoint response for tournament ${tournamentId}:`,
+      {
+        hasData: !!fixturesData,
+        isArray: Array.isArray(fixturesData),
+        keys:
+          fixturesData && !Array.isArray(fixturesData)
+            ? Object.keys(fixturesData)
+            : [],
+        fixturesCount: fixturesData?.fixtures?.length || 0,
+        directArrayCount: Array.isArray(fixturesData) ? fixturesData.length : 0,
+        hasError: !!fixturesData?.error,
+      }
+    );
+
+    if (fixturesData?.error) {
+      console.error(`❌ Error fetching fixtures:`, fixturesData.error);
+    }
+
     // Estructura de datos similar al plugin
+    // Handle different response formats for fixtures
+    let competitionFixtures = [];
+    if (fixturesData) {
+      if (Array.isArray(fixturesData)) {
+        // If response is directly an array
+        competitionFixtures = fixturesData;
+      } else if (
+        fixturesData.fixtures &&
+        Array.isArray(fixturesData.fixtures)
+      ) {
+        // If response has fixtures property
+        competitionFixtures = fixturesData.fixtures;
+      } else if (fixturesData.data && Array.isArray(fixturesData.data)) {
+        // If response has data property
+        competitionFixtures = fixturesData.data;
+      }
+    }
+
     const result = {
       competition: competition || null,
       competitionParticipants: participantsData?.participants || [],
       stages: stagesData?.stages || [],
-      competitionFixtures: fixturesData?.fixtures || [],
+      competitionFixtures: competitionFixtures,
       allFixturesIndexedById: {},
       participantsDataIndexedById: {},
       stagesData: {},
@@ -39,6 +77,10 @@ export const getProcessedTournamentData = async (
       debug: {
         stageErrors: {},
         stageFetchInfo: {},
+        fixturesEndpointResponse: {
+          raw: fixturesData,
+          processedCount: competitionFixtures.length,
+        },
       },
     };
 
@@ -611,3 +653,4 @@ export const getStageData = async (tournamentId, stageId, sport = "cs2") => {
     throw error;
   }
 };
+
