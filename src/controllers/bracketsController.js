@@ -138,7 +138,7 @@ export const getProcessedTournamentData = async (
         fixturesIndexing: {
           competitionFixturesType: typeof competitionFixtures,
           competitionFixturesIsArray: Array.isArray(competitionFixtures),
-          competitionFixturesLength: competitionFixtures?.length || 0,
+          competitionFixturesLength: competitionFixtures.length || 0,
           indexedCount: 0, // Will be updated after indexing
         },
         hybridSeparationCheck: {
@@ -185,7 +185,9 @@ export const getProcessedTournamentData = async (
     }
 
     // Update debug info with indexing results
-    result.debug.fixturesIndexing.indexedCount = allFixtures.length;
+    if (result.debug && result.debug.fixturesIndexing) {
+      result.debug.fixturesIndexing.indexedCount = allFixtures.length;
+    }
 
     // Procesar cada stage
     if (result.stages && Array.isArray(result.stages)) {
@@ -409,12 +411,15 @@ export const getProcessedTournamentData = async (
         : allFixtures;
 
     // Update debug info with hybrid separation check
-    result.debug.hybridSeparationCheck.stagesCount = result.stages?.length || 0;
-    result.debug.hybridSeparationCheck.competitionFixturesCount =
-      result.competitionFixtures?.length || 0;
-    result.debug.hybridSeparationCheck.allFixturesCount = allFixtures.length;
-    result.debug.hybridSeparationCheck.fixturesForHybridCount =
-      fixturesForHybrid.length;
+    if (result.debug && result.debug.hybridSeparationCheck) {
+      result.debug.hybridSeparationCheck.stagesCount =
+        result.stages?.length || 0;
+      result.debug.hybridSeparationCheck.competitionFixturesCount =
+        result.competitionFixtures?.length || 0;
+      result.debug.hybridSeparationCheck.allFixturesCount = allFixtures.length;
+      result.debug.hybridSeparationCheck.fixturesForHybridCount =
+        fixturesForHybrid.length;
+    }
 
     if (
       (!result.stages || result.stages.length === 0) &&
