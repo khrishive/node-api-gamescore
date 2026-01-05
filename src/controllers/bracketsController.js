@@ -458,7 +458,11 @@ export const getProcessedTournamentData = async (
           hybridSeparation.swiss,
           swissDetectedType
         );
-        hybridSeparation.swissProcessedData = swissProcessedData;
+        // Ensure structure matches what plugin expects
+        hybridSeparation.swissProcessedData = {
+          ...swissProcessedData,
+          stageType: "Swiss", // Plugin expects stageType
+        };
       }
 
       if (
@@ -478,7 +482,41 @@ export const getProcessedTournamentData = async (
           hybridSeparation.playoffs,
           playoffsDetectedType
         );
-        hybridSeparation.playoffsProcessedData = playoffsProcessedData;
+        // Ensure structure matches what plugin expects
+        // Plugin expects: rounds (as array of {name, fixtures}), stageType, fixturesByRound
+        // The processStageFixtures returns rounds as {round, matches}, need to convert to {name, fixtures}
+        let roundsForPlugin = [];
+        if (
+          playoffsProcessedData.rounds &&
+          Array.isArray(playoffsProcessedData.rounds)
+        ) {
+          roundsForPlugin = playoffsProcessedData.rounds.map((r) => {
+            // Handle both {round, matches} and {name, fixtures} formats
+            if (r.round) {
+              return {
+                name: r.round,
+                fixtures: r.matches || [],
+              };
+            } else if (r.name) {
+              return r; // Already in correct format
+            } else {
+              return {
+                name: r.name || "Unknown",
+                fixtures: r.fixtures || [],
+              };
+            }
+          });
+        }
+
+        hybridSeparation.playoffsProcessedData = {
+          ...playoffsProcessedData,
+          stageType: playoffsProcessedData.playoffsType || "Playoffs", // Plugin expects stageType, not playoffsType
+          rounds: roundsForPlugin, // Converted to {name, fixtures} format
+          // fixturesByRound should already be in processedData
+          upperBracketRounds: playoffsProcessedData.upperBracketRounds || [],
+          lowerBracketRounds: playoffsProcessedData.lowerBracketRounds || [],
+          thirdPlaceMatch: playoffsProcessedData.thirdPlaceMatch || null,
+        };
       }
 
       console.log(
