@@ -92,10 +92,13 @@ export const getProcessedTournamentData = async (
       `   📊 Final competitionFixtures count: ${competitionFixtures.length}`
     );
 
+    // Ensure stages is always a mutable array
+    const stagesArray = stagesData?.stages ? [...stagesData.stages] : [];
+
     const result = {
       competition: competition || null,
       competitionParticipants: participantsData?.participants || [],
-      stages: stagesData?.stages || [],
+      stages: stagesArray,
       competitionFixtures: competitionFixtures,
       allFixturesIndexedById: {},
       participantsDataIndexedById: {},
