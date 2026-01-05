@@ -408,7 +408,9 @@ export const getProcessedTournamentData = async (
     const fixturesForHybrid =
       result.competitionFixtures && result.competitionFixtures.length > 0
         ? result.competitionFixtures
-        : allFixtures;
+        : allFixtures && allFixtures.length > 0
+        ? allFixtures
+        : [];
 
     // Update debug info with hybrid separation check
     if (result.debug && result.debug.hybridSeparationCheck) {
@@ -418,7 +420,7 @@ export const getProcessedTournamentData = async (
         result.competitionFixtures?.length || 0;
       result.debug.hybridSeparationCheck.allFixturesCount = allFixtures.length;
       result.debug.hybridSeparationCheck.fixturesForHybridCount =
-        fixturesForHybrid.length;
+        fixturesForHybrid ? fixturesForHybrid.length : 0;
     }
 
     if (
@@ -509,7 +511,7 @@ export const getProcessedTournamentData = async (
         result.stageParticipants[swissStageId] = [];
 
         // Agregar a stages array para que el plugin lo detecte
-        if (!result.stages) {
+        if (!Array.isArray(result.stages)) {
           result.stages = [];
         }
         result.stages.push({
@@ -538,7 +540,7 @@ export const getProcessedTournamentData = async (
         result.stageParticipants[playoffsStageId] = [];
 
         // Agregar a stages array para que el plugin lo detecte
-        if (!result.stages) {
+        if (!Array.isArray(result.stages)) {
           result.stages = [];
         }
         result.stages.push({
