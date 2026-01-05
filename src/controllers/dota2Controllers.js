@@ -1,0 +1,50 @@
+//src/controllers/dota2Controllers.js
+
+import { getDbBySport } from '../utils/dbUtils.js';
+
+/**
+ * Obtiene todos los jugadores del mapa asociados a un fixture_id (usando el pool de 'lol')
+ * @param {number} fixtureId - ID del fixture
+ * @returns {Promise<Array<Object>>} - Array de objetos con los datos de map_team_players
+ */
+export async function getMapResultsDota2(fixtureId) {
+  const db = getDbBySport('dota2');
+  const query = `SELECT * FROM map_team_players WHERE fixture_id = ?`;
+
+  try {
+    const [rows] = await db.query(query, [fixtureId]);
+    return rows;
+  } catch (error) {
+    console.error(`❌ Error al obtener map_team_players para fixture ${fixtureId}:`, error.message);
+    return [];
+  }
+}
+
+
+export async function getPickBanDota2(fixtureId) {
+  const db = getDbBySport('dota2');
+  const query = `SELECT * FROM dota2_pick_ban WHERE fixture_id = ?`;
+
+  try {
+    const [rows] = await db.query(query, [fixtureId]);
+    return rows;
+  } catch (error) {
+    console.error(`❌ Error al obtener dota2_pick_ban para fixture ${fixtureId}:`, error.message);
+    return [];
+  }
+}
+
+export async function getPlayerBuild(fixtureId) {
+  const db = getDbBySport('dota2');
+  const query = `SELECT * FROM dota2_players_build WHERE fixture_id = ?`;
+
+  try {
+    const [rows] = await db.query(query, [fixtureId]);
+    return rows;
+  } catch (error) {
+    console.error(`❌ Error al obtener lol_pick_ban para fixture ${fixtureId}:`, error.message);
+    return [];
+  }
+}
+
+
