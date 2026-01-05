@@ -291,16 +291,140 @@ export const getProcessedTournamentData = async (
 
     // Separar torneo híbrido si es necesario (cuando no hay stages definidos)
     let hybridSeparation = null;
+    // Use competitionFixtures if available, otherwise use allFixtures
+    const fixturesForHybrid =
+      result.competitionFixtures && result.competitionFixtures.length > 0
+        ? result.competitionFixtures
+        : allFixtures;
+
     if (
       (!result.stages || result.stages.length === 0) &&
-      result.competitionFixtures &&
-      result.competitionFixtures.length > 0
+      fixturesForHybrid &&
+      fixturesForHybrid.length > 0
     ) {
+      console.log(
+        `🔍 No stages found, attempting hybrid separation with ${fixturesForHybrid.length} fixtures`
+      );
       hybridSeparation = separateHybridTournament(
-        result.competitionFixtures,
+        fixturesForHybrid,
         result,
         tournamentId
       );
+
+      // Process the separated fixtures
+      if (
+        hybridSeparation &&
+        hybridSeparation.swiss &&
+        hybridSeparation.swiss.length > 0
+      ) {
+        console.log(
+          `   ✅ Swiss phase detected: ${hybridSeparation.swiss.length} fixtures`
+        );
+        const swissDetectedType = detectStageType(
+          hybridSeparation.swiss,
+          [],
+          "Swiss"
+        );
+        const swissProcessedData = processStageFixtures(
+          hybridSeparation.swiss,
+          swissDetectedType
+        );
+        hybridSeparation.swissProcessedData = swissProcessedData;
+      }
+
+      if (
+        hybridSeparation &&
+        hybridSeparation.playoffs &&
+        hybridSeparation.playoffs.length > 0
+      ) {
+        console.log(
+          `   ✅ Playoffs phase detected: ${hybridSeparation.playoffs.length} fixtures`
+        );
+        const playoffsDetectedType = detectStageType(
+          hybridSeparation.playoffs,
+          [],
+          "Playoffs"
+        );
+        const playoffsProcessedData = processStageFixtures(
+          hybridSeparation.playoffs,
+          playoffsDetectedType
+        );
+        hybridSeparation.playoffsProcessedData = playoffsProcessedData;
+      }
+
+      console.log(
+        `   📊 Hybrid separation complete: Swiss=${
+          hybridSeparation?.swissCount || 0
+        }, Playoffs=${hybridSeparation?.playoffsCount || 0}`
+      );
+    } else if (!result.stages || result.stages.length === 0) {
+      console.log(
+        `   ⚠️ No stages and no fixtures available for hybrid separation`
+      );
+    }
+
+    // Si tenemos hybridSeparation, crear stages virtuales para que el plugin pueda renderizarlos
+    if (
+      hybridSeparation &&
+      (hybridSeparation.swissCount > 0 || hybridSeparation.playoffsCount > 0)
+    ) {
+      // Crear stage virtual para Swiss si existe
+      if (hybridSeparation.swissCount > 0) {
+        const swissStageId = `swiss_${tournamentId}`;
+        result.stagesData[swissStageId] = {
+          id: swissStageId,
+          name: "Group stage",
+          type: "Swiss",
+          isSwiss: true,
+          isPlayoffs: false,
+          processedData: hybridSeparation.swissProcessedData,
+          detectedType: "Swiss",
+          fullFixtures: hybridSeparation.swiss,
+        };
+        result.stageFixtures[swissStageId] = hybridSeparation.swiss;
+        result.stageParticipants[swissStageId] = [];
+
+        // Agregar a stages array para que el plugin lo detecte
+        if (!result.stages) {
+          result.stages = [];
+        }
+        result.stages.push({
+          id: swissStageId,
+          name: "Group stage",
+          type: "Swiss",
+        });
+
+        console.log(`   ✅ Created virtual Swiss stage: ${swissStageId}`);
+      }
+
+      // Crear stage virtual para Playoffs si existe
+      if (hybridSeparation.playoffsCount > 0) {
+        const playoffsStageId = `playoffs_${tournamentId}`;
+        result.stagesData[playoffsStageId] = {
+          id: playoffsStageId,
+          name: "Playoffs",
+          type: "Playoffs",
+          isSwiss: false,
+          isPlayoffs: true,
+          processedData: hybridSeparation.playoffsProcessedData,
+          detectedType: "Playoffs",
+          fullFixtures: hybridSeparation.playoffs,
+        };
+        result.stageFixtures[playoffsStageId] = hybridSeparation.playoffs;
+        result.stageParticipants[playoffsStageId] = [];
+
+        // Agregar a stages array para que el plugin lo detecte
+        if (!result.stages) {
+          result.stages = [];
+        }
+        result.stages.push({
+          id: playoffsStageId,
+          name: "Playoffs",
+          type: "Playoffs",
+        });
+
+        console.log(`   ✅ Created virtual Playoffs stage: ${playoffsStageId}`);
+      }
     }
 
     // Agregar datos procesados al resultado
