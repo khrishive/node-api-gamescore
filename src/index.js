@@ -20,6 +20,7 @@ import fixturesByComp from "./routes/fixtureByCompetitionRoute.js";
 import mapStatsRoute from "./routes/mapStatsRoute.js";
 import populateRoutes from "./routes/populateRoutes.js";
 import lolMapStats from "./routes/lolStatsRoute.js";
+import dota2MapStats from "./routes/dota2StatsRoute.js";
 import bracketsRoutes from "./routes/bracketsRoutes.js";
 
 dotenv.config(); // ⚠️ Load environment variables before using them
@@ -49,6 +50,7 @@ app.use("/fixtures", apiKeyAuth, fixtureEquipmentStateRouter);
 app.use("/fixtures", apiKeyAuth, fixtureEventsRawRouter);
 app.use("/fixtures", apiKeyAuth, fixtureMapsRouter);
 app.use("/fixtures/lol", apiKeyAuth, lolMapStats);
+app.use("/fixtures/dota2", apiKeyAuth, dota2MapStats);
 app.use("/api/teams", apiKeyAuth, teamsRoutes);
 app.use("/api/players", apiKeyAuth, playersRoutes);
 app.use("/db", apiKeyAuth, dbAPIRoutes);
