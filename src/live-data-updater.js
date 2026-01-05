@@ -1,3 +1,5 @@
+//src/live-data-updater.js
+
 import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import axios from 'axios';
@@ -13,6 +15,7 @@ const WP_DEV_URL = 'https://wordpressmu-1372681-5818581.cloudwaysapps.com/wp-jso
 const WP_STAGING_URL = 'https://wordpressmu-1301114-4845462.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_PROD_URL = 'https://www.hotspawn.com/wp-json/fixtures/v1/update';
 const RR_DEV_URL = 'https://wordpress-1372681-5668655.cloudwaysapps.com/wp-json/fixtures/v1/update';
+const PICKEM_URL = 'http://localhost:3000/api/v1/fixtures/update';
 
 let reconnectAttempts = 0;
 
@@ -124,6 +127,28 @@ export function connectWebSocket(fixture_id) {
         } catch (err) {
           console.error('[POST -> RR DEV] Error sending:', err.message);
         }
+
+        // --- Send to PICKEM---
+        try {
+          const pickemPayload = {
+            ...payload,
+            external_id: Number(payload.external_id)
+          };
+
+          const res = await axios.post(PICKEM_URL, pickemPayload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+
+          console.log('[POST -> PICKEM] Response:', res.data);
+        } catch (err) {
+          console.error('[POST -> PICKEM] Error sending:', err.message, {
+            status: err.response?.status,
+            data: err.response?.data
+          });
+        }
       }
 
       // --- Detect end of the match ---
@@ -200,6 +225,28 @@ export function connectWebSocket(fixture_id) {
           console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
           console.error('[POST -> RR DEV] Error sending:', err.message);
+        }
+
+        // --- Send to PICKEM ---
+        try {
+          const pickemPayload = {
+            ...payload,
+            external_id: Number(payload.external_id)
+          };
+
+          const res = await axios.post(PICKEM_URL, pickemPayload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+
+          console.log('[POST -> PICKEM] Response:', res.data);
+        } catch (err) {
+          console.error('[POST -> PICKEM] Error sending:', err.message, {
+            status: err.response?.status,
+            data: err.response?.data
+          });
         }
       }
 
@@ -315,6 +362,31 @@ export function connectWebSocket(fixture_id) {
           console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
           console.error('[POST -> RR DEV] Error sending:', err.message);
+        }
+
+        // --- Send to PICKEM ---
+        try {
+          const pickemPayload = {
+            external_id: Number(fixtureId),
+            participants0_id: scores[0]?.id || null,
+            participants0_score: scores[0]?.score ?? null,
+            participants1_id: scores[1]?.id || null,
+            participants1_score: scores[1]?.score ?? null
+          };
+
+          const res = await axios.post(PICKEM_URL, pickemPayload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Api-Key': WP_API_KEY
+            }
+          });
+
+          console.log('[POST -> PICKEM] Response:', res.data);
+        } catch (err) {
+          console.error('[POST -> PICKEM] Error sending:', err.message, {
+            status: err.response?.status,
+            data: err.response?.data
+          });
         }
       }
 

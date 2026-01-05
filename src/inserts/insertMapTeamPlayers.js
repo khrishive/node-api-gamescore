@@ -1,35 +1,34 @@
+//src/inserts/insertMapTeamPlayers.js
+
 import dotenv from 'dotenv';
 import axios from 'axios';
 import { getDbBySport } from '../utils/dbUtils.js';
+import {resolveDateRangeToUnix } from '../utils/dateUtils.js';
 
 dotenv.config();
 
 const API_URL = process.env.GAME_SCORE_API;
 const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 
-async function getFixtureIds(db) {
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
+export async function getFixtureIds(
+  db,
+  fromDate = null,
+  toDate = null
+) {
 
-  const startOfTomorrow = new Date(startOfToday);
-  startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+  const { from, to } = resolveDateRangeToUnix(fromDate, toDate);
 
-  const startTimestamp = startOfToday.getTime();
-  const endTimestamp = startOfTomorrow.getTime();
+  const query = `
+    SELECT id
+    FROM fixtures
+    WHERE (
+      start_time BETWEEN ? AND ?
+      OR scheduled_start_time BETWEEN ? AND ?
+    )
+  `;
 
-  const [rows] = await db.query(
-    `
-      SELECT id 
-      FROM fixtures 
-      WHERE 
-        (start_time BETWEEN ? AND ?)
-        OR 
-        (scheduled_start_time BETWEEN ? AND ?)
-    `,
-    [startTimestamp, endTimestamp, startTimestamp, endTimestamp]
-  );
-
-  return rows.map(row => row.id);
+  const [rows] = await db.query(query, [from, to, from, to]);
+  return rows.map(r => r.id);
 }
 
 async function fetchMapTeamPlayers(fixtureId) {
@@ -176,9 +175,26 @@ async function insertMapTeamPlayers(db, { teamStatsResult, teamRoundScores }) {
   }
 }
 
-export async function processMapTeamPlayers(sport = 'cs2') {
+export async function processMapTeamPlayers(
+  sport,
+  fromDate = null,
+  toDate = null
+) {
+  console.log(`🔄 processMapTeamPlayers | ${sport}`);
+
   const db = getDbBySport(sport);
-  const fixtureIds = await getFixtureIds(db);
+
+  const fixtureIds = await getFixtureIds(
+    db,          
+    fromDate,
+    toDate
+  );
+
+  if (!fixtureIds.length) {
+    console.log(`⚠️ No fixtures found for ${sport}`);
+    return;
+  }
+
   console.log(`Found ${fixtureIds.length} fixtures for ${sport} to process.`);
 
   for (const fixtureId of fixtureIds) {
@@ -189,6 +205,7 @@ export async function processMapTeamPlayers(sport = 'cs2') {
 
   console.log(`✓ Process finished for ${sport}`);
 }
+
 
 // If run directly, execute with CLI arguments
 if (import.meta.url === `file://${process.argv[1]}`) {

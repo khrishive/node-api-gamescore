@@ -1,52 +1,34 @@
 import { getDbBySport } from './src/utils/dbUtils.js';
 
-/**
- * Obtiene todos los jugadores del mapa asociados a un fixture_id (usando el pool de 'lol')
- * @param {number} fixtureId - ID del fixture
- * @returns {Promise<Array<Object>>} - Array de objetos con los datos de map_team_players
- */
-export async function getMapResultsLol(fixtureId) {
-  const db = getDbBySport('lol');
-  const query = `SELECT * FROM map_team_players WHERE fixture_id = ?`;
+export async function getParticipantById({
+  id,
+  sport = 'cs2'
+}) {
+  const db = getDbBySport(sport);
 
   try {
-    const [rows] = await db.query(query, [fixtureId]);
-    return rows;
+    const [rows] = await db.query(
+      `
+      SELECT *
+      FROM participants
+      WHERE id = ?
+      LIMIT 1
+      `,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      console.log(`❌ Participant not found | id=${id} | sport=${sport}`);
+      return null;
+    }
+
+    console.log('✅ Participant found:');
+    console.log(rows[0]);
+
+    return rows[0];
+
   } catch (error) {
-    console.error(`❌ Error al obtener map_team_players para fixture ${fixtureId}:`, error.message);
-    return [];
+    console.error('❌ Error fetching participant:', error.message);
+    throw error;
   }
 }
-
-
-export async function getPickBanLol(fixtureId) {
-  const db = getDbBySport('lol');
-  const query = `SELECT * FROM lol_pick_ban WHERE fixture_id = ?`;
-
-  try {
-    const [rows] = await db.query(query, [fixtureId]);
-    return rows;
-  } catch (error) {
-    console.error(`❌ Error al obtener lol_pick_ban para fixture ${fixtureId}:`, error.message);
-    return [];
-  }
-}
-
-export async function getPlayerBuild(fixtureId) {
-  const db = getDbBySport('lol');
-  const query = `SELECT * FROM lol_players_build WHERE fixture_id = ?`;
-
-  try {
-    const [rows] = await db.query(query, [fixtureId]);
-    return rows;
-  } catch (error) {
-    console.error(`❌ Error al obtener lol_pick_ban para fixture ${fixtureId}:`, error.message);
-    return [];
-  }
-}
-
-(async () => {
-  const data = await getPlayerBuild(950332);
-  console.log(data);
-})();
-

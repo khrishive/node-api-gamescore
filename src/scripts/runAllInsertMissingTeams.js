@@ -1,19 +1,22 @@
+//src/scripts/runAllInsertMissingTeams.js
 import { processMissingTeams } from '../inserts/insertMissingTeams.js';
-import { dbCS2, dbLOL } from "../db.js";
+import { dbCS2, dbLOL, dbDOTA2 } from "../db.js";
 
-// Dynamically get sports from db.js exports
-const dbConnections = { cs2: dbCS2, lol: dbLOL };
-const sports = Object.keys(dbConnections);
+// Available DB connections
+const dbConnections = { cs2: dbCS2, lol: dbLOL, dota2: dbDOTA2 };
+const ALL_SPORTS = Object.keys(dbConnections);
 
-async function runAllInsertMissingTeams() {
-  console.log("🚀 Starting to insert missing teams for all sports...");
+export async function runAllInsertMissingTeams(sp = null) {
+  const sportsToRun = sp ? [sp] : ALL_SPORTS;
+
+  console.log(`🚀 Starting to insert missing teams for: ${sportsToRun.join(', ')}`);
 
   let executedCount = 0;
   const executedDatabases = [];
   let failedCount = 0;
   const failedDatabases = [];
 
-  for (const sport of sports) {
+  for (const sport of sportsToRun) {
     console.log(`--- Processing sport: ${sport} ---`);
     try {
       await processMissingTeams(sport);
@@ -28,14 +31,23 @@ async function runAllInsertMissingTeams() {
   }
 
   console.log(`\n✅ All sports processed!`);
-  console.log(`The script has been executed ${executedCount} time(s) in the following databases: ${executedDatabases.join(', ')}`);
+  console.log(
+    `The script has been executed ${executedCount} time(s) in: ${executedDatabases.join(', ')}`
+  );
+
   if (failedCount > 0) {
     console.log(`❌ Failed in ${failedCount} database(s): ${failedDatabases.join(', ')}`);
   }
+
   console.log("🎉 End of runAllInsertMissingTeams script.");
 }
 
-runAllInsertMissingTeams().catch((error) => {
-  console.error("\n❌ A global error occurred:", error.message);
-  process.exit(1);
-});
+// CLI support
+if (import.meta.url === `file://${process.argv[1]}`) {
+  const sport = process.argv[2] || null;
+
+  runAllInsertMissingTeams(sport).catch((error) => {
+    console.error("\n❌ A global error occurred:", error.message);
+    process.exit(1);
+  });
+}
