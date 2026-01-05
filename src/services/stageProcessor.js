@@ -180,13 +180,18 @@ function buildPlayoffsBracket(fixtures) {
     bracketsByRound[section].push(fixture);
   });
 
-  // Ordenar rounds (Final, Semi-Final, Quarter-Final, etc.)
+  // Ordenar rounds de menos significativo a más significativo (izquierda a derecha)
+  // Round of 32 -> Round of 16 -> Quarter-Final -> Semi-Final -> Final
   const roundOrder = [
-    "Final",
-    "Semi-Final",
-    "Quarter-Final",
-    "Round of 16",
     "Round of 32",
+    "Round of 16",
+    "Quarter-Final",
+    "Quarterfinals",
+    "Semi-Final",
+    "Semifinals",
+    "Final",
+    "Grand Final",
+    "Finals",
   ];
   const sortedRounds = Object.keys(bracketsByRound).sort((a, b) => {
     const indexA = roundOrder.indexOf(a);
@@ -194,6 +199,7 @@ function buildPlayoffsBracket(fixtures) {
     if (indexA !== -1 && indexB !== -1) return indexA - indexB;
     if (indexA !== -1) return -1;
     if (indexB !== -1) return 1;
+    // If not in predefined order, sort alphabetically (less significant first)
     return a.localeCompare(b);
   });
 
