@@ -25,6 +25,30 @@ export const getProcessedTournamentData = async (
         fetchFromApi(`competitions/${tournamentId}/fixtures`),
       ]);
 
+    // Log what we received from all endpoints
+    console.log(`📊 API Responses for tournament ${tournamentId}:`);
+    console.log(`   - competition: ${competition ? "EXISTS" : "NULL/ERROR"}`);
+    if (competition?.error) {
+      console.log(`      Error: ${competition.error}`);
+    }
+    console.log(
+      `   - participantsData: ${participantsData ? "EXISTS" : "NULL/ERROR"}`
+    );
+    if (participantsData?.error) {
+      console.log(`      Error: ${participantsData.error}`);
+    }
+    console.log(`   - stagesData: ${stagesData ? "EXISTS" : "NULL/ERROR"}`);
+    if (stagesData?.error) {
+      console.log(`      Error: ${stagesData.error}`);
+    }
+    if (stagesData?.stages) {
+      console.log(`      Stages count: ${stagesData.stages.length || 0}`);
+    }
+    console.log(`   - fixturesData: ${fixturesData ? "EXISTS" : "NULL/ERROR"}`);
+    if (fixturesData?.error) {
+      console.log(`      Error: ${fixturesData.error}`);
+    }
+
     // Log what we received from fixtures endpoint
     console.log(
       `📊 Fixtures endpoint response for tournament ${tournamentId}:`
@@ -92,6 +116,41 @@ export const getProcessedTournamentData = async (
       `   📊 Final competitionFixtures count: ${competitionFixtures.length}`
     );
 
+    // Check if competition exists
+    if (!competition || competition.error) {
+      console.error(
+        `❌ Competition ${tournamentId} does not exist or has error:`,
+        competition?.error || "Competition not found"
+      );
+      return {
+        competition: null,
+        competitionParticipants: [],
+        stages: [],
+        competitionFixtures: [],
+        allFixturesIndexedById: {},
+        participantsDataIndexedById: {},
+        stagesData: {},
+        stageFixtures: {},
+        stageParticipants: {},
+        debug: {
+          stageErrors: {},
+          stageFetchInfo: {},
+          apiEndpointsResponse: {
+            competition: {
+              exists: false,
+              hasError: true,
+              error: competition?.error || "Competition not found",
+            },
+          },
+        },
+        processedData: {
+          hybridSeparation: null,
+          stagesData: {},
+          allFixtures: [],
+        },
+      };
+    }
+
     // Ensure stages is always a mutable array
     const stagesArray = stagesData?.stages ? [...stagesData.stages] : [];
 
@@ -108,6 +167,26 @@ export const getProcessedTournamentData = async (
       debug: {
         stageErrors: {},
         stageFetchInfo: {},
+        apiEndpointsResponse: {
+          competition: {
+            exists: !!competition,
+            hasError: !!competition?.error,
+            error: competition?.error || null,
+            name: competition?.name || null,
+          },
+          participants: {
+            exists: !!participantsData,
+            hasError: !!participantsData?.error,
+            error: participantsData?.error || null,
+            count: participantsData?.participants?.length || 0,
+          },
+          stages: {
+            exists: !!stagesData,
+            hasError: !!stagesData?.error,
+            error: stagesData?.error || null,
+            count: stagesData?.stages?.length || 0,
+          },
+        },
         fixturesEndpointResponse: {
           hasData: !!fixturesData,
           isArray: Array.isArray(fixturesData),
