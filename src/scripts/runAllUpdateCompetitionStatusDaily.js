@@ -1,8 +1,10 @@
+//src/scripts/runAllUpdateCompetitionStatusDaily.js
+
 import { updateCompetitionStatus } from '../sync/updateCompetitionStatusDaily.js';
-import { dbCS2, dbLOL } from "../db.js";
+import { dbCS2, dbLOL, dbDOTA2} from "../db.js";
 
 // Dynamically get sports from db.js exports
-const dbConnections = { cs2: dbCS2, lol: dbLOL };
+const dbConnections = {cs2: dbCS2, lol: dbLOL, dota2: dbDOTA2};
 const sports = Object.keys(dbConnections);
 
 async function runAllUpdateCompetitionStatusDaily() {
