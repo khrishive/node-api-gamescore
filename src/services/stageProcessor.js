@@ -30,6 +30,13 @@ export function processStageFixtures(fixtures, stageType) {
       processed.rounds = organizePlayoffsRounds(fixtures);
       processed.fixturesByRound = organizePlayoffsFixturesByRound(fixtures);
       processed.playoffsType = detectPlayoffsType(fixtures);
+
+      // If Double Elimination, separate upper and lower brackets
+      if (processed.playoffsType === "DOUBLE_ELIMINATION") {
+        const bracketSeparation = separateDoubleEliminationBrackets(fixtures);
+        processed.upperBracketRounds = bracketSeparation.upperBracketRounds;
+        processed.lowerBracketRounds = bracketSeparation.lowerBracketRounds;
+      }
       break;
 
     case "GSL":
