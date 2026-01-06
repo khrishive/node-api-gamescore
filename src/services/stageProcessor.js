@@ -173,12 +173,83 @@ function buildPlayoffsBracket(fixtures) {
   const bracketsByRound = {};
 
   fixtures.forEach((fixture) => {
-    const section = fixture.section || fixture.round_name || "Unknown";
-    if (!bracketsByRound[section]) {
-      bracketsByRound[section] = [];
+    // Try multiple possible fields for round/section name
+    const section =
+      fixture.section ||
+      fixture.round_name ||
+      fixture.roundName ||
+      fixture.round ||
+      fixture._stageInfo?.section ||
+      "Unknown";
+
+    // Normalize section name (handle variations)
+    let normalizedSection = section;
+    const sectionLower = section.toLowerCase();
+
+    if (sectionLower.includes("quarter")) {
+      normalizedSection = "Quarter-finals";
+    } else if (sectionLower.includes("semi")) {
+      normalizedSection = "Semi-finals";
+    } else if (
+      sectionLower.includes("final") &&
+      !sectionLower.includes("grand") &&
+      !sectionLower.includes("3rd") &&
+      !sectionLower.includes("third")
+    ) {
+      normalizedSection = "Final";
+    } else if (sectionLower.includes("grand")) {
+      normalizedSection = "Grand Final";
+    } else if (sectionLower.includes("3rd") || sectionLower.includes("third")) {
+      normalizedSection = "3rd Place Decider";
+    } else if (section === "Unknown" || !section || section.trim() === "") {
+      // Try to detect round based on fixture position/structure
+      // This is a fallback when section is not provided
+      normalizedSection = "Unknown";
     }
-    bracketsByRound[section].push(fixture);
+
+    if (!bracketsByRound[normalizedSection]) {
+      bracketsByRound[normalizedSection] = [];
+    }
+    bracketsByRound[normalizedSection].push(fixture);
   });
+
+  // If all fixtures are in "Unknown", try to detect rounds by structure
+  if (
+    bracketsByRound["Unknown"] &&
+    bracketsByRound["Unknown"].length === fixtures.length
+  ) {
+    console.log(
+      `⚠️ All ${fixtures.length} fixtures are in "Unknown" - attempting structure-based detection`
+    );
+    // Log first few fixtures to see what data we have
+    if (fixtures.length > 0) {
+      const sampleFixture = fixtures[0];
+      console.log(`   Sample fixture keys:`, Object.keys(sampleFixture));
+      console.log(`   Sample fixture section:`, sampleFixture.section);
+      console.log(`   Sample fixture _stageInfo:`, sampleFixture._stageInfo);
+      console.log(`   Sample fixture round_name:`, sampleFixture.round_name);
+    }
+
+    // Try to detect rounds based on bracket structure
+    const detectedRounds = detectRoundsByStructure(fixtures);
+    if (detectedRounds && Object.keys(detectedRounds).length > 1) {
+      console.log(
+        `   ✅ Detected ${
+          Object.keys(detectedRounds).length
+        } rounds by structure:`,
+        Object.keys(detectedRounds)
+      );
+      // Use detected rounds instead
+      Object.keys(bracketsByRound).forEach(
+        (key) => delete bracketsByRound[key]
+      );
+      Object.assign(bracketsByRound, detectedRounds);
+    } else {
+      console.log(
+        `   ⚠️ Could not detect rounds by structure - keeping "Unknown"`
+      );
+    }
+  }
 
   // Ordenar rounds de menos significativo a más significativo (izquierda a derecha)
   // Round of 32 -> Round of 16 -> Quarter-Final -> Semi-Final -> Final
@@ -230,12 +301,40 @@ function organizePlayoffsFixturesByRound(fixtures) {
   const fixturesByRound = {};
 
   fixtures.forEach((fixture) => {
+    // Try multiple possible fields for round/section name
     const section =
-      fixture.section || fixture.round_name || fixture.roundName || "Unknown";
-    if (!fixturesByRound[section]) {
-      fixturesByRound[section] = [];
+      fixture.section ||
+      fixture.round_name ||
+      fixture.roundName ||
+      fixture.round ||
+      fixture._stageInfo?.section ||
+      "Unknown";
+
+    // Normalize section name (handle variations)
+    let normalizedSection = section;
+    const sectionLower = section.toLowerCase();
+
+    if (sectionLower.includes("quarter")) {
+      normalizedSection = "Quarter-finals";
+    } else if (sectionLower.includes("semi")) {
+      normalizedSection = "Semi-finals";
+    } else if (
+      sectionLower.includes("final") &&
+      !sectionLower.includes("grand") &&
+      !sectionLower.includes("3rd") &&
+      !sectionLower.includes("third")
+    ) {
+      normalizedSection = "Final";
+    } else if (sectionLower.includes("grand")) {
+      normalizedSection = "Grand Final";
+    } else if (sectionLower.includes("3rd") || sectionLower.includes("third")) {
+      normalizedSection = "3rd Place Decider";
     }
-    fixturesByRound[section].push(fixture);
+
+    if (!fixturesByRound[normalizedSection]) {
+      fixturesByRound[normalizedSection] = [];
+    }
+    fixturesByRound[normalizedSection].push(fixture);
   });
 
   return fixturesByRound;
@@ -273,6 +372,67 @@ function detectPlayoffsType(fixtures) {
 function organizeGSLRounds(fixtures) {
   // Similar a Swiss pero con estructura específica de GSL
   return organizeSwissRounds(fixtures);
+}
+
+/**
+ * Detecta rounds basándose en la estructura del bracket cuando no hay información de section
+ */
+function detectRoundsByStructure(fixtures) {
+  const rounds = {};
+  const totalFixtures = fixtures.length;
+
+  // Ordenar fixtures por timestamp
+  const sortedFixtures = [...fixtures].sort((a, b) => {
+    const timeA = a.scheduledStartTime || a.startTime || 0;
+    const timeB = b.scheduledStartTime || b.startTime || 0;
+    return timeA - timeB;
+  });
+
+  // Detectar estructura típica de playoffs:
+  // - 8 fixtures = Quarter-finals (8 equipos)
+  // - 4 fixtures = Semi-finals (4 equipos)
+  // - 2 fixtures = Final + 3rd Place (o solo Final)
+  // - 1 fixture = Grand Final
+
+  // Intentar detectar por número de fixtures y posición
+  if (totalFixtures >= 8) {
+    // Probablemente Quarter-finals
+    const quarterCount = Math.min(8, Math.floor(totalFixtures * 0.4));
+    for (let i = 0; i < quarterCount; i++) {
+      if (!rounds["Quarter-finals"]) rounds["Quarter-finals"] = [];
+      rounds["Quarter-finals"].push(sortedFixtures[i]);
+    }
+  }
+
+  if (totalFixtures >= 4) {
+    // Probablemente Semi-finals
+    const semiStart = Math.floor(totalFixtures * 0.3);
+    const semiEnd = Math.floor(totalFixtures * 0.6);
+    for (let i = semiStart; i < semiEnd && i < sortedFixtures.length; i++) {
+      if (!rounds["Semi-finals"]) rounds["Semi-finals"] = [];
+      rounds["Semi-finals"].push(sortedFixtures[i]);
+    }
+  }
+
+  // Los últimos fixtures probablemente son Final/3rd Place
+  const finalStart = Math.floor(totalFixtures * 0.7);
+  for (let i = finalStart; i < sortedFixtures.length; i++) {
+    const fixture = sortedFixtures[i];
+    // Intentar detectar si es 3rd Place o Final basándose en participantes
+    // Por ahora, asumimos que los últimos 2 son Final y 3rd Place
+    if (i === sortedFixtures.length - 1) {
+      if (!rounds["Grand Final"]) rounds["Grand Final"] = [];
+      rounds["Grand Final"].push(fixture);
+    } else if (i === sortedFixtures.length - 2) {
+      if (!rounds["3rd Place Decider"]) rounds["3rd Place Decider"] = [];
+      rounds["3rd Place Decider"].push(fixture);
+    } else {
+      if (!rounds["Final"]) rounds["Final"] = [];
+      rounds["Final"].push(fixture);
+    }
+  }
+
+  return rounds;
 }
 
 /**
