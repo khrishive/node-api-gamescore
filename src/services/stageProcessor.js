@@ -186,12 +186,19 @@ function buildPlayoffsBracket(fixtures) {
     "Round of 32",
     "Round of 16",
     "Quarter-Final",
+    "Quarter-finals",
     "Quarterfinals",
+    "Quarter Final",
     "Semi-Final",
+    "Semi-finals",
     "Semifinals",
+    "Semi Final",
     "Final",
     "Grand Final",
     "Finals",
+    "3rd Place Decider",
+    "3rd Place",
+    "Third Place",
   ];
   const sortedRounds = Object.keys(bracketsByRound).sort((a, b) => {
     const indexA = roundOrder.indexOf(a);
