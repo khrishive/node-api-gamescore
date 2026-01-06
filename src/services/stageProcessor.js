@@ -481,6 +481,118 @@ function calculateGSLStandings(fixtures) {
 }
 
 /**
+ * Separa fixtures de Double Elimination en Upper y Lower brackets
+ */
+function separateDoubleEliminationBrackets(fixtures) {
+  const upperBracketRounds = {};
+  const lowerBracketRounds = {};
+
+  fixtures.forEach((fixture) => {
+    // Try multiple possible fields for round/section name
+    const section =
+      fixture.section ||
+      fixture.round_name ||
+      fixture.roundName ||
+      fixture.round ||
+      fixture._stageInfo?.section ||
+      "Unknown";
+
+    const sectionLower = section.toLowerCase();
+    const isUpperBracket =
+      sectionLower.includes("upper") ||
+      sectionLower.includes("winner") ||
+      (!sectionLower.includes("lower") && !sectionLower.includes("loser"));
+
+    // Normalize section name (handle variations)
+    let normalizedSection = section;
+    if (sectionLower.includes("opening")) {
+      normalizedSection = "Opening round";
+    } else if (sectionLower.includes("quarter")) {
+      normalizedSection = isUpperBracket
+        ? "Upper Quarter-finals"
+        : "Lower Quarter-finals";
+    } else if (sectionLower.includes("semi")) {
+      normalizedSection = isUpperBracket
+        ? "Upper Semi-finals"
+        : "Lower Semi-finals";
+    } else if (
+      sectionLower.includes("final") &&
+      !sectionLower.includes("grand")
+    ) {
+      normalizedSection = isUpperBracket ? "Upper Final" : "Lower Final";
+    } else if (sectionLower.includes("round")) {
+      // Extract round number if present
+      const roundMatch = section.match(/round\s*(\d+)/i);
+      if (roundMatch) {
+        normalizedSection = isUpperBracket
+          ? `Upper Round ${roundMatch[1]}`
+          : `Lower Round ${roundMatch[1]}`;
+      } else {
+        normalizedSection = isUpperBracket ? "Upper Round" : "Lower Round";
+      }
+    }
+
+    if (isUpperBracket) {
+      if (!upperBracketRounds[normalizedSection]) {
+        upperBracketRounds[normalizedSection] = [];
+      }
+      upperBracketRounds[normalizedSection].push(fixture);
+    } else {
+      if (!lowerBracketRounds[normalizedSection]) {
+        lowerBracketRounds[normalizedSection] = [];
+      }
+      lowerBracketRounds[normalizedSection].push(fixture);
+    }
+  });
+
+  // Convert to array format and sort
+  const upperRoundsArray = Object.keys(upperBracketRounds)
+    .sort((a, b) => {
+      // Sort by round order (Opening -> Quarter -> Semi -> Final)
+      const order = ["Opening", "Quarter", "Semi", "Final"];
+      const aOrder = order.findIndex((o) =>
+        a.toLowerCase().includes(o.toLowerCase())
+      );
+      const bOrder = order.findIndex((o) =>
+        b.toLowerCase().includes(o.toLowerCase())
+      );
+      if (aOrder !== -1 && bOrder !== -1) return aOrder - bOrder;
+      if (aOrder !== -1) return -1;
+      if (bOrder !== -1) return 1;
+      return a.localeCompare(b);
+    })
+    .map((round) => ({
+      round,
+      matches: upperBracketRounds[round],
+    }));
+
+  const lowerRoundsArray = Object.keys(lowerBracketRounds)
+    .sort((a, b) => {
+      // Sort by round order (Round 1 -> Round 2 -> Quarter -> Semi -> Final)
+      const order = ["Round 1", "Round 2", "Quarter", "Semi", "Final"];
+      const aOrder = order.findIndex((o) =>
+        a.toLowerCase().includes(o.toLowerCase())
+      );
+      const bOrder = order.findIndex((o) =>
+        b.toLowerCase().includes(o.toLowerCase())
+      );
+      if (aOrder !== -1 && bOrder !== -1) return aOrder - bOrder;
+      if (aOrder !== -1) return -1;
+      if (bOrder !== -1) return 1;
+      return a.localeCompare(b);
+    })
+    .map((round) => ({
+      round,
+      matches: lowerBracketRounds[round],
+    }));
+
+  return {
+    upperBracketRounds: upperRoundsArray,
+    lowerBracketRounds: lowerRoundsArray,
+  };
+}
+
+/**
  * Organiza rounds genéricos
  */
 function organizeGenericRounds(fixtures) {
