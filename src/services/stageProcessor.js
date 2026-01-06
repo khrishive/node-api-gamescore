@@ -504,32 +504,37 @@ function separateDoubleEliminationBrackets(fixtures) {
       (!sectionLower.includes("lower") && !sectionLower.includes("loser"));
 
     // Normalize section name (handle variations)
+    // Keep names simple - "Upper"/"Lower" prefix will be handled in display
     let normalizedSection = section;
     if (sectionLower.includes("opening")) {
       normalizedSection = "Opening round";
     } else if (sectionLower.includes("quarter")) {
-      normalizedSection = isUpperBracket
-        ? "Upper Quarter-finals"
-        : "Lower Quarter-finals";
+      normalizedSection = "Quarter-finals";
     } else if (sectionLower.includes("semi")) {
-      normalizedSection = isUpperBracket
-        ? "Upper Semi-finals"
-        : "Lower Semi-finals";
+      normalizedSection = "Semi-finals";
     } else if (
       sectionLower.includes("final") &&
       !sectionLower.includes("grand")
     ) {
-      normalizedSection = isUpperBracket ? "Upper Final" : "Lower Final";
+      normalizedSection = "Final";
     } else if (sectionLower.includes("round")) {
       // Extract round number if present
       const roundMatch = section.match(/round\s*(\d+)/i);
       if (roundMatch) {
-        normalizedSection = isUpperBracket
-          ? `Upper Round ${roundMatch[1]}`
-          : `Lower Round ${roundMatch[1]}`;
+        normalizedSection = `Round ${roundMatch[1]}`;
       } else {
-        normalizedSection = isUpperBracket ? "Upper Round" : "Lower Round";
+        normalizedSection = "Round";
       }
+    }
+
+    // Add "Upper" or "Lower" prefix for tracking
+    if (isUpperBracket && !normalizedSection.toLowerCase().includes("upper")) {
+      normalizedSection = `Upper ${normalizedSection}`;
+    } else if (
+      !isUpperBracket &&
+      !normalizedSection.toLowerCase().includes("lower")
+    ) {
+      normalizedSection = `Lower ${normalizedSection}`;
     }
 
     if (isUpperBracket) {
@@ -548,18 +553,29 @@ function separateDoubleEliminationBrackets(fixtures) {
   // Convert to array format and sort
   const upperRoundsArray = Object.keys(upperBracketRounds)
     .sort((a, b) => {
-      // Sort by round order (Opening -> Quarter -> Semi -> Final)
-      const order = ["Opening", "Quarter", "Semi", "Final"];
+      // Remove "Upper" prefix for sorting
+      const aClean = a.replace(/^Upper\s+/i, "");
+      const bClean = b.replace(/^Upper\s+/i, "");
+
+      // Sort by round order (Opening -> Round -> Quarter -> Semi -> Final)
+      const order = ["Opening", "Round", "Quarter", "Semi", "Final"];
       const aOrder = order.findIndex((o) =>
-        a.toLowerCase().includes(o.toLowerCase())
+        aClean.toLowerCase().includes(o.toLowerCase())
       );
       const bOrder = order.findIndex((o) =>
-        b.toLowerCase().includes(o.toLowerCase())
+        bClean.toLowerCase().includes(o.toLowerCase())
       );
-      if (aOrder !== -1 && bOrder !== -1) return aOrder - bOrder;
+
+      if (aOrder !== -1 && bOrder !== -1) {
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        // If same order type, extract numbers if present
+        const aNum = parseInt(aClean.match(/\d+/)?.[0] || "0");
+        const bNum = parseInt(bClean.match(/\d+/)?.[0] || "0");
+        return aNum - bNum;
+      }
       if (aOrder !== -1) return -1;
       if (bOrder !== -1) return 1;
-      return a.localeCompare(b);
+      return aClean.localeCompare(bClean);
     })
     .map((round) => ({
       round,
@@ -568,18 +584,29 @@ function separateDoubleEliminationBrackets(fixtures) {
 
   const lowerRoundsArray = Object.keys(lowerBracketRounds)
     .sort((a, b) => {
-      // Sort by round order (Round 1 -> Round 2 -> Quarter -> Semi -> Final)
-      const order = ["Round 1", "Round 2", "Quarter", "Semi", "Final"];
+      // Remove "Lower" prefix for sorting
+      const aClean = a.replace(/^Lower\s+/i, "");
+      const bClean = b.replace(/^Lower\s+/i, "");
+
+      // Sort by round order (Round -> Quarter -> Semi -> Final)
+      const order = ["Round", "Quarter", "Semi", "Final"];
       const aOrder = order.findIndex((o) =>
-        a.toLowerCase().includes(o.toLowerCase())
+        aClean.toLowerCase().includes(o.toLowerCase())
       );
       const bOrder = order.findIndex((o) =>
-        b.toLowerCase().includes(o.toLowerCase())
+        bClean.toLowerCase().includes(o.toLowerCase())
       );
-      if (aOrder !== -1 && bOrder !== -1) return aOrder - bOrder;
+
+      if (aOrder !== -1 && bOrder !== -1) {
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        // If same order type, extract numbers if present
+        const aNum = parseInt(aClean.match(/\d+/)?.[0] || "0");
+        const bNum = parseInt(bClean.match(/\d+/)?.[0] || "0");
+        return aNum - bNum;
+      }
       if (aOrder !== -1) return -1;
       if (bOrder !== -1) return 1;
-      return a.localeCompare(b);
+      return aClean.localeCompare(bClean);
     })
     .map((round) => ({
       round,
