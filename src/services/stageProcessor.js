@@ -252,7 +252,7 @@ function buildPlayoffsBracket(fixtures) {
   }
 
   // Ordenar rounds de menos significativo a más significativo (izquierda a derecha)
-  // Round of 32 -> Round of 16 -> Quarter-Final -> Semi-Final -> Final
+  // Round of 32 -> Round of 16 -> Quarter-Final -> Semi-Final -> Final -> Grand Final -> 3rd Place Decider
   const roundOrder = [
     "Round of 32",
     "Round of 16",
@@ -271,12 +271,42 @@ function buildPlayoffsBracket(fixtures) {
     "3rd Place",
     "Third Place",
   ];
+
+  // Round order with numeric values for proper sorting
+  const roundOrderMap = {
+    "Round of 32": 1,
+    "Round of 16": 2,
+    "Quarter-Final": 3,
+    "Quarter-finals": 3,
+    Quarterfinals: 3,
+    "Quarter Final": 3,
+    "Semi-Final": 4,
+    "Semi-finals": 4,
+    Semifinals: 4,
+    "Semi Final": 4,
+    Final: 5,
+    "Grand Final": 6,
+    Finals: 5,
+    "3rd Place Decider": 7,
+    "3rd Place": 7,
+    "Third Place": 7,
+  };
   const sortedRounds = Object.keys(bracketsByRound).sort((a, b) => {
+    // Use numeric order map for proper sorting
+    const orderA = roundOrderMap[a] ?? 999;
+    const orderB = roundOrderMap[b] ?? 999;
+
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+
+    // If same order, use index in roundOrder array as fallback
     const indexA = roundOrder.indexOf(a);
     const indexB = roundOrder.indexOf(b);
     if (indexA !== -1 && indexB !== -1) return indexA - indexB;
     if (indexA !== -1) return -1;
     if (indexB !== -1) return 1;
+
     // If not in predefined order, sort alphabetically (less significant first)
     return a.localeCompare(b);
   });
