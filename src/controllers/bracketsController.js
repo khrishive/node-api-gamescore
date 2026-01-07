@@ -22,15 +22,143 @@ export const getProcessedTournamentData = async (
         fetchFromApi(`competitions/${tournamentId}`),
         fetchFromApi(`competitions/${tournamentId}/participants`),
         fetchFromApi(`competitions/${tournamentId}/stages`),
-        fetchFromApi(`fixtures?competitionId=${tournamentId}`),
+        fetchFromApi(`competitions/${tournamentId}/fixtures`),
       ]);
 
+    // Log what we received from all endpoints
+    console.log(`📊 API Responses for tournament ${tournamentId}:`);
+    console.log(`   - competition: ${competition ? "EXISTS" : "NULL/ERROR"}`);
+    if (competition?.error) {
+      console.log(`      Error: ${competition.error}`);
+    }
+    console.log(
+      `   - participantsData: ${participantsData ? "EXISTS" : "NULL/ERROR"}`
+    );
+    if (participantsData?.error) {
+      console.log(`      Error: ${participantsData.error}`);
+    }
+    console.log(`   - stagesData: ${stagesData ? "EXISTS" : "NULL/ERROR"}`);
+    if (stagesData?.error) {
+      console.log(`      Error: ${stagesData.error}`);
+    }
+    if (stagesData?.stages) {
+      console.log(`      Stages count: ${stagesData.stages.length || 0}`);
+    }
+    console.log(`   - fixturesData: ${fixturesData ? "EXISTS" : "NULL/ERROR"}`);
+    if (fixturesData?.error) {
+      console.log(`      Error: ${fixturesData.error}`);
+    }
+
+    // Log what we received from fixtures endpoint
+    console.log(
+      `📊 Fixtures endpoint response for tournament ${tournamentId}:`
+    );
+    console.log(`   - hasData: ${!!fixturesData}`);
+    console.log(`   - isArray: ${Array.isArray(fixturesData)}`);
+    console.log(`   - type: ${typeof fixturesData}`);
+    if (fixturesData && !Array.isArray(fixturesData)) {
+      console.log(`   - keys: ${Object.keys(fixturesData).join(", ")}`);
+    }
+    console.log(`   - fixturesCount: ${fixturesData?.fixtures?.length || 0}`);
+    console.log(
+      `   - directArrayCount: ${
+        Array.isArray(fixturesData) ? fixturesData.length : 0
+      }`
+    );
+    console.log(`   - hasError: ${!!fixturesData?.error}`);
+    if (fixturesData?.error) {
+      console.error(`   ❌ Error details:`, fixturesData.error);
+    }
+    if (fixturesData && !Array.isArray(fixturesData) && fixturesData.data) {
+      console.log(
+        `   - data property exists: ${Array.isArray(fixturesData.data)} (${
+          fixturesData.data?.length || 0
+        } items)`
+      );
+    }
+
     // Estructura de datos similar al plugin
+    // Handle different response formats for fixtures
+    let competitionFixtures = [];
+    if (fixturesData) {
+      if (Array.isArray(fixturesData)) {
+        // If response is directly an array
+        competitionFixtures = fixturesData;
+        console.log(
+          `   ✅ Using fixtures as direct array (${competitionFixtures.length} items)`
+        );
+      } else if (
+        fixturesData.fixtures &&
+        Array.isArray(fixturesData.fixtures)
+      ) {
+        // If response has fixtures property
+        competitionFixtures = fixturesData.fixtures;
+        console.log(
+          `   ✅ Using fixturesData.fixtures (${competitionFixtures.length} items)`
+        );
+      } else if (fixturesData.data && Array.isArray(fixturesData.data)) {
+        // If response has data property
+        competitionFixtures = fixturesData.data;
+        console.log(
+          `   ✅ Using fixturesData.data (${competitionFixtures.length} items)`
+        );
+      } else {
+        console.log(
+          `   ⚠️ Could not extract fixtures from response. Response structure:`,
+          JSON.stringify(fixturesData).substring(0, 200)
+        );
+      }
+    } else {
+      console.log(`   ⚠️ fixturesData is null or undefined`);
+    }
+
+    console.log(
+      `   📊 Final competitionFixtures count: ${competitionFixtures.length}`
+    );
+
+    // Check if competition exists
+    if (!competition || competition.error) {
+      console.error(
+        `❌ Competition ${tournamentId} does not exist or has error:`,
+        competition?.error || "Competition not found"
+      );
+      return {
+        competition: null,
+        competitionParticipants: [],
+        stages: [],
+        competitionFixtures: [],
+        allFixturesIndexedById: {},
+        participantsDataIndexedById: {},
+        stagesData: {},
+        stageFixtures: {},
+        stageParticipants: {},
+        debug: {
+          stageErrors: {},
+          stageFetchInfo: {},
+          apiEndpointsResponse: {
+            competition: {
+              exists: false,
+              hasError: true,
+              error: competition?.error || "Competition not found",
+            },
+          },
+        },
+        processedData: {
+          hybridSeparation: null,
+          stagesData: {},
+          allFixtures: [],
+        },
+      };
+    }
+
+    // Ensure stages is always a mutable array
+    const stagesArray = stagesData?.stages ? [...stagesData.stages] : [];
+
     const result = {
       competition: competition || null,
       competitionParticipants: participantsData?.participants || [],
-      stages: stagesData?.stages || [],
-      competitionFixtures: fixturesData?.fixtures || [],
+      stages: stagesArray,
+      competitionFixtures: competitionFixtures,
       allFixturesIndexedById: {},
       participantsDataIndexedById: {},
       stagesData: {},
@@ -39,6 +167,68 @@ export const getProcessedTournamentData = async (
       debug: {
         stageErrors: {},
         stageFetchInfo: {},
+        apiEndpointsResponse: {
+          competition: {
+            exists: !!competition,
+            hasError: !!competition?.error,
+            error: competition?.error || null,
+            name: competition?.name || null,
+          },
+          participants: {
+            exists: !!participantsData,
+            hasError: !!participantsData?.error,
+            error: participantsData?.error || null,
+            count: participantsData?.participants?.length || 0,
+          },
+          stages: {
+            exists: !!stagesData,
+            hasError: !!stagesData?.error,
+            error: stagesData?.error || null,
+            count: stagesData?.stages?.length || 0,
+          },
+        },
+        fixturesEndpointResponse: {
+          hasData: !!fixturesData,
+          isArray: Array.isArray(fixturesData),
+          type: typeof fixturesData,
+          keys:
+            fixturesData && !Array.isArray(fixturesData)
+              ? Object.keys(fixturesData)
+              : [],
+          fixturesCount: fixturesData?.fixtures?.length || 0,
+          directArrayCount: Array.isArray(fixturesData)
+            ? fixturesData.length
+            : 0,
+          hasError: !!fixturesData?.error,
+          errorDetails: fixturesData?.error || null,
+          dataPropertyExists:
+            fixturesData && !Array.isArray(fixturesData) && fixturesData.data
+              ? {
+                  isArray: Array.isArray(fixturesData.data),
+                  length: fixturesData.data?.length || 0,
+                }
+              : null,
+          processedCount: competitionFixtures.length,
+          extractionMethod: Array.isArray(fixturesData)
+            ? "direct_array"
+            : fixturesData?.fixtures
+            ? "fixtures_property"
+            : fixturesData?.data
+            ? "data_property"
+            : "none",
+        },
+        fixturesIndexing: {
+          competitionFixturesType: typeof competitionFixtures,
+          competitionFixturesIsArray: Array.isArray(competitionFixtures),
+          competitionFixturesLength: competitionFixtures.length || 0,
+          indexedCount: 0, // Will be updated after indexing
+        },
+        hybridSeparationCheck: {
+          stagesCount: 0, // Will be updated later
+          competitionFixturesCount: 0, // Will be updated later
+          allFixturesCount: 0, // Will be updated later
+          fixturesForHybridCount: 0, // Will be updated later
+        },
       },
     };
 
@@ -74,6 +264,11 @@ export const getProcessedTournamentData = async (
           allFixtures.push(fixture);
         }
       });
+    }
+
+    // Update debug info with indexing results
+    if (result.debug && result.debug.fixturesIndexing) {
+      result.debug.fixturesIndexing.indexedCount = allFixtures.length;
     }
 
     // Procesar cada stage
@@ -291,16 +486,197 @@ export const getProcessedTournamentData = async (
 
     // Separar torneo híbrido si es necesario (cuando no hay stages definidos)
     let hybridSeparation = null;
+    // Use competitionFixtures if available, otherwise use allFixtures
+    const fixturesForHybrid =
+      result.competitionFixtures && result.competitionFixtures.length > 0
+        ? result.competitionFixtures
+        : allFixtures && allFixtures.length > 0
+        ? allFixtures
+        : [];
+
+    // Update debug info with hybrid separation check
+    if (result.debug && result.debug.hybridSeparationCheck) {
+      result.debug.hybridSeparationCheck.stagesCount =
+        result.stages?.length || 0;
+      result.debug.hybridSeparationCheck.competitionFixturesCount =
+        result.competitionFixtures?.length || 0;
+      result.debug.hybridSeparationCheck.allFixturesCount = allFixtures.length;
+      result.debug.hybridSeparationCheck.fixturesForHybridCount =
+        fixturesForHybrid ? fixturesForHybrid.length : 0;
+    }
+
     if (
       (!result.stages || result.stages.length === 0) &&
-      result.competitionFixtures &&
-      result.competitionFixtures.length > 0
+      fixturesForHybrid &&
+      fixturesForHybrid.length > 0
     ) {
+      console.log(
+        `🔍 No stages found, attempting hybrid separation with ${fixturesForHybrid.length} fixtures`
+      );
       hybridSeparation = separateHybridTournament(
-        result.competitionFixtures,
+        fixturesForHybrid,
         result,
         tournamentId
       );
+
+      // Process the separated fixtures
+      if (
+        hybridSeparation &&
+        hybridSeparation.swiss &&
+        hybridSeparation.swiss.length > 0
+      ) {
+        console.log(
+          `   ✅ Swiss phase detected: ${hybridSeparation.swiss.length} fixtures`
+        );
+        const swissDetectedType = detectStageType(
+          hybridSeparation.swiss,
+          [],
+          "Swiss"
+        );
+        const swissProcessedData = processStageFixtures(
+          hybridSeparation.swiss,
+          swissDetectedType
+        );
+        // Ensure structure matches what plugin expects
+        hybridSeparation.swissProcessedData = {
+          ...swissProcessedData,
+          stageType: "Swiss", // Plugin expects stageType
+        };
+      }
+
+      if (
+        hybridSeparation &&
+        hybridSeparation.playoffs &&
+        hybridSeparation.playoffs.length > 0
+      ) {
+        console.log(
+          `   ✅ Playoffs phase detected: ${hybridSeparation.playoffs.length} fixtures`
+        );
+        const playoffsDetectedType = detectStageType(
+          hybridSeparation.playoffs,
+          [],
+          "Playoffs"
+        );
+        const playoffsProcessedData = processStageFixtures(
+          hybridSeparation.playoffs,
+          playoffsDetectedType
+        );
+        // Ensure structure matches what plugin expects
+        // Plugin expects: rounds (as array of {name, fixtures}), stageType, fixturesByRound
+        // The processStageFixtures returns rounds as {round, matches}, need to convert to {name, fixtures}
+        let roundsForPlugin = [];
+        if (
+          playoffsProcessedData.rounds &&
+          Array.isArray(playoffsProcessedData.rounds)
+        ) {
+          roundsForPlugin = playoffsProcessedData.rounds.map((r) => {
+            // Handle both {round, matches} and {name, fixtures} formats
+            if (r.round) {
+              return {
+                name: r.round,
+                fixtures: r.matches || [],
+              };
+            } else if (r.name) {
+              return r; // Already in correct format
+            } else {
+              return {
+                name: r.name || "Unknown",
+                fixtures: r.fixtures || [],
+              };
+            }
+          });
+        }
+
+        hybridSeparation.playoffsProcessedData = {
+          ...playoffsProcessedData,
+          stageType: "Playoffs", // Plugin expects "Playoffs", not "SINGLE_ELIMINATION" or "DOUBLE_ELIMINATION"
+          rounds: roundsForPlugin, // Converted to {name, fixtures} format
+          // fixturesByRound should already be in processedData
+          upperBracketRounds: playoffsProcessedData.upperBracketRounds || [],
+          lowerBracketRounds: playoffsProcessedData.lowerBracketRounds || [],
+          thirdPlaceMatch: playoffsProcessedData.thirdPlaceMatch || null,
+        };
+      }
+
+      console.log(
+        `   📊 Hybrid separation complete: Swiss=${
+          hybridSeparation?.swissCount || 0
+        }, Playoffs=${hybridSeparation?.playoffsCount || 0}`
+      );
+    } else if (!result.stages || result.stages.length === 0) {
+      console.log(
+        `   ⚠️ No stages and no fixtures available for hybrid separation`
+      );
+    }
+
+    // Si tenemos hybridSeparation, crear stages virtuales para que el plugin pueda renderizarlos
+    if (
+      hybridSeparation &&
+      (hybridSeparation.swissCount > 0 || hybridSeparation.playoffsCount > 0)
+    ) {
+      // Crear stage virtual para Swiss si existe
+      if (hybridSeparation.swissCount > 0) {
+        const swissStageId = `swiss_${tournamentId}`;
+        result.stagesData[swissStageId] = {
+          id: swissStageId,
+          name: "Group stage",
+          type: "Swiss",
+          isSwiss: true,
+          isPlayoffs: false,
+          processedData: hybridSeparation.swissProcessedData,
+          detectedType: "Swiss",
+          fullFixtures: hybridSeparation.swiss,
+        };
+        result.stageFixtures[swissStageId] = hybridSeparation.swiss;
+        result.stageParticipants[swissStageId] = [];
+
+        // Agregar a stages array para que el plugin lo detecte
+        if (!Array.isArray(result.stages)) {
+          result.stages = [];
+        }
+        result.stages.push({
+          id: swissStageId,
+          name: "Group stage",
+          type: "Swiss",
+        });
+
+        console.log(`   ✅ Created virtual Swiss stage: ${swissStageId}`);
+      }
+
+      // Crear stage virtual para Playoffs si existe
+      if (hybridSeparation.playoffsCount > 0) {
+        const playoffsStageId = `playoffs_${tournamentId}`;
+        // Ensure processedData has stageType as "Playoffs" for plugin compatibility
+        const playoffsProcessedDataForStage = {
+          ...hybridSeparation.playoffsProcessedData,
+          stageType: "Playoffs", // Plugin expects "Playoffs", not "SINGLE_ELIMINATION" or "DOUBLE_ELIMINATION"
+        };
+
+        result.stagesData[playoffsStageId] = {
+          id: playoffsStageId,
+          name: "Playoffs",
+          type: "Playoffs",
+          isSwiss: false,
+          isPlayoffs: true,
+          processedData: playoffsProcessedDataForStage,
+          detectedType: "Playoffs",
+          fullFixtures: hybridSeparation.playoffs,
+        };
+        result.stageFixtures[playoffsStageId] = hybridSeparation.playoffs;
+        result.stageParticipants[playoffsStageId] = [];
+
+        // Agregar a stages array para que el plugin lo detecte
+        if (!Array.isArray(result.stages)) {
+          result.stages = [];
+        }
+        result.stages.push({
+          id: playoffsStageId,
+          name: "Playoffs",
+          type: "Playoffs",
+        });
+
+        console.log(`   ✅ Created virtual Playoffs stage: ${playoffsStageId}`);
+      }
     }
 
     // Agregar datos procesados al resultado
@@ -487,3 +863,4 @@ export const getStageData = async (tournamentId, stageId, sport = "cs2") => {
     throw error;
   }
 };
+

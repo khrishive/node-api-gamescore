@@ -17,6 +17,7 @@ export function detectStageType(
   apiStageType = "Unknown"
 ) {
   // Si la API ya indica el tipo, confiar en ella (con validación)
+  // PERO: Si es "Group stage" y tiene estructura de Double Elimination (upper/lower bracket), detectarlo como GSL
   if (
     apiStageType &&
     apiStageType !== "Unknown" &&
@@ -33,7 +34,33 @@ export function detectStageType(
       return "Playoffs";
     }
     if (lowerType.includes("gsl")) return "GSL";
-    if (lowerType.includes("group")) return "Groups";
+    
+    // Group stage: Check if it has Double Elimination structure (upper/lower bracket)
+    if (lowerType.includes("group")) {
+      // Check if fixtures have upper/lower bracket structure
+      if (fixtures && fixtures.length > 0) {
+        const hasUpperBracket = fixtures.some(
+          (f) =>
+            f.section &&
+            (f.section.toLowerCase().includes("upper") ||
+              f.section.toLowerCase().includes("winner"))
+        );
+        const hasLowerBracket = fixtures.some(
+          (f) =>
+            f.section &&
+            (f.section.toLowerCase().includes("lower") ||
+              f.section.toLowerCase().includes("loser"))
+        );
+        
+        // If it has both upper and lower bracket, it's GSL (Double Elimination)
+        if (hasUpperBracket && hasLowerBracket) {
+          return "GSL";
+        }
+      }
+      
+      // Otherwise, return "Groups" for regular group stages
+      return "Groups";
+    }
   }
 
   if (!fixtures || fixtures.length === 0) {
