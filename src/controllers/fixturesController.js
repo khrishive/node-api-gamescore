@@ -78,16 +78,30 @@ export const getFixtures = async (offset = 0, limit = 100, filters = {}, sport =
     }
   }
 
-  if (conditions.length > 0) {
-    query += ` WHERE ` + conditions.join(' AND ');
-  }
+  const whereClause = conditions.length > 0 ? ` WHERE ` + conditions.join(' AND ') : '';
 
   const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
   const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
 
-  query += ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+  // Get total count
+  const countQuery = `SELECT COUNT(*) as total FROM fixtures${whereClause}`;
+  const [[{ total }]] = await db.execute(countQuery, params);
 
-  const [rows] = await db.execute(query, params);
-  return rows;
+  // Get paginated data
+  const dataQuery = query + whereClause + ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;
+  const [rows] = await db.execute(dataQuery, params);
+
+  const totalPages = Math.ceil(total / safeLimit);
+
+  return {
+    data: rows,
+    pagination: {
+      offset: safeOffset,
+      limit: safeLimit,
+      totalItems: total,
+      totalPages,
+      currentPage: Math.floor(safeOffset / safeLimit) + 1
+    }
+  };
 };
 
