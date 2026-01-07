@@ -37,7 +37,11 @@ export const getFixtures = async (offset = 0, limit = 100, filters = {}, sport =
   }
 
   // Direct filter for scheduled_start_time if provided
-  if (filters.scheduled_start_time) {
+  // Support either a single bound (`scheduled_start_time`) or a range
+  if (filters.scheduled_start_time_from && filters.scheduled_start_time_to) {
+    conditions.push('scheduled_start_time BETWEEN ? AND ?');
+    params.push(filters.scheduled_start_time_from, filters.scheduled_start_time_to);
+  } else if (filters.scheduled_start_time) {
     conditions.push('scheduled_start_time >= ?');
     params.push(filters.scheduled_start_time);
   }

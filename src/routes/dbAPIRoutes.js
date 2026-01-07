@@ -1,11 +1,14 @@
+//src/routes/dbAPIRoutes.js
+
 import express from 'express';
 const router = express.Router();
 import {getRecords} from '../controllers/dbController.js';
 import {getAllRecords} from '../controllers/dbController.js';
 import { getFixtures } from '../controllers/fixturesController.js';
-import { getCompetitions } from '../controllers/competitionsController.js';
+//import { getCompetitions } from '../controllers/competitionsController.js';
 
 // Endpoint to get all records from the 'competitions' table
+/*
 router.get('/competitions', async (req, res) => {
   try {
     const {
@@ -49,7 +52,7 @@ router.get('/competitions', async (req, res) => {
     console.error('Connection error:', error);
     res.status(500).json({ error: 'Server error' });
   }
-});
+});*/
 
 router.get("/all_competitions", async (req, res) => {
   const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
@@ -98,13 +101,41 @@ router.get('/fixtures', async (req, res) => {
     filters.to = to;
   }
 
+  // If user passed start_time as yyyy-mm-dd, treat it as that day's range
+  if (start_time) {
+    const m = /^\d{4}-\d{2}-\d{2}$/.test(start_time);
+    if (m) {
+      filters.customRange = { from: start_time, to: start_time };
+    } else {
+      // if not date string, pass through (could be timestamp)
+      filters.from = start_time;
+    }
+  }
+
   if (id) filters.id = id;
   if (competition_id) filters.competition_id = competition_id;
   if (competition_name) filters.competition_name = competition_name;
-  if (end_time) filters.end_time = end_time;
+  if (end_time) {
+    // accept yyyy-mm-dd and convert to end-of-day timestamp
+    if (/^\d{4}-\d{2}-\d{2}$/.test(end_time)) {
+      const endTs = new Date(`${end_time}T23:59:59Z`).getTime();
+      filters.end_time = endTs;
+    } else {
+      filters.end_time = end_time;
+    }
+  }
   if (format_name) filters.format_name = format_name;
   if (format_value) filters.format_value = format_value;
-  if (scheduled_start_time) filters.scheduled_start_time = scheduled_start_time;
+  if (scheduled_start_time) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(scheduled_start_time)) {
+      const startTs = new Date(scheduled_start_time).setHours(0,0,0,0);
+      const endTs = new Date(`${scheduled_start_time}T23:59:59Z`).getTime();
+      filters.scheduled_start_time_from = startTs;
+      filters.scheduled_start_time_to = endTs;
+    } else {
+      filters.scheduled_start_time = scheduled_start_time;
+    }
+  }
   if (sport_alias) filters.sport_alias = sport_alias;
   if (sport_name) filters.sport_name = sport_name;
   if (start_time) filters.start_time = start_time;
