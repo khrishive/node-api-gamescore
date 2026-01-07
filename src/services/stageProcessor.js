@@ -67,7 +67,7 @@ function organizeSwissRounds(fixtures) {
 
     // Si no hay round, agrupar por fecha
     if (!roundName) {
-      const timestamp = fixture.scheduledStartTime || fixture.startTime || 0;
+      let timestamp = fixture.scheduledStartTime || fixture.startTime || 0;
       if (timestamp > 1893456000) timestamp = timestamp / 1000;
       roundName =
         timestamp > 0
