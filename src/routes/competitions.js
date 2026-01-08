@@ -1,24 +1,29 @@
+//src/routes/competitions.js
+
 import express from 'express';
 import { fetchFromApi } from '../controllers/apiController.js';
+import {
+  getCompetitionsCS2,
+  getCompetitionByIdCS2,
+  getCompetitionsLOL,
+  getCompetitionByIdLOL,
+  getCompetitionsDOTA2,
+  getCompetitionByIdDOTA2
+} from '../controllers/competitionsController.js';
 
 const router = express.Router();
 
-// Obtener la lista de competiciones
-router.get('/', async (req, res) => {
-    console.log("🔍 Petición recibida en /competitions con query:", req.query);
-    const data = await fetchFromApi('competitions', req.query);
-    console.log("📩 Respuesta de la API en /competitions:", data);
-    res.json(data);
-});
+// CS2 routes
+router.get('/cs2', getCompetitionsCS2);
+router.get('/cs2/:id', getCompetitionByIdCS2);
 
-// Obtener detalles de una competición por ID
-router.get('/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log("🔍 Petición recibida en /competitions/:id con ID:", id);
-    const data = await fetchFromApi(`competitions/${id}`);
-    console.log("📩 Respuesta de la API en /competitions/:id:", data);
-    res.json(data);
-});
+// LOL routes
+router.get('/lol', getCompetitionsLOL);
+router.get('/lol/:id', getCompetitionByIdLOL);
+
+// DOTA2 routes
+router.get('/dota2', getCompetitionsDOTA2);
+router.get('/dota2/:id', getCompetitionByIdDOTA2);
 
 // Obtener participantes de una competición
 router.get('/:id/participants', async (req, res) => {

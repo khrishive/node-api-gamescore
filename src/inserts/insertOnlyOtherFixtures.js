@@ -25,7 +25,7 @@ async function getCompetitionsFromDB(sport) {
     SELECT id
     FROM competitions
     WHERE fixture_count > 0
-      AND status IN ('upcoming', 'started')
+      AND status IN ('upcoming', 'started', 'ended')
       AND sport_alias = ?
     `,
     [sport]

@@ -41,6 +41,8 @@ app.use(morgan("dev")); // Log each request to the console
 // Protected routes with API Key:
 app.use("/api/competitions", apiKeyAuth, competitionsRoutes);
 app.use("/api/fixtures", apiKeyAuth, fixturesRoutes);
+app.use("/api/teams", apiKeyAuth, teamsRoutes);
+app.use("/api/players", apiKeyAuth, playersRoutes);
 app.use("/fixtures-by-comp", apiKeyAuth, fixturesByComp);
 app.use("/api", apiKeyAuth, mapBreakdownRoute);
 app.use("/historic-events", apiKeyAuth, matchEventRoute);
@@ -51,8 +53,6 @@ app.use("/fixtures", apiKeyAuth, fixtureEventsRawRouter);
 app.use("/fixtures", apiKeyAuth, fixtureMapsRouter);
 app.use("/fixtures/lol", apiKeyAuth, lolMapStats);
 app.use("/fixtures/dota2", apiKeyAuth, dota2MapStats);
-app.use("/api/teams", apiKeyAuth, teamsRoutes);
-app.use("/api/players", apiKeyAuth, playersRoutes);
 app.use("/db", apiKeyAuth, dbAPIRoutes);
 app.use("/db/populate", populateRoutes);
 app.use("/map-stats", apiKeyAuth, mapStatsRoute);
