@@ -5,9 +5,61 @@ const router = express.Router();
 import {getRecords} from '../controllers/dbController.js';
 import {getAllRecords} from '../controllers/dbController.js';
 import { getFixtures } from '../controllers/fixturesController.js';
+import { getCompetitions } from '../controllers/competitionsController_db.js';
 //import { getCompetitions } from '../controllers/competitionsController.js';
 
 // Endpoint to get all records from the 'competitions' table
+router.get('/competitions', async (req, res) => {
+  try {
+    let offset = parseInt(req.query.offset, 10);
+    let limit = parseInt(req.query.limit, 10);
+
+    if (isNaN(offset)) offset = 0;
+    if (isNaN(limit)) limit = 100;
+
+    const {
+      id, name, status, start_date
+    } = req.query;
+
+    const sport = req.query.sport || 'cs2';
+
+    const filters = {};
+
+    if (id !== undefined && id !== '') {
+      filters.id = id;
+    }
+
+    if (name) {
+      filters.name = name;
+    }
+
+    if (status) {
+      filters.status = status;
+    }
+
+    // Handle start_date filtering (supports yyyy-mm-dd format)
+    if (start_date) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
+        // Date range: entire day
+        const startTs = new Date(start_date).setHours(0, 0, 0, 0);
+        const endTs = new Date(`${start_date}T23:59:59Z`).getTime();
+        filters.start_date_from = startTs;
+        filters.start_date_to = endTs;
+      } else {
+        // Treat as timestamp
+        filters.start_date = start_date;
+      }
+    }
+
+    const result = await getCompetitions(offset, limit, filters, sport);
+    // Return only the data array, not the pagination metadata
+    res.json(result.data);
+  } catch (error) {
+    console.error('Connection error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 /*
 router.get('/competitions', async (req, res) => {
   try {
@@ -81,9 +133,9 @@ router.get('/fixtures', async (req, res) => {
   if (isNaN(limit)) limit = 100;
 
   const {
-    today, from, to,
+    from, to,
     id, competition_id, competition_name, end_time, format_name, format_value,
-    scheduled_start_time, sport_alias, sport_name, start_time, status, tie, winner_id,
+    sport_alias, sport_name, status, tie, winner_id,
     participants0_id, participants0_name, participants0_score,
     participants1_name, participants1_id, participants1_score
   } = req.query;
@@ -92,24 +144,14 @@ router.get('/fixtures', async (req, res) => {
 
   const filters = {};
 
-  // Flexible date filtering for scheduled_start_time and start_time
+  // Date range filtering for start_time (with fallback to scheduled_start_time if NULL)
   if (from && to) {
-    filters.customRange = { from, to };
+    filters.from = from;
+    filters.to = to;
   } else if (from) {
     filters.from = from;
   } else if (to) {
     filters.to = to;
-  }
-
-  // If user passed start_time as yyyy-mm-dd, treat it as that day's range
-  if (start_time) {
-    const m = /^\d{4}-\d{2}-\d{2}$/.test(start_time);
-    if (m) {
-      filters.customRange = { from: start_time, to: start_time };
-    } else {
-      // if not date string, pass through (could be timestamp)
-      filters.from = start_time;
-    }
   }
 
   if (id) filters.id = id;
@@ -126,19 +168,8 @@ router.get('/fixtures', async (req, res) => {
   }
   if (format_name) filters.format_name = format_name;
   if (format_value) filters.format_value = format_value;
-  if (scheduled_start_time) {
-    if (/^\d{4}-\d{2}-\d{2}$/.test(scheduled_start_time)) {
-      const startTs = new Date(scheduled_start_time).setHours(0,0,0,0);
-      const endTs = new Date(`${scheduled_start_time}T23:59:59Z`).getTime();
-      filters.scheduled_start_time_from = startTs;
-      filters.scheduled_start_time_to = endTs;
-    } else {
-      filters.scheduled_start_time = scheduled_start_time;
-    }
-  }
   if (sport_alias) filters.sport_alias = sport_alias;
   if (sport_name) filters.sport_name = sport_name;
-  if (start_time) filters.start_time = start_time;
   if (status) filters.status = status;
   if (tie) filters.tie = tie;
   if (winner_id) filters.winner_id = winner_id;
