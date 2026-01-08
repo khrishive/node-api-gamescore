@@ -80,12 +80,28 @@ export const getFixtures = async (offset = 0, limit = 100, filters = {}, sport =
 
   const whereClause = conditions.length > 0 ? ` WHERE ` + conditions.join(' AND ') : '';
 
-  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
-  const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
-
   // Get total count
   const countQuery = `SELECT COUNT(*) as total FROM fixtures${whereClause}`;
   const [[{ total }]] = await db.execute(countQuery, params);
+
+  // Special case: limit = -1 means fetch all without pagination
+  if (limit === -1) {
+    const dataQuery = query + whereClause;
+    const [rows] = await db.execute(dataQuery, params);
+    return {
+      data: rows,
+      pagination: {
+        offset: 0,
+        limit: -1,
+        totalItems: total,
+        totalPages: 1,
+        currentPage: 1
+      }
+    };
+  }
+
+  const safeLimit = Number.isInteger(limit) && limit > 0 ? limit : 100;
+  const safeOffset = Number.isInteger(offset) && offset >= 0 ? offset : 0;
 
   // Get paginated data
   const dataQuery = query + whereClause + ` LIMIT ${safeLimit} OFFSET ${safeOffset}`;

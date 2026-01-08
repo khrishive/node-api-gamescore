@@ -150,8 +150,9 @@ router.get('/fixtures', async (req, res) => {
   if (participants1_score) filters.participants1_score = participants1_score;
 
   try {
-    const data = await getFixtures(offset, limit, filters, sport);
-    res.json(data);
+    const result = await getFixtures(offset, limit, filters, sport);
+    // Return only the data array, not the pagination metadata
+    res.json(result.data);
   } catch (error) {
     console.error('Connection error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -287,3 +288,55 @@ router.get('/team_info', async (req, res) => {
 });
 
 export default router;
+
+
+
+
+    [
+        {
+            "id": 637042,
+            "competition_id": 13367,
+            "competition_name": "ESL Challenger League Season 46: North America",
+            "end_time": 1692151036223,
+            "scheduled_start_time": 1692144600000,
+            "start_time": 1692145296671,
+            "sport_alias": "cs2",
+            "sport_name": "Counter-Strike 2",
+            "status": "ended",
+            "tie": 0,
+            "winner_id": 104060,
+            "participants0_id": 62253,
+            "participants0_name": "Unjustified",
+            "participants0_score": 0,
+            "participants1_id": 104060,
+            "participants1_name": "M80",
+            "participants1_score": 2,
+            "hs_description": null,
+            "rr_description": null,
+            "manual_override": 0,
+            "manual_updated_at": null
+        },
+        {
+            "id": 637043,
+            "competition_id": 13367,
+            "competition_name": "ESL Challenger League Season 46: North America",
+            "end_time": 1692151843308,
+            "scheduled_start_time": 1692144600000,
+            "start_time": 1692145479056,
+            "sport_alias": "cs2",
+            "sport_name": "Counter-Strike 2",
+            "status": "Ended",
+            "tie": 0,
+            "winner_id": 5743,
+            "participants0_id": 10195,
+            "participants0_name": "Bad News Bears",
+            "participants0_score": 0,
+            "participants1_id": 5743,
+            "participants1_name": "Mythic",
+            "participants1_score": 2,
+            "hs_description": null,
+            "rr_description": null,
+            "manual_override": 0,
+            "manual_updated_at": null
+        }
+    ]
