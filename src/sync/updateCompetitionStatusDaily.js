@@ -9,6 +9,34 @@ export async function updateCompetitionStatus(sport = 'cs2') {
   try {
     const today = Date.now();
 
+    // --- Step 0: future competitions → upcoming ---
+    console.log(
+      `[${sport}] 0/3: Checking competitions to move to 'upcoming'...`
+    );
+
+    const [toUpcoming] = await db.query(
+      `UPDATE competitions
+      SET status = 'upcoming'
+      WHERE start_date > ?
+        AND (
+          status IS NULL
+          OR status = ''
+          OR LOWER(status) = 'waiting for information'
+        )`,
+      [today]
+    );
+
+    if (toUpcoming.affectedRows > 0) {
+      console.log(
+        `[${sport}] 🟡 Updated ${toUpcoming.affectedRows} competitions to 'upcoming'.`
+      );
+    } else {
+      console.log(
+        `[${sport}] ℹ️  No competitions needed to be updated to 'upcoming'.`
+      );
+    }
+
+
     // --- Step 1: NULL / empty / waiting / upcoming → started ---
     console.log(
       `[${sport}] 1/2: Checking competitions to move to 'started' (null | empty | waiting | upcoming)...`
