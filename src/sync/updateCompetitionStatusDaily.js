@@ -1,3 +1,5 @@
+//src/sync/updateCompetitionStatusDaily.js
+
 import { getDbBySport } from '../utils/dbUtils.js'; // Centralized DB selector
 
 export async function updateCompetitionStatus(sport = 'cs2') {
@@ -13,17 +15,18 @@ export async function updateCompetitionStatus(sport = 'cs2') {
     );
 
     const [toStarted] = await db.query(
-      `UPDATE competitions
-       SET status = 'started'
-       WHERE start_date <= ?
-         AND (
-           status IS NULL
-           OR status = ''
-           OR status = 'waiting for information'
-           OR status = 'upcoming'
-         )`,
-      [today]
-    );
+  `UPDATE competitions
+   SET status = 'started'
+   WHERE start_date <= ?
+     AND (
+       status IS NULL
+       OR status = ''
+       OR LOWER(status) = 'waiting for information'
+       OR status = 'upcoming'
+     )`,
+  [today]
+);
+
 
     if (toStarted.affectedRows > 0) {
       console.log(
