@@ -76,8 +76,26 @@ export async function runAllInsertCompetitions(
  */
 if (process.argv[1].includes('runAllInsertCompetitions')) {
   const sportFromCLI = process.argv[2] || null;
-  const fromDate = process.argv[3] || null;
-  const toDate = process.argv[4] || null;
+  let fromDate = process.argv[3] || null;
+  let toDate = process.argv[4] || null;
+
+  // Set default dates if not provided
+  if (!fromDate || !toDate) {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth(); // 0-11
+
+    fromDate = `${currentYear}-01-01`;
+
+    // If November (10) or December (11), set toDate to next year
+    if (currentMonth >= 10) {
+      toDate = `${currentYear + 1}-12-31`;
+    } else {
+      toDate = `${currentYear}-12-31`;
+    }
+
+    console.log(`📅 Default dates applied: ${fromDate} → ${toDate}`);
+  }
 
   runAllInsertCompetitions(sportFromCLI, fromDate, toDate).catch((error) => {
     console.error("\n❌ A global error occurred:", error.message);
