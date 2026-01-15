@@ -53,7 +53,6 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
             const players = dota2PlayerBuild
             .filter(p => p.map_number === mapNumber && p.team_id === teamId)
             .map(p => ({
-                playerId: p.player_id,
                 name: p.name,
                 role: p.role,
                 heroId: p.heroId,
@@ -126,7 +125,7 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
 
                 teamRef.players.forEach(player => {
                     const stat = dota2FixtureData.find(
-                        s => s.player_id === player.playerId && s.map_number === mapNumber
+                        s => s.player_name === player.name && s.map_number === mapNumber
                     );
                     if (stat) {
                         player.kills = stat.kills ?? 0;
