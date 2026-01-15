@@ -53,6 +53,7 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
             const players = dota2PlayerBuild
             .filter(p => p.map_number === mapNumber && p.team_id === teamId)
             .map(p => ({
+                playerId: p.player_playerId,
                 name: p.name,
                 role: p.role,
                 heroId: p.heroId,
@@ -130,12 +131,12 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
                     if (stat) {
                         player.kills = stat.kills ?? 0;
                         player.deaths = stat.deaths ?? 0;
-                        player.assists = stat.assists ?? 0;
+                        player.denies = stat.denies ?? 0;
                         player.gold = stat.gold ?? 0;
-                        player.damage = stat.championDamage ?? 0;
-                        player.cs = stat.cs ?? 0;
+                        player.heroDamage = stat.heroDamage ?? 0;
+                        player.towersDestroyed = stat.towersDestroyed ?? 0;
                         player.kp = teamKills > 0
-                            ? Number((((player.kills + player.assists) / teamKills) * 100).toFixed(3))
+                            ? Number((((player.kills + stat.assists) / teamKills) * 100).toFixed(3))
                             : 0;
                     }
                 });
