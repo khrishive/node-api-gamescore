@@ -136,7 +136,7 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
                         player.towersDestroyed = stat.towersDestroyed ?? 0;
                         player.cs = stat.cs ?? 0;
                         player.kp = teamKills > 0
-                            ? Number((((player.kills + stat.assists) / teamKills) * 100).toFixed(3))
+                            ? Number((((player.kills + stat.denies) / teamKills) * 100).toFixed(3))
                             : 0;
                     }
                 });
