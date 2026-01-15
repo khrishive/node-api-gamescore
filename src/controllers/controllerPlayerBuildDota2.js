@@ -53,7 +53,7 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
             const players = dota2PlayerBuild
             .filter(p => p.map_number === mapNumber && p.team_id === teamId)
             .map(p => ({
-                playerId: p.player_playerId,
+                playerId: p.player_id,
                 name: p.name,
                 role: p.role,
                 heroId: p.heroId,
