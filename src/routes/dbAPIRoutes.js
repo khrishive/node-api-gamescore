@@ -1,19 +1,38 @@
-import express from 'express';
+import express from "express";
 const router = express.Router();
-import {getRecords} from '../controllers/dbController.js';
-import {getAllRecords} from '../controllers/dbController.js';
-import { getFixtures } from '../controllers/fixturesController.js';
-import { getCompetitions } from '../controllers/competitionsController.js';
+import { getRecords } from "../controllers/dbController.js";
+import { getAllRecords } from "../controllers/dbController.js";
+import { getFixtures } from "../controllers/fixturesController.js";
+import { getCompetitions } from "../controllers/competitionsController.js";
+import { getTournaments } from "../controllers/tournamentsController.js";
 
 // Endpoint to get all records from the 'competitions' table
-router.get('/competitions', async (req, res) => {
+router.get("/competitions", async (req, res) => {
   try {
     const {
-      from, to, id, name, sport_alias, start_date, end_date, prize_pool_usd,
-      location, organizer, type, fixture_count, description, no_participants,
-      stage, time_of_year, year, series, tier, offset = 0, limit = 100
+      from,
+      to,
+      id,
+      name,
+      sport_alias,
+      start_date,
+      end_date,
+      prize_pool_usd,
+      location,
+      organizer,
+      type,
+      fixture_count,
+      description,
+      no_participants,
+      stage,
+      time_of_year,
+      year,
+      series,
+      tier,
+      offset = 0,
+      limit = 100,
     } = req.query;
-    const sport = req.query.sport || 'cs2'; // Always present
+    const sport = req.query.sport || "cs2"; // Always present
 
     const filters = {};
     if (from && to) {
@@ -46,8 +65,8 @@ router.get('/competitions', async (req, res) => {
     );
     res.json(data);
   } catch (error) {
-    console.error('Connection error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -62,7 +81,12 @@ router.get("/all_competitions", async (req, res) => {
 
   try {
     // Pass pagination parameters to getAllRecords
-    let data = await getAllRecords("competitions", sport, safeOffset, safeLimit);
+    let data = await getAllRecords(
+      "competitions",
+      sport,
+      safeOffset,
+      safeLimit
+    );
     res.json(data);
   } catch (error) {
     console.error("Connection error:", error);
@@ -70,7 +94,7 @@ router.get("/all_competitions", async (req, res) => {
   }
 });
 
-router.get('/fixtures', async (req, res) => { 
+router.get("/fixtures", async (req, res) => {
   let offset = parseInt(req.query.offset, 10);
   let limit = parseInt(req.query.limit, 10);
 
@@ -78,14 +102,31 @@ router.get('/fixtures', async (req, res) => {
   if (isNaN(limit)) limit = 100;
 
   const {
-    today, from, to,
-    id, competition_id, competition_name, end_time, format_name, format_value,
-    scheduled_start_time, sport_alias, sport_name, start_time, status, tie, winner_id,
-    participants0_id, participants0_name, participants0_score,
-    participants1_name, participants1_id, participants1_score
+    today,
+    from,
+    to,
+    id,
+    competition_id,
+    competition_name,
+    end_time,
+    format_name,
+    format_value,
+    scheduled_start_time,
+    sport_alias,
+    sport_name,
+    start_time,
+    status,
+    tie,
+    winner_id,
+    participants0_id,
+    participants0_name,
+    participants0_score,
+    participants1_name,
+    participants1_id,
+    participants1_score,
   } = req.query;
 
-  const sport = req.query.sport || 'cs2';
+  const sport = req.query.sport || "cs2";
 
   const filters = {};
 
@@ -122,32 +163,15 @@ router.get('/fixtures', async (req, res) => {
     const data = await getFixtures(offset, limit, filters, sport);
     res.json(data);
   } catch (error) {
-    console.error('Connection error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
-router.get('/all_fixtures', async (req, res) => {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
-    try {
-        const data = await getAllRecords('fixtures', sport); // Pass sport to controller
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Example for team_fixture_stats
-router.get('/team_fixture_stats', async (req, res) => {
-  const sport = req.query.sport || "cs2";
-  const offset = parseInt(req.query.offset) || 0;
-  const limit = parseInt(req.query.limit) || 100;
-  const filters = {}; // Add any filter logic if needed
-
+router.get("/all_fixtures", async (req, res) => {
+  const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
   try {
-    const data = await getRecords("team_fixture_stats", offset, limit, filters, '', sport);
+    const data = await getAllRecords("fixtures", sport); // Pass sport to controller
     res.json(data);
   } catch (error) {
     console.error("Connection error:", error);
@@ -155,41 +179,81 @@ router.get('/team_fixture_stats', async (req, res) => {
   }
 });
 
-router.get('/fixture_links', async (req, res) => {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
-    const offset = parseInt(req.query.offset) || 0;
-    const limit = parseInt(req.query.limit) || 100;
+// Example for team_fixture_stats
+router.get("/team_fixture_stats", async (req, res) => {
+  const sport = req.query.sport || "cs2";
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = parseInt(req.query.limit) || 100;
+  const filters = {}; // Add any filter logic if needed
 
-    // Only apply filter for fixture_id if present
-    const filters = {};
-    if (req.query.fixture_id !== undefined) {
-        filters.fixture_id = req.query.fixture_id;
-    }
-
-    try {
-        const data = await getRecords('fixture_links', offset, limit, filters, '', sport); // Pass sport to controller
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
+  try {
+    const data = await getRecords(
+      "team_fixture_stats",
+      offset,
+      limit,
+      filters,
+      "",
+      sport
+    );
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-router.get('/participants', async (req, res) => {
+router.get("/fixture_links", async (req, res) => {
+  const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = parseInt(req.query.limit) || 100;
+
+  // Only apply filter for fixture_id if present
+  const filters = {};
+  if (req.query.fixture_id !== undefined) {
+    filters.fixture_id = req.query.fixture_id;
+  }
+
   try {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
+    const data = await getRecords(
+      "fixture_links",
+      offset,
+      limit,
+      filters,
+      "",
+      sport
+    ); // Pass sport to controller
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/participants", async (req, res) => {
+  try {
+    const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
     // Valid fields for the participants table
     const filters = {};
     const validFields = [
-      'id', 'name', 'sport', 'country', 'countryISO', 'region',
-      'player_id_0', 'player_name_0',
-      'player_id_1', 'player_name_1',
-      'player_id_2', 'player_name_2',
-      'player_id_3', 'player_name_3',
-      'player_id_4', 'player_name_4'
+      "id",
+      "name",
+      "sport",
+      "country",
+      "countryISO",
+      "region",
+      "player_id_0",
+      "player_name_0",
+      "player_id_1",
+      "player_name_1",
+      "player_id_2",
+      "player_name_2",
+      "player_id_3",
+      "player_name_3",
+      "player_id_4",
+      "player_name_4",
     ];
 
     for (const field of validFields) {
@@ -198,27 +262,39 @@ router.get('/participants', async (req, res) => {
       }
     }
 
-    const data = await getRecords('participants', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
+    const data = await getRecords(
+      "participants",
+      offset,
+      limit,
+      filters,
+      "id DESC",
+      sport
+    ); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error('❌ Connection error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    console.error("❌ Connection error:", error.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
-
-router.get('/players', async (req, res) => {
+router.get("/players", async (req, res) => {
   try {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
+    const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
     // Map only the valid fields of the table
     const filters = {};
     const validFields = [
-      'id', 'team_id', 'first_name', 'last_name', 
-      'nickname', 'age', 'country', 'countryISO', 'sport'
+      "id",
+      "team_id",
+      "first_name",
+      "last_name",
+      "nickname",
+      "age",
+      "country",
+      "countryISO",
+      "sport",
     ];
 
     for (const field of validFields) {
@@ -227,32 +303,91 @@ router.get('/players', async (req, res) => {
       }
     }
 
-    const data = await getRecords('player', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
+    const data = await getRecords(
+      "player",
+      offset,
+      limit,
+      filters,
+      "id DESC",
+      sport
+    ); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error('❌ Connection error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    console.error("❌ Connection error:", error.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-router.get('/stats_player', async (req, res) => {
-    try {
-        const data = await getRecords('stats_player');
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
+router.get("/stats_player", async (req, res) => {
+  try {
+    const data = await getRecords("stats_player");
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-router.get('/team_info', async (req, res) => {
-    try {
-        const data = await getRecords('team_info');
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
+router.get("/team_info", async (req, res) => {
+  try {
+    const data = await getRecords("team_info");
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Endpoint for WordPress tournaments shortcode
+router.get("/tournaments", async (req, res) => {
+  try {
+    const {
+      from,
+      to,
+      start_date,
+      end_date,
+      tier,
+      tier_filter,
+      start_year,
+      end_year,
+      offset = 0,
+      limit = 1000,
+    } = req.query;
+    const sport = req.query.sport || "cs2";
+
+    const filters = {};
+
+    // Date range
+    if (from && to) {
+      filters.customRange = { from, to };
+    } else if (start_date && end_date) {
+      filters.start_date = start_date;
+      filters.end_date = end_date;
     }
+
+    // Year range (for 2025-2026 filter)
+    if (start_year && end_year) {
+      filters.year_range = { start_year, end_year };
+    }
+
+    // Tier filter
+    if (tier_filter === "true" || tier_filter === true) {
+      filters.tier_filter = true;
+    } else if (tier) {
+      filters.tier = tier;
+    }
+
+    const data = await getTournaments(
+      parseInt(offset),
+      parseInt(limit),
+      filters,
+      sport
+    );
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
 export default router;
