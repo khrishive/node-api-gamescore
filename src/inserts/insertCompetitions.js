@@ -45,11 +45,15 @@ function resolveDateRange(fromDate, toDate) {
   }
 
   const now = new Date();
-  const startDate = now.toISOString().split('T')[0];
+  const year = now.getFullYear();
+  const month = now.getMonth() + 1; // 1-12
 
-  const tomorrow = new Date(now);
-  tomorrow.setDate(now.getDate() + 1);
-  const endDate = tomorrow.toISOString().split('T')[0];
+  // Default: full current year (YYYY-01-01 -> YYYY-12-31)
+  // If current date is between Nov 1 and Dec 31 (month >= 11),
+  // extend end date to next year's 12-31 (YYYY-01-01 -> YYYY+1-12-31)
+  const startDate = `${year}-01-01`;
+  const endYear = month >= 11 ? year + 1 : year;
+  const endDate = `${endYear}-12-31`;
 
   return { fromDate: startDate, toDate: endDate };
 }

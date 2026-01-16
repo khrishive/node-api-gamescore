@@ -125,17 +125,18 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
 
                 teamRef.players.forEach(player => {
                     const stat = dota2FixtureData.find(
-                        s => s.player_id === player.playerId && s.map_number === mapNumber
+                        s => s.player_name === player.name && s.map_number === mapNumber
                     );
                     if (stat) {
                         player.kills = stat.kills ?? 0;
                         player.deaths = stat.deaths ?? 0;
-                        player.assists = stat.assists ?? 0;
+                        player.denies = stat.denies ?? 0;
                         player.gold = stat.gold ?? 0;
-                        player.damage = stat.championDamage ?? 0;
+                        player.heroDamage = stat.heroDamage ?? 0;
+                        player.towersDestroyed = stat.towersDestroyed ?? 0;
                         player.cs = stat.cs ?? 0;
                         player.kp = teamKills > 0
-                            ? Number((((player.kills + player.assists) / teamKills) * 100).toFixed(3))
+                            ? Number((((player.kills + stat.denies) / teamKills) * 100).toFixed(3))
                             : 0;
                     }
                 });

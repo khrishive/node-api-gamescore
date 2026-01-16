@@ -1,38 +1,74 @@
-import express from "express";
+//src/routes/dbAPIRoutes.js
+
+import express from 'express';
 const router = express.Router();
-import { getRecords } from "../controllers/dbController.js";
-import { getAllRecords } from "../controllers/dbController.js";
-import { getFixtures } from "../controllers/fixturesController.js";
-import { getCompetitions } from "../controllers/competitionsController.js";
-import { getTournaments } from "../controllers/tournamentsController.js";
+import {getRecords} from '../controllers/dbController.js';
+import {getAllRecords} from '../controllers/dbController.js';
+import { getFixtures } from '../controllers/fixturesController.js';
+import { getCompetitions } from '../controllers/competitionsController_db.js';
+//import { getCompetitions } from '../controllers/competitionsController.js';
 
 // Endpoint to get all records from the 'competitions' table
-router.get("/competitions", async (req, res) => {
+router.get('/competitions', async (req, res) => {
+  try {
+    let offset = parseInt(req.query.offset, 10);
+    let limit = parseInt(req.query.limit, 10);
+
+    if (isNaN(offset)) offset = 0;
+    if (isNaN(limit)) limit = 100;
+
+    const {
+      id, name, status, start_date
+    } = req.query;
+
+    const sport = req.query.sport || 'cs2';
+
+    const filters = {};
+
+    if (id !== undefined && id !== '') {
+      filters.id = id;
+    }
+
+    if (name) {
+      filters.name = name;
+    }
+
+    if (status) {
+      filters.status = status;
+    }
+
+    // Handle start_date filtering (supports yyyy-mm-dd format)
+    if (start_date) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(start_date)) {
+        // Date range: entire day
+        const startTs = new Date(start_date).setHours(0, 0, 0, 0);
+        const endTs = new Date(`${start_date}T23:59:59Z`).getTime();
+        filters.start_date_from = startTs;
+        filters.start_date_to = endTs;
+      } else {
+        // Treat as timestamp
+        filters.start_date = start_date;
+      }
+    }
+
+    const result = await getCompetitions(offset, limit, filters, sport);
+    // Return only the data array, not the pagination metadata
+    res.json(result.data);
+  } catch (error) {
+    console.error('Connection error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/*
+router.get('/competitions', async (req, res) => {
   try {
     const {
-      from,
-      to,
-      id,
-      name,
-      sport_alias,
-      start_date,
-      end_date,
-      prize_pool_usd,
-      location,
-      organizer,
-      type,
-      fixture_count,
-      description,
-      no_participants,
-      stage,
-      time_of_year,
-      year,
-      series,
-      tier,
-      offset = 0,
-      limit = 100,
+      from, to, id, name, sport_alias, start_date, end_date, prize_pool_usd,
+      location, organizer, type, fixture_count, description, no_participants,
+      stage, time_of_year, year, series, tier, offset = 0, limit = 100
     } = req.query;
-    const sport = req.query.sport || "cs2"; // Always present
+    const sport = req.query.sport || 'cs2'; // Always present
 
     const filters = {};
     if (from && to) {
@@ -65,10 +101,10 @@ router.get("/competitions", async (req, res) => {
     );
     res.json(data);
   } catch (error) {
-    console.error("Connection error:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error('Connection error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
-});
+});*/
 
 router.get("/all_competitions", async (req, res) => {
   const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
@@ -81,12 +117,7 @@ router.get("/all_competitions", async (req, res) => {
 
   try {
     // Pass pagination parameters to getAllRecords
-    let data = await getAllRecords(
-      "competitions",
-      sport,
-      safeOffset,
-      safeLimit
-    );
+    let data = await getAllRecords("competitions", sport, safeOffset, safeLimit);
     res.json(data);
   } catch (error) {
     console.error("Connection error:", error);
@@ -94,7 +125,7 @@ router.get("/all_competitions", async (req, res) => {
   }
 });
 
-router.get("/fixtures", async (req, res) => {
+router.get('/fixtures', async (req, res) => { 
   let offset = parseInt(req.query.offset, 10);
   let limit = parseInt(req.query.limit, 10);
 
@@ -102,37 +133,21 @@ router.get("/fixtures", async (req, res) => {
   if (isNaN(limit)) limit = 100;
 
   const {
-    today,
-    from,
-    to,
-    id,
-    competition_id,
-    competition_name,
-    end_time,
-    format_name,
-    format_value,
-    scheduled_start_time,
-    sport_alias,
-    sport_name,
-    start_time,
-    status,
-    tie,
-    winner_id,
-    participants0_id,
-    participants0_name,
-    participants0_score,
-    participants1_name,
-    participants1_id,
-    participants1_score,
+    from, to,
+    id, competition_id, competition_name, end_time, format_name, format_value,
+    sport_alias, sport_name, status, tie, winner_id,
+    participants0_id, participants0_name, participants0_score,
+    participants1_name, participants1_id, participants1_score
   } = req.query;
 
-  const sport = req.query.sport || "cs2";
+  const sport = req.query.sport || 'cs2';
 
   const filters = {};
 
-  // Flexible date filtering for scheduled_start_time and start_time
+  // Date range filtering for start_time (with fallback to scheduled_start_time if NULL)
   if (from && to) {
-    filters.customRange = { from, to };
+    filters.from = from;
+    filters.to = to;
   } else if (from) {
     filters.from = from;
   } else if (to) {
@@ -142,13 +157,19 @@ router.get("/fixtures", async (req, res) => {
   if (id) filters.id = id;
   if (competition_id) filters.competition_id = competition_id;
   if (competition_name) filters.competition_name = competition_name;
-  if (end_time) filters.end_time = end_time;
+  if (end_time) {
+    // accept yyyy-mm-dd and convert to end-of-day timestamp
+    if (/^\d{4}-\d{2}-\d{2}$/.test(end_time)) {
+      const endTs = new Date(`${end_time}T23:59:59Z`).getTime();
+      filters.end_time = endTs;
+    } else {
+      filters.end_time = end_time;
+    }
+  }
   if (format_name) filters.format_name = format_name;
   if (format_value) filters.format_value = format_value;
-  if (scheduled_start_time) filters.scheduled_start_time = scheduled_start_time;
   if (sport_alias) filters.sport_alias = sport_alias;
   if (sport_name) filters.sport_name = sport_name;
-  if (start_time) filters.start_time = start_time;
   if (status) filters.status = status;
   if (tie) filters.tie = tie;
   if (winner_id) filters.winner_id = winner_id;
@@ -160,41 +181,36 @@ router.get("/fixtures", async (req, res) => {
   if (participants1_score) filters.participants1_score = participants1_score;
 
   try {
-    const data = await getFixtures(offset, limit, filters, sport);
-    res.json(data);
+    const result = await getFixtures(offset, limit, filters, sport);
+    // Return only the data array, not the pagination metadata
+    res.json(result.data);
   } catch (error) {
-    console.error("Connection error:", error);
-    res.status(500).json({ error: "Server error" });
+    console.error('Connection error:', error);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.get("/all_fixtures", async (req, res) => {
-  const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
-  try {
-    const data = await getAllRecords("fixtures", sport); // Pass sport to controller
-    res.json(data);
-  } catch (error) {
-    console.error("Connection error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
+
+router.get('/all_fixtures', async (req, res) => {
+    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
+    try {
+        const data = await getAllRecords('fixtures', sport); // Pass sport to controller
+        res.json(data);
+    } catch (error) {
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // Example for team_fixture_stats
-router.get("/team_fixture_stats", async (req, res) => {
+router.get('/team_fixture_stats', async (req, res) => {
   const sport = req.query.sport || "cs2";
   const offset = parseInt(req.query.offset) || 0;
   const limit = parseInt(req.query.limit) || 100;
   const filters = {}; // Add any filter logic if needed
 
   try {
-    const data = await getRecords(
-      "team_fixture_stats",
-      offset,
-      limit,
-      filters,
-      "",
-      sport
-    );
+    const data = await getRecords("team_fixture_stats", offset, limit, filters, '', sport);
     res.json(data);
   } catch (error) {
     console.error("Connection error:", error);
@@ -202,58 +218,41 @@ router.get("/team_fixture_stats", async (req, res) => {
   }
 });
 
-router.get("/fixture_links", async (req, res) => {
-  const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
-  const offset = parseInt(req.query.offset) || 0;
-  const limit = parseInt(req.query.limit) || 100;
+router.get('/fixture_links', async (req, res) => {
+    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 100;
 
-  // Only apply filter for fixture_id if present
-  const filters = {};
-  if (req.query.fixture_id !== undefined) {
-    filters.fixture_id = req.query.fixture_id;
-  }
+    // Only apply filter for fixture_id if present
+    const filters = {};
+    if (req.query.fixture_id !== undefined) {
+        filters.fixture_id = req.query.fixture_id;
+    }
 
-  try {
-    const data = await getRecords(
-      "fixture_links",
-      offset,
-      limit,
-      filters,
-      "",
-      sport
-    ); // Pass sport to controller
-    res.json(data);
-  } catch (error) {
-    console.error("Connection error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
+    try {
+        const data = await getRecords('fixture_links', offset, limit, filters, '', sport); // Pass sport to controller
+        res.json(data);
+    } catch (error) {
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
-router.get("/participants", async (req, res) => {
+router.get('/participants', async (req, res) => {
   try {
-    const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
+    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
     // Valid fields for the participants table
     const filters = {};
     const validFields = [
-      "id",
-      "name",
-      "sport",
-      "country",
-      "countryISO",
-      "region",
-      "player_id_0",
-      "player_name_0",
-      "player_id_1",
-      "player_name_1",
-      "player_id_2",
-      "player_name_2",
-      "player_id_3",
-      "player_name_3",
-      "player_id_4",
-      "player_name_4",
+      'id', 'name', 'sport', 'country', 'countryISO', 'region',
+      'player_id_0', 'player_name_0',
+      'player_id_1', 'player_name_1',
+      'player_id_2', 'player_name_2',
+      'player_id_3', 'player_name_3',
+      'player_id_4', 'player_name_4'
     ];
 
     for (const field of validFields) {
@@ -262,39 +261,27 @@ router.get("/participants", async (req, res) => {
       }
     }
 
-    const data = await getRecords(
-      "participants",
-      offset,
-      limit,
-      filters,
-      "id DESC",
-      sport
-    ); // <-- Pass sport here
+    const data = await getRecords('participants', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error("❌ Connection error:", error.message);
-    res.status(500).json({ error: "Server error" });
+    console.error('❌ Connection error:', error.message);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.get("/players", async (req, res) => {
+
+
+router.get('/players', async (req, res) => {
   try {
-    const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
+    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
     // Map only the valid fields of the table
     const filters = {};
     const validFields = [
-      "id",
-      "team_id",
-      "first_name",
-      "last_name",
-      "nickname",
-      "age",
-      "country",
-      "countryISO",
-      "sport",
+      'id', 'team_id', 'first_name', 'last_name', 
+      'nickname', 'age', 'country', 'countryISO', 'sport'
     ];
 
     for (const field of validFields) {
@@ -303,91 +290,84 @@ router.get("/players", async (req, res) => {
       }
     }
 
-    const data = await getRecords(
-      "player",
-      offset,
-      limit,
-      filters,
-      "id DESC",
-      sport
-    ); // <-- Pass sport here
+    const data = await getRecords('player', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error("❌ Connection error:", error.message);
-    res.status(500).json({ error: "Server error" });
+    console.error('❌ Connection error:', error.message);
+    res.status(500).json({ error: 'Server error' });
   }
 });
 
-router.get("/stats_player", async (req, res) => {
-  try {
-    const data = await getRecords("stats_player");
-    res.json(data);
-  } catch (error) {
-    console.error("Connection error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
+router.get('/stats_player', async (req, res) => {
+    try {
+        const data = await getRecords('stats_player');
+        res.json(data);
+    } catch (error) {
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
-router.get("/team_info", async (req, res) => {
-  try {
-    const data = await getRecords("team_info");
-    res.json(data);
-  } catch (error) {
-    console.error("Connection error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
-// Endpoint for WordPress tournaments shortcode
-router.get("/tournaments", async (req, res) => {
-  try {
-    const {
-      from,
-      to,
-      start_date,
-      end_date,
-      tier,
-      tier_filter,
-      start_year,
-      end_year,
-      offset = 0,
-      limit = 1000,
-    } = req.query;
-    const sport = req.query.sport || "cs2";
-
-    const filters = {};
-
-    // Date range
-    if (from && to) {
-      filters.customRange = { from, to };
-    } else if (start_date && end_date) {
-      filters.start_date = start_date;
-      filters.end_date = end_date;
+router.get('/team_info', async (req, res) => {
+    try {
+        const data = await getRecords('team_info');
+        res.json(data);
+    } catch (error) {
+        console.error('Connection error:', error);
+        res.status(500).json({ error: 'Server error' });
     }
-
-    // Year range (for 2025-2026 filter)
-    if (start_year && end_year) {
-      filters.year_range = { start_year, end_year };
-    }
-
-    // Tier filter
-    if (tier_filter === "true" || tier_filter === true) {
-      filters.tier_filter = true;
-    } else if (tier) {
-      filters.tier = tier;
-    }
-
-    const data = await getTournaments(
-      parseInt(offset),
-      parseInt(limit),
-      filters,
-      sport
-    );
-    res.json(data);
-  } catch (error) {
-    console.error("Connection error:", error);
-    res.status(500).json({ error: "Server error" });
-  }
 });
 
 export default router;
+
+
+
+
+    [
+        {
+            "id": 637042,
+            "competition_id": 13367,
+            "competition_name": "ESL Challenger League Season 46: North America",
+            "end_time": 1692151036223,
+            "scheduled_start_time": 1692144600000,
+            "start_time": 1692145296671,
+            "sport_alias": "cs2",
+            "sport_name": "Counter-Strike 2",
+            "status": "ended",
+            "tie": 0,
+            "winner_id": 104060,
+            "participants0_id": 62253,
+            "participants0_name": "Unjustified",
+            "participants0_score": 0,
+            "participants1_id": 104060,
+            "participants1_name": "M80",
+            "participants1_score": 2,
+            "hs_description": null,
+            "rr_description": null,
+            "manual_override": 0,
+            "manual_updated_at": null
+        },
+        {
+            "id": 637043,
+            "competition_id": 13367,
+            "competition_name": "ESL Challenger League Season 46: North America",
+            "end_time": 1692151843308,
+            "scheduled_start_time": 1692144600000,
+            "start_time": 1692145479056,
+            "sport_alias": "cs2",
+            "sport_name": "Counter-Strike 2",
+            "status": "Ended",
+            "tie": 0,
+            "winner_id": 5743,
+            "participants0_id": 10195,
+            "participants0_name": "Bad News Bears",
+            "participants0_score": 0,
+            "participants1_id": 5743,
+            "participants1_name": "Mythic",
+            "participants1_score": 2,
+            "hs_description": null,
+            "rr_description": null,
+            "manual_override": 0,
+            "manual_updated_at": null
+        }
+    ]

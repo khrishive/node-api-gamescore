@@ -7,7 +7,7 @@ import { dbCS2, dbLOL, dbDOTA2} from "../db.js";
 const dbConnections = {cs2: dbCS2, lol: dbLOL, dota2: dbDOTA2};
 const sports = Object.keys(dbConnections);
 
-async function runAllUpdateCompetitionStatusDaily() {
+export async function runAllUpdateCompetitionStatusDaily() {
   console.log("🚀 Starting updateCompetitionStatusDaily for all sports...");
 
   let executedCount = 0;

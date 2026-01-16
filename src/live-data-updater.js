@@ -366,11 +366,17 @@ export function connectWebSocket(fixture_id) {
 
         // --- Send to PICKEM ---
         try {
+          const toIntOrNull = (v) => {
+            if (v === undefined || v === null) return null;
+            const n = Number(v);
+            return Number.isNaN(n) ? null : n;
+          };
+
           const pickemPayload = {
             external_id: Number(fixtureId),
-            participants0_id: scores[0]?.id || null,
+            participants0_id: toIntOrNull(scores[0]?.id),
             participants0_score: scores[0]?.score ?? null,
-            participants1_id: scores[1]?.id || null,
+            participants1_id: toIntOrNull(scores[1]?.id),
             participants1_score: scores[1]?.score ?? null
           };
 

@@ -1,24 +1,24 @@
+//src/routes/players.js
 import express from 'express';
-import { fetchFromApi } from '../controllers/apiController.js';
+import {
+  getPlayersCS2,
+  getPlayerByIdCS2,
+  getPlayersLOL,
+  getPlayerByIdLOL,
+  getPlayersDOTA2,
+  getPlayerByIdDOTA2
+} from '../controllers/players/playerControllers.js';
 
 const router = express.Router();
 
-// Obtener detalles de un jugador por ID
-router.get('/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log("🔍 Petición recibida en /players/:id con ID:", id);
-    const data = await fetchFromApi(`players/${id}`);
-    console.log("📩 Respuesta de la API en /players/:id:", data);
-    res.json(data);
-});
+// Per-game routes for players (support query filters: id, team_id, first_name, last_name, nickname, age and ?page)
+router.get('/cs2', getPlayersCS2);
+router.get('/cs2/:id', getPlayerByIdCS2);
 
-// Obtener detalles de los stats de un jugador por ID
-router.get('/stats/player/:id', async (req, res) => {
-    const { id } = req.params;
-    console.log("🔍 Petición recibida en /players/:id con ID:", id);
-    const data = await fetchFromApi(`stats/player/${id}`);
-    console.log("📩 Respuesta de la API en /stats/player/:id:", data);
-    res.json(data);
-});
+router.get('/lol', getPlayersLOL);
+router.get('/lol/:id', getPlayerByIdLOL);
+
+router.get('/dota2', getPlayersDOTA2);
+router.get('/dota2/:id', getPlayerByIdDOTA2);
 
 export default router;
