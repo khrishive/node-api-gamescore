@@ -1,15 +1,16 @@
 //src/routes/dbAPIRoutes.js
 
-import express from 'express';
+import express from "express";
 const router = express.Router();
-import {getRecords} from '../controllers/dbController.js';
-import {getAllRecords} from '../controllers/dbController.js';
-import { getFixtures } from '../controllers/fixturesController.js';
-import { getCompetitions } from '../controllers/competitionsController_db.js';
+import { getRecords } from "../controllers/dbController.js";
+import { getAllRecords } from "../controllers/dbController.js";
+import { getFixtures } from "../controllers/fixturesController.js";
+import { getCompetitions } from "../controllers/competitionsController_db.js";
+import { getTournaments } from "../controllers/tournamentsController.js";
 //import { getCompetitions } from '../controllers/competitionsController.js';
 
 // Endpoint to get all records from the 'competitions' table
-router.get('/competitions', async (req, res) => {
+router.get("/competitions", async (req, res) => {
   try {
     let offset = parseInt(req.query.offset, 10);
     let limit = parseInt(req.query.limit, 10);
@@ -17,15 +18,13 @@ router.get('/competitions', async (req, res) => {
     if (isNaN(offset)) offset = 0;
     if (isNaN(limit)) limit = 100;
 
-    const {
-      id, name, status, start_date
-    } = req.query;
+    const { id, name, status, start_date } = req.query;
 
-    const sport = req.query.sport || 'cs2';
+    const sport = req.query.sport || "cs2";
 
     const filters = {};
 
-    if (id !== undefined && id !== '') {
+    if (id !== undefined && id !== "") {
       filters.id = id;
     }
 
@@ -55,8 +54,8 @@ router.get('/competitions', async (req, res) => {
     // Return only the data array, not the pagination metadata
     res.json(result.data);
   } catch (error) {
-    console.error('Connection error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
@@ -117,7 +116,12 @@ router.get("/all_competitions", async (req, res) => {
 
   try {
     // Pass pagination parameters to getAllRecords
-    let data = await getAllRecords("competitions", sport, safeOffset, safeLimit);
+    let data = await getAllRecords(
+      "competitions",
+      sport,
+      safeOffset,
+      safeLimit
+    );
     res.json(data);
   } catch (error) {
     console.error("Connection error:", error);
@@ -125,7 +129,7 @@ router.get("/all_competitions", async (req, res) => {
   }
 });
 
-router.get('/fixtures', async (req, res) => { 
+router.get("/fixtures", async (req, res) => {
   let offset = parseInt(req.query.offset, 10);
   let limit = parseInt(req.query.limit, 10);
 
@@ -133,14 +137,28 @@ router.get('/fixtures', async (req, res) => {
   if (isNaN(limit)) limit = 100;
 
   const {
-    from, to,
-    id, competition_id, competition_name, end_time, format_name, format_value,
-    sport_alias, sport_name, status, tie, winner_id,
-    participants0_id, participants0_name, participants0_score,
-    participants1_name, participants1_id, participants1_score
+    from,
+    to,
+    id,
+    competition_id,
+    competition_name,
+    end_time,
+    format_name,
+    format_value,
+    sport_alias,
+    sport_name,
+    status,
+    tie,
+    winner_id,
+    participants0_id,
+    participants0_name,
+    participants0_score,
+    participants1_name,
+    participants1_id,
+    participants1_score,
   } = req.query;
 
-  const sport = req.query.sport || 'cs2';
+  const sport = req.query.sport || "cs2";
 
   const filters = {};
 
@@ -185,32 +203,15 @@ router.get('/fixtures', async (req, res) => {
     // Return only the data array, not the pagination metadata
     res.json(result.data);
   } catch (error) {
-    console.error('Connection error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
-router.get('/all_fixtures', async (req, res) => {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
-    try {
-        const data = await getAllRecords('fixtures', sport); // Pass sport to controller
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Example for team_fixture_stats
-router.get('/team_fixture_stats', async (req, res) => {
-  const sport = req.query.sport || "cs2";
-  const offset = parseInt(req.query.offset) || 0;
-  const limit = parseInt(req.query.limit) || 100;
-  const filters = {}; // Add any filter logic if needed
-
+router.get("/all_fixtures", async (req, res) => {
+  const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
   try {
-    const data = await getRecords("team_fixture_stats", offset, limit, filters, '', sport);
+    const data = await getAllRecords("fixtures", sport); // Pass sport to controller
     res.json(data);
   } catch (error) {
     console.error("Connection error:", error);
@@ -218,41 +219,81 @@ router.get('/team_fixture_stats', async (req, res) => {
   }
 });
 
-router.get('/fixture_links', async (req, res) => {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
-    const offset = parseInt(req.query.offset) || 0;
-    const limit = parseInt(req.query.limit) || 100;
+// Example for team_fixture_stats
+router.get("/team_fixture_stats", async (req, res) => {
+  const sport = req.query.sport || "cs2";
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = parseInt(req.query.limit) || 100;
+  const filters = {}; // Add any filter logic if needed
 
-    // Only apply filter for fixture_id if present
-    const filters = {};
-    if (req.query.fixture_id !== undefined) {
-        filters.fixture_id = req.query.fixture_id;
-    }
-
-    try {
-        const data = await getRecords('fixture_links', offset, limit, filters, '', sport); // Pass sport to controller
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
+  try {
+    const data = await getRecords(
+      "team_fixture_stats",
+      offset,
+      limit,
+      filters,
+      "",
+      sport
+    );
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-router.get('/participants', async (req, res) => {
+router.get("/fixture_links", async (req, res) => {
+  const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
+  const offset = parseInt(req.query.offset) || 0;
+  const limit = parseInt(req.query.limit) || 100;
+
+  // Only apply filter for fixture_id if present
+  const filters = {};
+  if (req.query.fixture_id !== undefined) {
+    filters.fixture_id = req.query.fixture_id;
+  }
+
   try {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
+    const data = await getRecords(
+      "fixture_links",
+      offset,
+      limit,
+      filters,
+      "",
+      sport
+    ); // Pass sport to controller
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+router.get("/participants", async (req, res) => {
+  try {
+    const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
     // Valid fields for the participants table
     const filters = {};
     const validFields = [
-      'id', 'name', 'sport', 'country', 'countryISO', 'region',
-      'player_id_0', 'player_name_0',
-      'player_id_1', 'player_name_1',
-      'player_id_2', 'player_name_2',
-      'player_id_3', 'player_name_3',
-      'player_id_4', 'player_name_4'
+      "id",
+      "name",
+      "sport",
+      "country",
+      "countryISO",
+      "region",
+      "player_id_0",
+      "player_name_0",
+      "player_id_1",
+      "player_name_1",
+      "player_id_2",
+      "player_name_2",
+      "player_id_3",
+      "player_name_3",
+      "player_id_4",
+      "player_name_4",
     ];
 
     for (const field of validFields) {
@@ -261,27 +302,39 @@ router.get('/participants', async (req, res) => {
       }
     }
 
-    const data = await getRecords('participants', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
+    const data = await getRecords(
+      "participants",
+      offset,
+      limit,
+      filters,
+      "id DESC",
+      sport
+    ); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error('❌ Connection error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    console.error("❌ Connection error:", error.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-
-
-router.get('/players', async (req, res) => {
+router.get("/players", async (req, res) => {
   try {
-    const sport = req.query.sport || 'cs2'; // Always present, default to 'cs2'
+    const sport = req.query.sport || "cs2"; // Always present, default to 'cs2'
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 100;
 
     // Map only the valid fields of the table
     const filters = {};
     const validFields = [
-      'id', 'team_id', 'first_name', 'last_name', 
-      'nickname', 'age', 'country', 'countryISO', 'sport'
+      "id",
+      "team_id",
+      "first_name",
+      "last_name",
+      "nickname",
+      "age",
+      "country",
+      "countryISO",
+      "sport",
     ];
 
     for (const field of validFields) {
@@ -290,84 +343,135 @@ router.get('/players', async (req, res) => {
       }
     }
 
-    const data = await getRecords('player', offset, limit, filters, 'id DESC', sport); // <-- Pass sport here
+    const data = await getRecords(
+      "player",
+      offset,
+      limit,
+      filters,
+      "id DESC",
+      sport
+    ); // <-- Pass sport here
     res.json(data);
   } catch (error) {
-    console.error('❌ Connection error:', error.message);
-    res.status(500).json({ error: 'Server error' });
+    console.error("❌ Connection error:", error.message);
+    res.status(500).json({ error: "Server error" });
   }
 });
 
-router.get('/stats_player', async (req, res) => {
-    try {
-        const data = await getRecords('stats_player');
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
-    }
+router.get("/stats_player", async (req, res) => {
+  try {
+    const data = await getRecords("stats_player");
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
 });
 
-router.get('/team_info', async (req, res) => {
-    try {
-        const data = await getRecords('team_info');
-        res.json(data);
-    } catch (error) {
-        console.error('Connection error:', error);
-        res.status(500).json({ error: 'Server error' });
+router.get("/team_info", async (req, res) => {
+  try {
+    const data = await getRecords("team_info");
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+// Endpoint for WordPress tournaments shortcode
+// Returns tournaments filtered by date range, tier, and determines finished/upcoming status
+router.get("/tournaments", async (req, res) => {
+  try {
+    let offset = parseInt(req.query.offset, 10);
+    let limit = parseInt(req.query.limit, 10);
+
+    if (isNaN(offset)) offset = 0;
+    if (isNaN(limit)) limit = 1000;
+
+    const sport = req.query.sport || "cs2";
+    const filters = {};
+
+    // Year range filter (e.g., 2025-2026)
+    if (req.query.start_year && req.query.end_year) {
+      filters.year_range = {
+        start_year: parseInt(req.query.start_year),
+        end_year: parseInt(req.query.end_year),
+      };
     }
+
+    // Custom date range filter
+    if (req.query.from && req.query.to) {
+      filters.customRange = {
+        from: req.query.from,
+        to: req.query.to,
+      };
+    } else if (req.query.start_date && req.query.end_date) {
+      filters.start_date = req.query.start_date;
+      filters.end_date = req.query.end_date;
+    }
+
+    // Tier filter - if tier_filter=true, applies the WordPress logic: (S or A) OR (B or C with fixtures)
+    if (req.query.tier_filter === "true" || req.query.tier_filter === "1") {
+      filters.tier_filter = true;
+    } else if (req.query.tier) {
+      filters.tier = req.query.tier;
+    }
+
+    const data = await getTournaments(offset, limit, filters, sport);
+    res.json(data);
+  } catch (error) {
+    console.error("Connection error:", error);
+    res.status(500).json({ error: "Server error", details: error.message });
+  }
 });
 
 export default router;
 
-
-
-
-    [
-        {
-            "id": 637042,
-            "competition_id": 13367,
-            "competition_name": "ESL Challenger League Season 46: North America",
-            "end_time": 1692151036223,
-            "scheduled_start_time": 1692144600000,
-            "start_time": 1692145296671,
-            "sport_alias": "cs2",
-            "sport_name": "Counter-Strike 2",
-            "status": "ended",
-            "tie": 0,
-            "winner_id": 104060,
-            "participants0_id": 62253,
-            "participants0_name": "Unjustified",
-            "participants0_score": 0,
-            "participants1_id": 104060,
-            "participants1_name": "M80",
-            "participants1_score": 2,
-            "hs_description": null,
-            "rr_description": null,
-            "manual_override": 0,
-            "manual_updated_at": null
-        },
-        {
-            "id": 637043,
-            "competition_id": 13367,
-            "competition_name": "ESL Challenger League Season 46: North America",
-            "end_time": 1692151843308,
-            "scheduled_start_time": 1692144600000,
-            "start_time": 1692145479056,
-            "sport_alias": "cs2",
-            "sport_name": "Counter-Strike 2",
-            "status": "Ended",
-            "tie": 0,
-            "winner_id": 5743,
-            "participants0_id": 10195,
-            "participants0_name": "Bad News Bears",
-            "participants0_score": 0,
-            "participants1_id": 5743,
-            "participants1_name": "Mythic",
-            "participants1_score": 2,
-            "hs_description": null,
-            "rr_description": null,
-            "manual_override": 0,
-            "manual_updated_at": null
-        }
-    ]
+[
+  {
+    id: 637042,
+    competition_id: 13367,
+    competition_name: "ESL Challenger League Season 46: North America",
+    end_time: 1692151036223,
+    scheduled_start_time: 1692144600000,
+    start_time: 1692145296671,
+    sport_alias: "cs2",
+    sport_name: "Counter-Strike 2",
+    status: "ended",
+    tie: 0,
+    winner_id: 104060,
+    participants0_id: 62253,
+    participants0_name: "Unjustified",
+    participants0_score: 0,
+    participants1_id: 104060,
+    participants1_name: "M80",
+    participants1_score: 2,
+    hs_description: null,
+    rr_description: null,
+    manual_override: 0,
+    manual_updated_at: null,
+  },
+  {
+    id: 637043,
+    competition_id: 13367,
+    competition_name: "ESL Challenger League Season 46: North America",
+    end_time: 1692151843308,
+    scheduled_start_time: 1692144600000,
+    start_time: 1692145479056,
+    sport_alias: "cs2",
+    sport_name: "Counter-Strike 2",
+    status: "Ended",
+    tie: 0,
+    winner_id: 5743,
+    participants0_id: 10195,
+    participants0_name: "Bad News Bears",
+    participants0_score: 0,
+    participants1_id: 5743,
+    participants1_name: "Mythic",
+    participants1_score: 2,
+    hs_description: null,
+    rr_description: null,
+    manual_override: 0,
+    manual_updated_at: null,
+  },
+];

@@ -100,11 +100,32 @@ export const getTournaments = async (
 
   // Process rows to determine finished/upcoming and format for WordPress
   const today = Date.now();
+  const todayDate = new Date(today);
+  
   const processed = rows.map((row) => {
-    // Determine status group
+    // Determine status group based on current date vs tournament dates
+    // Rule: If current date is greater than tournament end_date, it's finished
+    // Otherwise, it's live_upcoming
     const status = (row.status || "").toLowerCase().trim();
-    const isFinished =
-      status === "ended" || (row.end_date && row.end_date <= today);
+    let isFinished = false;
+    
+    // Primary check: Compare end_date with current date
+    // If end_date exists and is less than or equal to today, tournament is finished
+    if (row.end_date) {
+      const endDate = new Date(row.end_date);
+      // Compare timestamps: if end_date <= today, tournament is finished
+      isFinished = row.end_date <= today;
+    } else if (row.start_date) {
+      // Fallback: If no end_date but has start_date
+      // Default to live_upcoming if no end_date (can't determine if finished)
+      isFinished = false;
+    }
+    
+    // Override: If status explicitly says "ended" or "finished", mark as finished
+    if (status === "ended" || status === "finished") {
+      isFinished = true;
+    }
+    
     const groupKey = isFinished ? "finished" : "live_upcoming";
 
     // Format dates
