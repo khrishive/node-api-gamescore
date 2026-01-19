@@ -11,6 +11,7 @@ dotenv.config();
 const apiKey = process.env.GAME_SCORE_APIKEY;
 const TOKEN = apiKey;
 const WP_API_KEY = process.env.POST_SYNC_API_KEY; // Your API Key for WP
+const PICKEM_API_KEY = process.env.PICKEM_API_KEY; // Your API Key for PICKEM
 const WP_DEV_URL = 'https://wordpressmu-1372681-5818581.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_STAGING_URL = 'https://wordpressmu-1301114-4845462.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_PROD_URL = 'https://www.hotspawn.com/wp-json/fixtures/v1/update';
@@ -138,7 +139,7 @@ export function connectWebSocket(fixture_id) {
           const res = await axios.post(PICKEM_URL, pickemPayload, {
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': WP_API_KEY
+              'Authorization': PICKEM_API_KEY
             }
           });
 
@@ -237,7 +238,7 @@ export function connectWebSocket(fixture_id) {
           const res = await axios.post(PICKEM_URL, pickemPayload, {
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': WP_API_KEY
+              'Authorization': PICKEM_API_KEY
             }
           });
 
@@ -383,7 +384,7 @@ export function connectWebSocket(fixture_id) {
           const res = await axios.post(PICKEM_URL, pickemPayload, {
             headers: {
               'Content-Type': 'application/json',
-              'X-Api-Key': WP_API_KEY
+              'Authorization': PICKEM_API_KEY
             }
           });
 
