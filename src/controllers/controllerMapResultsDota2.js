@@ -27,7 +27,7 @@ function renderMapResultsDota2(dota2PickBanData, dota2FixtureData) {
             mapsData[map_number].teams[team_id].picks.push(hero_id);
         });
 
-    // 🔹 2. Procesar resultados del mapa
+    // 🔹 2. Procesar resultados del mapa (cada fila es un jugador individual)
     dota2FixtureData.forEach(row => {
         const {
             map_number,
@@ -50,16 +50,16 @@ function renderMapResultsDota2(dota2PickBanData, dota2FixtureData) {
             mapsData[map_number] = { teams: {}, duration: null, winnerId: null };
         }
 
-        // Crear el equipo si no existe
+        // Crear el equipo si no existe (mantener picks del paso anterior)
         if (!mapsData[map_number].teams[team_id]) {
             mapsData[map_number].teams[team_id] = { picks: [], kills: 0, gold: 0 };
         }
 
-        // Sumar estadísticas
+        // Sumar estadísticas individuales de cada jugador
         mapsData[map_number].teams[team_id].kills += kills;
         mapsData[map_number].teams[team_id].gold += gold;
 
-        // Solo asignar duración y ganador una vez
+        // Asignar duración y ganador (se sobrescribe, pero es el mismo valor para todos)
         mapsData[map_number].duration = formatDuration(duration);
         mapsData[map_number].winnerId = winner_id;
     });
