@@ -425,6 +425,77 @@ router.get("/tournaments", async (req, res) => {
   }
 });
 
+// Endpoint for WordPress plugin - Get tournaments by date range for CS2 and LoL
+router.get("/tournaments/date-range", async (req, res) => {
+  try {
+    const { from, to, sports } = req.query;
+
+    // Validate required parameters
+    if (!from || !to) {
+      return res.status(400).json({
+        error: "Missing required parameters: 'from' and 'to' dates are required",
+      });
+    }
+
+    // Parse dates - expect format: YYYY-MM-DD
+    const fromDate = new Date(from);
+    const toDate = new Date(`${to}T23:59:59Z`); // End of day
+
+    if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+      return res.status(400).json({
+        error: "Invalid date format. Use YYYY-MM-DD format",
+      });
+    }
+
+    // Convert to timestamps (milliseconds)
+    const fromTimestamp = fromDate.getTime();
+    const toTimestamp = toDate.getTime();
+
+    // Parse sports - default to cs2 and lol
+    let sportsArray = ["cs2", "lol"];
+    if (sports) {
+      if (typeof sports === "string") {
+        // If single sport or comma-separated string
+        sportsArray = sports.split(",").map((s) => s.trim().toLowerCase());
+      } else if (Array.isArray(sports)) {
+        sportsArray = sports.map((s) => String(s).trim().toLowerCase());
+      }
+    }
+
+    // Build filters
+    const filters = {
+      start_date: fromTimestamp,
+      end_date: toTimestamp,
+      tier_filter: true, // Apply tier filter (S, A always; B, C only if has fixtures)
+    };
+
+    // Query tournaments for each sport and combine results
+    let allTournaments = [];
+
+    for (const sport of sportsArray) {
+      try {
+        const tournaments = await getTournaments(0, 10000, filters, sport);
+        allTournaments = allTournaments.concat(tournaments);
+      } catch (error) {
+        console.error(`Error fetching tournaments for ${sport}:`, error);
+        // Continue with other sports even if one fails
+      }
+    }
+
+    // Sort all tournaments by start_date
+    allTournaments.sort((a, b) => {
+      const dateA = a.start_date || 0;
+      const dateB = b.start_date || 0;
+      return dateA - dateB;
+    });
+
+    res.json(allTournaments);
+  } catch (error) {
+    console.error("Error in /tournaments/date-range:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
 export default router;
 
 [
