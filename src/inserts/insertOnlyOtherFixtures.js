@@ -111,30 +111,40 @@ async function saveFixturesToDB(fixtures, sport) {
   `;
 
   for (const fixture of fixtures) {
-    await db.execute(query, [
-      fixture.id,
-      fixture.competition.id,
-      fixture.competition.name,
-      fixture.endTime,
-      fixture.scheduledStartTime,
-      fixture.startTime,
-      fixture.sport.alias,
-      fixture.sport.name,
-      fixture.status,
-      fixture.tie,
-      fixture.winnerId,
-      fixture.participants[0]?.id ?? null,
-      fixture.participants[0]?.name ?? null,
-      fixture.participants[0]?.score ?? null,
-      fixture.participants[1]?.id ?? null,
-      fixture.participants[1]?.name ?? null,
-      fixture.participants[1]?.score ?? null,
-      safeText(fixture.hs_description),
-      safeText(fixture.rr_description)
-    ]);
+    try {
+      await db.execute(query, [
+        fixture.id,
+        fixture.competition.id,
+        fixture.competition.name,
+        fixture.endTime,
+        fixture.scheduledStartTime,
+        fixture.startTime,
+        fixture.sport.alias,
+        fixture.sport.name,
+        fixture.status,
+        fixture.tie,
+        fixture.winnerId,
+        fixture.participants[0]?.id ?? null,
+        fixture.participants[0]?.name ?? null,
+        fixture.participants[0]?.score ?? null,
+        fixture.participants[1]?.id ?? null,
+        fixture.participants[1]?.name ?? null,
+        fixture.participants[1]?.score ?? null,
+        safeText(fixture.hs_description),
+        safeText(fixture.rr_description)
+      ]);
 
-    processedIds.push(fixture.id);
-    console.log(`✅ Fixture saved: ${fixture.id}`);
+      processedIds.push(fixture.id);
+      console.log(`✅ Fixture saved: ${fixture.id}`);
+    } catch (error) {
+      // Handle charset errors for competitions with special characters
+      if (error.code === 'ER_TRUNCATED_WRONG_VALUE_FOR_FIELD') {
+        console.log(`⚠️  Skipping fixture ${fixture.id} due to charset issue (competition: ${fixture.competition.name})`);
+      } else {
+        console.error(`❌ Error saving fixture ${fixture.id}:`, error.message);
+        throw error; // Re-throw other errors
+      }
+    }
   }
 
   return processedIds;
