@@ -27,10 +27,12 @@ async function getCompetitionsFromDB(sport) {
     WHERE fixture_count > 0
       AND status IN ('upcoming', 'started', 'ended')
       AND sport_alias = ?
+    ORDER BY id ASC
     `,
     [sport]
   );
 
+  console.log(`📊 Competitions found: ${rows.length}`);
   return rows.map(row => row.id);
 }
 

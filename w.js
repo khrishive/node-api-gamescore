@@ -10,115 +10,124 @@ const AUTH_TOKEN = `Bearer ${process.env.GAME_SCORE_APIKEY}`;
 const COMPETITION_ID = 33063; // European Pro League Series 4
 const SPORT = 'cs2';
 
-async function debugCompetition() {
-  console.log('🔍 DEBUG: Verificando competición 33063\n');
+const safeText = (value) =>
+  value && String(value).trim().length > 0
+    ? value
+    : 'Waiting for information';
 
-  // 1️⃣ Verificar si la competición está en la DB
-  console.log('1️⃣ Verificando competición en la base de datos...');
+async function testInsertFixtures() {
+  console.log('🔍 DEBUG: Intentando insertar fixtures de competición 33063\n');
+
   const db = getDbBySport(SPORT);
+
+  // 1️⃣ Obtener fixtures de la API
+  console.log('1️⃣ Obteniendo fixtures de la API...');
+  const response = await axios.get(
+    `${BASE_API_URL}/competitions/${COMPETITION_ID}/fixtures`,
+    {
+      headers: { Authorization: AUTH_TOKEN },
+      params: { page: 1, pageCount: 50 }
+    }
+  );
+
+  const fixtures = response.data?.fixtures || [];
+  console.log(`✅ ${fixtures.length} fixtures obtenidos\n`);
+
+  // 2️⃣ Intentar insertar el primer fixture con detalles
+  console.log('2️⃣ Intentando insertar el primer fixture...');
+  const firstFixture = fixtures[0];
   
-  const [competitions] = await db.execute(
-    `SELECT id, name, status, fixture_count, sport_alias 
-     FROM competitions 
-     WHERE id = ?`,
-    [COMPETITION_ID]
-  );
+  console.log('📋 Datos del fixture:');
+  console.log(JSON.stringify(firstFixture, null, 2));
 
-  if (competitions.length === 0) {
-    console.log('❌ La competición NO existe en la base de datos');
-    return;
-  }
+  const query = `
+    INSERT INTO fixtures (
+      id,
+      competition_id,
+      competition_name,
+      end_time,
+      scheduled_start_time,
+      start_time,
+      sport_alias,
+      sport_name,
+      status,
+      tie,
+      winner_id,
+      participants0_id,
+      participants0_name,
+      participants0_score,
+      participants1_id,
+      participants1_name,
+      participants1_score,
+      hs_description,
+      rr_description
+    )
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON DUPLICATE KEY UPDATE
+      competition_id = VALUES(competition_id),
+      competition_name = VALUES(competition_name),
+      end_time = VALUES(end_time),
+      scheduled_start_time = VALUES(scheduled_start_time),
+      start_time = VALUES(start_time),
+      sport_alias = VALUES(sport_alias),
+      sport_name = VALUES(sport_name),
+      status = VALUES(status),
+      tie = VALUES(tie),
+      winner_id = VALUES(winner_id),
+      participants0_id = VALUES(participants0_id),
+      participants0_name = VALUES(participants0_name),
+      participants0_score = VALUES(participants0_score),
+      participants1_id = VALUES(participants1_id),
+      participants1_name = VALUES(participants1_name),
+      participants1_score = VALUES(participants1_score),
+      hs_description = VALUES(hs_description),
+      rr_description = VALUES(rr_description)
+  `;
 
-  const comp = competitions[0];
-  console.log('✅ Competición encontrada:', comp);
+  const values = [
+    firstFixture.id,
+    firstFixture.competition.id,
+    firstFixture.competition.name,
+    firstFixture.endTime,
+    firstFixture.scheduledStartTime,
+    firstFixture.startTime,
+    firstFixture.sport.alias,
+    firstFixture.sport.name,
+    firstFixture.status,
+    firstFixture.tie,
+    firstFixture.winnerId,
+    firstFixture.participants[0]?.id ?? null,
+    firstFixture.participants[0]?.name ?? null,
+    firstFixture.participants[0]?.score ?? null,
+    firstFixture.participants[1]?.id ?? null,
+    firstFixture.participants[1]?.name ?? null,
+    firstFixture.participants[1]?.score ?? null,
+    safeText(firstFixture.hs_description),
+    safeText(firstFixture.rr_description)
+  ];
 
-  // 2️⃣ Verificar si cumple las condiciones del script
-  console.log('\n2️⃣ Verificando condiciones del script insertOnlyOtherFixtures...');
-  const [filtered] = await db.execute(
-    `SELECT id, name, status, fixture_count 
-     FROM competitions 
-     WHERE id = ? 
-       AND fixture_count > 0 
-       AND status IN ('upcoming', 'started', 'ended')
-       AND sport_alias = ?`,
-    [COMPETITION_ID, SPORT]
-  );
-
-  if (filtered.length === 0) {
-    console.log('❌ La competición NO cumple las condiciones:');
-    console.log(`   - fixture_count > 0: ${comp.fixture_count > 0 ? '✅' : '❌'}`);
-    console.log(`   - status in ('upcoming', 'started', 'ended'): ${['upcoming', 'started', 'ended'].includes(comp.status) ? '✅' : '❌'}`);
-    console.log(`   - sport_alias = '${SPORT}': ${comp.sport_alias === SPORT ? '✅' : '❌'}`);
-    return;
-  }
-
-  console.log('✅ La competición cumple todas las condiciones');
-
-  // 3️⃣ Hacer petición a la API
-  console.log('\n3️⃣ Consultando fixtures desde la API...');
-  console.log(`URL: ${BASE_API_URL}/competitions/${COMPETITION_ID}/fixtures`);
+  console.log('\n📊 Valores a insertar:');
+  console.log(values);
 
   try {
-    const response = await axios.get(
-      `${BASE_API_URL}/competitions/${COMPETITION_ID}/fixtures`,
-      {
-        headers: { Authorization: AUTH_TOKEN },
-        params: { page: 1, pageCount: 50 }
-      }
-    );
+    const [result] = await db.execute(query, values);
+    console.log('\n✅ Fixture insertado exitosamente!');
+    console.log('Result:', result);
 
-    const fixtures = response.data?.fixtures || [];
-    
-    console.log(`✅ API respondió exitosamente`);
-    console.log(`📊 Fixtures recibidos: ${fixtures.length}`);
-
-    if (fixtures.length === 0) {
-      console.log('\n⚠️  La API devuelve 0 fixtures para esta competición');
-      console.log('   Posibles causas:');
-      console.log('   - Los fixtures aún no están disponibles en la API');
-      console.log('   - La competición no tiene fixtures programados aún');
-      console.log('   - fixture_count en la DB está desactualizado');
-    } else {
-      console.log('\n📋 Primeros 3 fixtures:');
-      fixtures.slice(0, 3).forEach((f, i) => {
-        console.log(`\n  ${i + 1}. ID: ${f.id}`);
-        console.log(`     Status: ${f.status}`);
-        console.log(`     ${f.participants[0]?.name || 'TBD'} vs ${f.participants[1]?.name || 'TBD'}`);
-        console.log(`     Start: ${f.scheduledStartTime ? new Date(f.scheduledStartTime).toISOString() : 'N/A'}`);
-      });
-
-      // 4️⃣ Verificar si están en la DB
-      console.log('\n4️⃣ Verificando fixtures en la base de datos...');
-      const fixtureIds = fixtures.map(f => f.id);
-      const placeholders = fixtureIds.map(() => '?').join(',');
-      
-      const [dbFixtures] = await db.execute(
-        `SELECT id FROM fixtures WHERE id IN (${placeholders})`,
-        fixtureIds
-      );
-
-      console.log(`📦 Fixtures en DB: ${dbFixtures.length}/${fixtures.length}`);
-      
-      if (dbFixtures.length === 0) {
-        console.log('⚠️  NINGÚN fixture está guardado en la base de datos');
-      } else if (dbFixtures.length < fixtures.length) {
-        console.log('⚠️  Algunos fixtures NO están en la base de datos');
-      } else {
-        console.log('✅ Todos los fixtures están en la base de datos');
-      }
-    }
+    // Verificar
+    const [check] = await db.execute('SELECT * FROM fixtures WHERE id = ?', [firstFixture.id]);
+    console.log('\n📦 Fixture en DB:', check[0]);
 
   } catch (error) {
-    console.log('❌ Error al consultar la API:');
-    console.log(`   Status: ${error.response?.status || 'N/A'}`);
-    console.log(`   Message: ${error.message}`);
-    console.log(`   Response: ${JSON.stringify(error.response?.data || {}, null, 2)}`);
+    console.log('\n❌ Error al insertar fixture:');
+    console.log('Error message:', error.message);
+    console.log('Error code:', error.code);
+    console.log('SQL State:', error.sqlState);
+    console.log('SQL Message:', error.sqlMessage);
   }
-
-  console.log('\n✅ Debug completado');
 }
 
-debugCompetition().catch(err => {
+testInsertFixtures().catch(err => {
   console.error('💥 Error fatal:', err);
   process.exit(1);
 });
