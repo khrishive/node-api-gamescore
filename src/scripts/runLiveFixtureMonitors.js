@@ -10,7 +10,7 @@ const API_KEY = process.env.GAME_SCORE_APIKEY;
 const API_URL = process.env.GAME_SCORE_API;
 
 const trackedFixtures = new Set(); // Fixture IDs for which WebSocket has already been opened
-const SPORTS_TO_MONITOR = ['cs2', 'lol']; // Sports to monitor
+const SPORTS_TO_MONITOR = ['cs2']; // Sports to monitor
 
 // 🔄 Changed to 15 minutes
 const POLL_INTERVAL = 15 * 60 * 1000; // 15 minutes in milliseconds
