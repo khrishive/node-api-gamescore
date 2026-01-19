@@ -6,11 +6,13 @@ async function removeDuplicates() {
   console.log('🔍 Buscando duplicados en dota2_pick_ban...\n');
   
   try {
-    // Eliminar duplicados manteniendo el registro más reciente (mayor id)
-    const deleteQuery = `
-      DELETE t1 FROM dota2_pick_ban t1
-      INNER JOIN dota2_pick_ban t2 
-      WHERE 
+    // Primero, identificar los IDs duplicados a eliminar (solo para fixture 979590)
+    console.log('📍 Buscando duplicados del fixture 979590...');
+    
+    const [duplicates] = await db.query(`
+      SELECT t1.id
+      FROM dota2_pick_ban t1
+      INNER JOIN dota2_pick_ban t2 ON
         t1.fixture_id = t2.fixture_id
         AND t1.map_number = t2.map_number
         AND t1.team_id = t2.team_id
@@ -18,11 +20,24 @@ async function removeDuplicates() {
         AND t1.type = t2.type
         AND t1.\`order\` = t2.\`order\`
         AND t1.id < t2.id
-    `;
+      WHERE t1.fixture_id = 979590
+    `);
     
-    const [result] = await db.query(deleteQuery);
+    console.log(`📋 Encontrados ${duplicates.length} registros duplicados\n`);
     
-    console.log(`✅ Duplicados eliminados: ${result.affectedRows} filas\n`);
+    if (duplicates.length > 0) {
+      const idsToDelete = duplicates.map(row => row.id);
+      
+      console.log('🗑️  Eliminando duplicados...');
+      const [result] = await db.query(
+        `DELETE FROM dota2_pick_ban WHERE id IN (?)`,
+        [idsToDelete]
+      );
+      
+      console.log(`✅ ${result.affectedRows} duplicados eliminados\n`);
+    } else {
+      console.log('✅ No hay duplicados para eliminar\n');
+    }
     
     // Verificar el resultado
     const [picks] = await db.query(
