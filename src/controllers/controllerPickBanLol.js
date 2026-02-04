@@ -66,7 +66,7 @@ export function renderPickBanLol(lolPickBanData, lolFixtureData) {
             return acc;
         }, {});
 
-    console.dir(sortedMaps, { depth: null });
+    //console.dir(sortedMaps, { depth: null });
     return sortedMaps;
 }
 

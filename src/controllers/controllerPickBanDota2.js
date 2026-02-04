@@ -68,7 +68,7 @@ export function renderPickBanDota2(dota2PickBanData, dota2FixtureData) {
             return acc;
         }, {});
 
-    console.dir(sortedMaps, { depth: null });
+    //console.dir(sortedMaps, { depth: null });
     return sortedMaps;
 }
 

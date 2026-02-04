@@ -1,9 +1,9 @@
 import { getMapResultsLol, getPickBanLol, getPlayerBuild } from './lolControllers.js';
 
 export function renderPlayerBuildsLol(lolPlayerBuild, lolFixtureData, lolPickBanData, team1Id, team2Id) {
-    console.log("🔍 lolPlayerBuild:", Array.isArray(lolPlayerBuild) ? lolPlayerBuild.length : typeof lolPlayerBuild);
-    console.log("🔍 lolFixtureData:", Array.isArray(lolFixtureData) ? lolFixtureData.length : typeof lolFixtureData);
-    console.log("🔍 lolPickBanData:", Array.isArray(lolPickBanData) ? `Array(${lolPickBanData.length})` : typeof lolPickBanData);
+    //console.log("🔍 lolPlayerBuild:", Array.isArray(lolPlayerBuild) ? lolPlayerBuild.length : typeof lolPlayerBuild);
+    //console.log("🔍 lolFixtureData:", Array.isArray(lolFixtureData) ? lolFixtureData.length : typeof lolFixtureData);
+    //console.log("🔍 lolPickBanData:", Array.isArray(lolPickBanData) ? `Array(${lolPickBanData.length})` : typeof lolPickBanData);
 
     // ✅ Validación
     if (!lolPlayerBuild?.length || !lolFixtureData?.length || !lolPickBanData?.length) {

@@ -168,5 +168,5 @@ export async function mainPlayerBuild(fixture_id, team1Id, team2Id) {
 
   const result = await mainPlayerBuild(fixtureId, team1Id, team2Id);
 
-  console.dir(result, { depth: null });
+  //console.dir(result, { depth: null });
 })();

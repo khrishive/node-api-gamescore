@@ -22,13 +22,15 @@ async function getCompetitionsFromDB(sport) {
 
   const [rows] = await db.execute(
     `
-    SELECT id
+    SELECT
+      id
     FROM competitions
     WHERE fixture_count > 0
-      AND status IN ('upcoming', 'started', 'ended')
       AND sport_alias = ?
-    ORDER BY id ASC
+      AND start_date IS NOT NULL
+      AND YEAR(FROM_UNIXTIME(start_date / 1000)) = YEAR(CURDATE());
     `,
+
     [sport]
   );
 

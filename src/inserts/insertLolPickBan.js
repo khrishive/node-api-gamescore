@@ -45,6 +45,10 @@ async function fetchPickBanData(fixtureId) {
       entry.type ?? '',
     ]);
   } catch (error) {
+    if (error.response?.status === 404) {
+      // 404 significa que no hay datos de pick/ban para este fixture, no es un error crítico
+      return [];
+    }
     console.error(`[ERROR] Fixture ${fixtureId}:`, error.message);
     return [];
   }
