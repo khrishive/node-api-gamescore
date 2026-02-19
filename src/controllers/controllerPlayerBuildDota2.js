@@ -24,6 +24,36 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
 
     const maps = {};
 
+    const uniquePlayerRowsMap = new Map();
+    (dota2PlayerBuild || []).forEach(row => {
+        const key = `${row.map_number}:${row.team_id}:${row.name}:${row.heroId}`;
+        const prev = uniquePlayerRowsMap.get(key);
+
+        if (!prev) {
+            uniquePlayerRowsMap.set(key, row);
+            return;
+        }
+
+        const prevUpdated = prev.updated_at ? new Date(prev.updated_at).getTime() : 0;
+        const rowUpdated = row.updated_at ? new Date(row.updated_at).getTime() : 0;
+        const prevId = Number(prev.id || 0);
+        const rowId = Number(row.id || 0);
+
+        if (rowUpdated > prevUpdated || (rowUpdated === prevUpdated && rowId > prevId)) {
+            uniquePlayerRowsMap.set(key, row);
+        }
+    });
+    const uniquePlayerRows = Array.from(uniquePlayerRowsMap.values());
+
+    const uniquePickBanMap = new Map();
+    (dota2PickBanData || []).forEach(pb => {
+        const key = `${pb.map_number}:${pb.team_id}:${pb.type}:${pb.order}:${pb.hero_id}`;
+        if (!uniquePickBanMap.has(key)) {
+            uniquePickBanMap.set(key, pb);
+        }
+    });
+    const uniquePickBanRows = Array.from(uniquePickBanMap.values());
+
     // 🔹 Paso 1: Construcción base de los mapas
     dota2FixtureData.forEach(mapEntry => {
         const mapNumber = mapEntry.map_number;
@@ -32,7 +62,7 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
 
         // Obtener teams por map
         const teamIds = [...new Set(
-            dota2PlayerBuild
+            uniquePlayerRows
                 .filter(p => p.map_number === mapNumber)
                 .map(p => p.team_id)
         )];
@@ -42,15 +72,15 @@ export function renderPlayerBuildsdota2(dota2PlayerBuild, dota2FixtureData, dota
             const teamPicks = [];
             const teamBans = [];
 
-            (dota2PickBanData || []).forEach(pb => {
-                if (pb.mapNumber === mapNumber && pb.teamId === teamId) {
-                    if (pb.type === 'pick') teamPicks.push(pb.heroId);
-                    else if (pb.type === 'ban') teamBans.push(pb.heroId);
+            uniquePickBanRows.forEach(pb => {
+                if (pb.map_number === mapNumber && pb.team_id === teamId) {
+                    if (pb.type === 'pick') teamPicks.push(pb.hero_id);
+                    else if (pb.type === 'ban') teamBans.push(pb.hero_id);
                 }
             });
 
             // Jugadores
-            const players = dota2PlayerBuild
+            const players = uniquePlayerRows
             .filter(p => p.map_number === mapNumber && p.team_id === teamId)
             .map(p => ({
                 name: p.name,
