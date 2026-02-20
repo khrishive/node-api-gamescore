@@ -4,6 +4,7 @@ import express from 'express';
 import { dota2MapStats } from '../controllers/controllerMapResultsDota2.js';
 import { dota2PickBan } from '../controllers/controllerPickBanDota2.js';
 import {mainPlayerBuild} from '../controllers/controllerPlayerBuildDota2.js';
+import { mainTeamStatsDota2 } from '../controllers/controllerTeamStatsDota2.js';
 
 const router = express.Router();
 
@@ -45,6 +46,35 @@ router.get('/:fixtureId/build/:team1/:team2', async (req, res) => {
     console.log(`⚙️ Generando build data → Fixture: ${fixtureIdNum}, Teams: ${team1Id} vs ${team2Id}`);
 
     const data = await mainPlayerBuild(fixtureIdNum, team1Id, team2Id);
+
+    if (!data || !data.length) {
+      return res.status(404).json({ error: 'No data found for this fixture' });
+    }
+
+    res.json({
+      fixture_id: fixtureIdNum,
+      team1_id: team1Id,
+      team2_id: team2Id,
+      maps: data,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.get('/:fixtureId/teamStats/:team1/:team2', async (req, res) => {
+  try {
+    const { fixtureId, team1, team2 } = req.params;
+
+    const fixtureIdNum = parseInt(fixtureId);
+    const team1Id = parseInt(team1);
+    const team2Id = parseInt(team2);
+
+    if (isNaN(fixtureIdNum) || isNaN(team1Id) || isNaN(team2Id)) {
+      return res.status(400).json({ error: 'fixtureId, team1 y team2 deben ser números válidos' });
+    }
+
+    const data = await mainTeamStatsDota2(fixtureIdNum, team1Id, team2Id);
 
     if (!data || !data.length) {
       return res.status(404).json({ error: 'No data found for this fixture' });
