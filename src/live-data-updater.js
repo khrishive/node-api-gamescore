@@ -12,11 +12,12 @@ const apiKey = process.env.GAME_SCORE_APIKEY;
 const TOKEN = apiKey;
 const WP_API_KEY = process.env.POST_SYNC_API_KEY; // Your API Key for WP
 const PICKEM_API_KEY = process.env.PICKEM_API_KEY; // Your API Key for PICKEM
-const WP_DEV_URL = 'https://wordpressmu-1372681-5818581.cloudwaysapps.com/wp-json/fixtures/v1/update';
-const WP_STAGING_URL = 'https://wordpressmu-1301114-4845462.cloudwaysapps.com/wp-json/fixtures/v1/update';
-const WP_PROD_URL = 'https://www.hotspawn.com/wp-json/fixtures/v1/update';
-const RR_DEV_URL = 'https://wordpress-1372681-5668655.cloudwaysapps.com/wp-json/fixtures/v1/update';
-const PICKEM_URL = 'https://phpstack-1372681-6459848.cloudwaysapps.com/api/v1/fixtures/update';
+const WP_DEV_URL = process.env.WP_DEV_URL;
+const WP_STAGING_URL = process.env.WP_STAGING_URL;
+const WP_PROD_URL = process.env.WP_PROD_URL;
+const RR_DEV_URL = process.env.RR_DEV_URL;
+const PICKEM_URL = process.env.PICKEM_URL;
+const PICKEM_STAGING_URL = process.env.PICKEM_STAGING_URL;
 
 let reconnectAttempts = 0;
 
@@ -150,6 +151,28 @@ export function connectWebSocket(fixture_id) {
             data: err.response?.data
           });
         }
+
+        // --- Send to PICKEM STAGING ---
+        try {
+          const pickemPayload = {
+            ...payload,
+            external_id: Number(payload.external_id)
+          };
+
+          const res = await axios.post(PICKEM_STAGING_URL, pickemPayload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': PICKEM_API_KEY
+            }
+          });
+
+          console.log('[POST -> PICKEM STAGING] Response:', res.data);
+        } catch (err) {
+          console.error('[POST -> PICKEM STAGING] Error sending:', err.message, {
+            status: err.response?.status,
+            data: err.response?.data
+          });
+        }
       }
 
       // --- Detect end of the match ---
@@ -245,6 +268,28 @@ export function connectWebSocket(fixture_id) {
           console.log('[POST -> PICKEM] Response:', res.data);
         } catch (err) {
           console.error('[POST -> PICKEM] Error sending:', err.message, {
+            status: err.response?.status,
+            data: err.response?.data
+          });
+        }
+
+        // --- Send to PICKEM STAGING ---
+        try {
+          const pickemPayload = {
+            ...payload,
+            external_id: Number(payload.external_id)
+          };
+
+          const res = await axios.post(PICKEM_STAGING_URL, pickemPayload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': PICKEM_API_KEY
+            }
+          });
+
+          console.log('[POST -> PICKEM STAGING] Response:', res.data);
+        } catch (err) {
+          console.error('[POST -> PICKEM STAGING] Error sending:', err.message, {
             status: err.response?.status,
             data: err.response?.data
           });
@@ -391,6 +436,37 @@ export function connectWebSocket(fixture_id) {
           console.log('[POST -> PICKEM] Response:', res.data);
         } catch (err) {
           console.error('[POST -> PICKEM] Error sending:', err.message, {
+            status: err.response?.status,
+            data: err.response?.data
+          });
+        }
+
+        // --- Send to PICKEM STAGING ---
+        try {
+          const toIntOrNull = (v) => {
+            if (v === undefined || v === null) return null;
+            const n = Number(v);
+            return Number.isNaN(n) ? null : n;
+          };
+
+          const pickemPayload = {
+            external_id: Number(fixtureId),
+            participants0_id: toIntOrNull(scores[0]?.id),
+            participants0_score: scores[0]?.score ?? null,
+            participants1_id: toIntOrNull(scores[1]?.id),
+            participants1_score: scores[1]?.score ?? null
+          };
+
+          const res = await axios.post(PICKEM_STAGING_URL, pickemPayload, {
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': PICKEM_API_KEY
+            }
+          });
+
+          console.log('[POST -> PICKEM STAGING] Response:', res.data);
+        } catch (err) {
+          console.error('[POST -> PICKEM STAGING] Error sending:', err.message, {
             status: err.response?.status,
             data: err.response?.data
           });
