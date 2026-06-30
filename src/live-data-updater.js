@@ -16,7 +16,7 @@ const WP_DEV_URL = 'https://wordpressmu-1372681-5818581.cloudwaysapps.com/wp-jso
 const WP_STAGING_URL = 'https://wordpressmu-1301114-4845462.cloudwaysapps.com/wp-json/fixtures/v1/update';
 const WP_PROD_URL = 'https://www.hotspawn.com/wp-json/fixtures/v1/update';
 const RR_DEV_URL = 'https://wordpress-1372681-5668655.cloudwaysapps.com/wp-json/fixtures/v1/update';
-const PICKEM_URL = 'https://phpstack-1301114-6142459.cloudwaysapps.com/api/v1/fixtures/update';
+const PICKEM_URL = 'https://phpstack-1372681-6459848.cloudwaysapps.com/api/v1/fixtures/update';
 
 let reconnectAttempts = 0;
 
