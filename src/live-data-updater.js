@@ -134,7 +134,8 @@ export function connectWebSocket(fixture_id) {
         try {
           const pickemPayload = {
             ...payload,
-            external_id: Number(payload.external_id)
+            external_id: Number(payload.external_id),
+            status: typeof payload.status === 'string' ? payload.status.toLowerCase() : payload.status
           };
 
           const res = await axios.post(PICKEM_URL, pickemPayload, {
@@ -156,7 +157,8 @@ export function connectWebSocket(fixture_id) {
         try {
           const pickemPayload = {
             ...payload,
-            external_id: Number(payload.external_id)
+            external_id: Number(payload.external_id),
+            status: typeof payload.status === 'string' ? payload.status.toLowerCase() : payload.status
           };
 
           const res = await axios.post(PICKEM_STAGING_URL, pickemPayload, {
@@ -255,7 +257,8 @@ export function connectWebSocket(fixture_id) {
         try {
           const pickemPayload = {
             ...payload,
-            external_id: Number(payload.external_id)
+            external_id: Number(payload.external_id),
+            status: typeof payload.status === 'string' ? payload.status.toLowerCase() : payload.status
           };
 
           const res = await axios.post(PICKEM_URL, pickemPayload, {
@@ -277,7 +280,8 @@ export function connectWebSocket(fixture_id) {
         try {
           const pickemPayload = {
             ...payload,
-            external_id: Number(payload.external_id)
+            external_id: Number(payload.external_id),
+            status: typeof payload.status === 'string' ? payload.status.toLowerCase() : payload.status
           };
 
           const res = await axios.post(PICKEM_STAGING_URL, pickemPayload, {
