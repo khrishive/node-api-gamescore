@@ -64,12 +64,13 @@ export function connectWebSocket(fixture_id) {
           status: 'Started'
         };
 
-        
+        console.log('[fixture_started] Payload to send:', payload);
+
         // --- Send to DB ---
 
         try {
           const res = await updateFixtureFields( 'cs2' , payload)
-          console.log('[UPDATE ON DB] Response:', res.data);
+          console.log('[UPDATE ON DB] Response:', res);
         } catch (err) {
           console.error('[UPDATE ON DB] Error sending:', err.message);
         }
@@ -84,7 +85,7 @@ export function connectWebSocket(fixture_id) {
           });
           console.log('[POST -> WP DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP DEV] Error sending:', err.message);
+          console.error('[POST -> WP DEV] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to WP STAGING ---
@@ -101,20 +102,21 @@ export function connectWebSocket(fixture_id) {
           });
           console.log('[POST -> WP STAGING] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP STAGING] Error sending:', err.message);
+          console.error('[POST -> WP STAGING] Error sending:', err.message, err.response?.data);
         }
 
-        // --- Send to WP PROD ---
+        // --- Send to HS PROD ---
         try {
+          console.log('[POST -> HS PROD] Payload:', payload);
           const res = await axios.post(WP_PROD_URL, payload, {
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> WP PROD] Response:', res.data);
+          console.log('[POST -> HS PROD] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP PROD] Error sending:', err.message);
+          console.error('[POST -> HS PROD] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to RR DEV ---
@@ -127,7 +129,7 @@ export function connectWebSocket(fixture_id) {
           });
           console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> RR DEV] Error sending:', err.message);
+          console.error('[POST -> RR DEV] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to PICKEM---
@@ -181,18 +183,20 @@ export function connectWebSocket(fixture_id) {
       if (message.type === 'fixture_ended') {
         const fixtureId = message.payload.fixtureId;
 
-        console.log('[WebSocket] fixture_started event detected:', { fixtureId });
+        console.log('[WebSocket] fixture_ended event detected:', { fixtureId });
 
         const payload = {
           external_id: fixtureId,
           status: 'Ended'
         };
 
+        console.log('[fixture_ended] Payload to send:', payload);
+
         // --- Send to DB ---
 
         try {
           const res = await updateFixtureFields( 'cs2' , payload)
-          console.log('[UPDATE ON DB] Response:', res.data);
+          console.log('[UPDATE ON DB] Response:', res);
         } catch (err) {
           console.error('[UPDATE ON DB] Error sending:', err.message);
         }
@@ -207,7 +211,7 @@ export function connectWebSocket(fixture_id) {
           });
           console.log('[POST -> WP DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP DEV] Error sending:', err.message);
+          console.error('[POST -> WP DEV] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to WP STAGING ---
@@ -224,20 +228,21 @@ export function connectWebSocket(fixture_id) {
           });
           console.log('[POST -> WP STAGING] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP STAGING] Error sending:', err.message);
+          console.error('[POST -> WP STAGING] Error sending:', err.message, err.response?.data);
         }
 
-        // --- Send to WP PROD ---
+        // --- Send to HS PROD ---
         try {
+          console.log('[POST -> HS PROD] Payload:', payload);
           const res = await axios.post(WP_PROD_URL, payload, {
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': WP_API_KEY
             }
           });
-          console.log('[POST -> WP PROD] Response:', res.data);
+          console.log('[POST -> HS PROD] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP PROD] Error sending:', err.message);
+          console.error('[POST -> HS PROD] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to RR DEV ---
@@ -250,7 +255,7 @@ export function connectWebSocket(fixture_id) {
           });
           console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> RR DEV] Error sending:', err.message);
+          console.error('[POST -> RR DEV] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to PICKEM ---
@@ -309,31 +314,28 @@ export function connectWebSocket(fixture_id) {
 
         console.log('[WebSocket] score_changed event detected:', { fixtureId, scores });
 
+        const payload = {
+          external_id: fixtureId,
+          participants0_id: scores[0]?.id || null,
+          participants0_score: scores[0]?.score ?? null,
+          participants1_id: scores[1]?.id || null,
+          participants1_score: scores[1]?.score ?? null
+        };
+
+        console.log('[score_changed] Payload to send:', payload);
 
         // --- Send to DB ---
 
         try {
-          const res = await updateFixtureFields( 'cs2' , {
-            external_id: fixtureId,
-            participants0_id: scores[0]?.id || null,
-            participants0_score: scores[0]?.score ?? null,
-            participants1_id: scores[1]?.id || null,
-            participants1_score: scores[1]?.score ?? null
-          })
-          console.log('[UPDATE ON DB] Response:', res.data);
+          const res = await updateFixtureFields( 'cs2' , payload)
+          console.log('[UPDATE ON DB] Response:', res);
         } catch (err) {
           console.error('[UPDATE ON DB] Error sending:', err.message);
         }
 
         // --- Send to WP DEV ---
         try {
-          const res = await axios.post(WP_DEV_URL, {
-            external_id: fixtureId,
-            participants0_id: scores[0]?.id || null,
-            participants0_score: scores[0]?.score ?? null,
-            participants1_id: scores[1]?.id || null,
-            participants1_score: scores[1]?.score ?? null
-          }, {
+          const res = await axios.post(WP_DEV_URL, payload, {
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': WP_API_KEY
@@ -342,20 +344,12 @@ export function connectWebSocket(fixture_id) {
 
           console.log('[POST -> WP DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP DEV] Error sending:', err.message);
+          console.error('[POST -> WP DEV] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to WP STAGING ---
         try {
-          
-
-          const res = await axios.post(WP_STAGING_URL, {
-            external_id: fixtureId,
-            participants0_id: scores[0]?.id || null,
-            participants0_score: scores[0]?.score ?? null,
-            participants1_id: scores[1]?.id || null,
-            participants1_score: scores[1]?.score ?? null
-          }, {
+          const res = await axios.post(WP_STAGING_URL, payload, {
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': WP_API_KEY
@@ -368,41 +362,28 @@ export function connectWebSocket(fixture_id) {
 
           console.log('[POST -> WP STAGING] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP STAGING] Error sending:', err.message);
+          console.error('[POST -> WP STAGING] Error sending:', err.message, err.response?.data);
         }
 
-        // --- Send to WP PROD ---
+        // --- Send to HS PROD ---
 
         try {
-          
-
-          const res = await axios.post(WP_PROD_URL, {
-            external_id: fixtureId,
-            participants0_id: scores[0]?.id || null,
-            participants0_score: scores[0]?.score ?? null,
-            participants1_id: scores[1]?.id || null,
-            participants1_score: scores[1]?.score ?? null
-          }, {
+          console.log('[POST -> HS PROD] Payload:', payload);
+          const res = await axios.post(WP_PROD_URL, payload, {
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': WP_API_KEY
             }
           });
 
-          console.log('[POST -> WP PROD] Response:', res.data);
+          console.log('[POST -> HS PROD] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> WP PROD] Error sending:', err.message);
+          console.error('[POST -> HS PROD] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to RR DEV ---
         try {
-          const res = await axios.post(RR_DEV_URL, {
-            external_id: fixtureId,
-            participants0_id: scores[0]?.id || null,
-            participants0_score: scores[0]?.score ?? null,
-            participants1_id: scores[1]?.id || null,
-            participants1_score: scores[1]?.score ?? null
-          }, {
+          const res = await axios.post(RR_DEV_URL, payload, {
             headers: {
               'Content-Type': 'application/json',
               'X-Api-Key': WP_API_KEY
@@ -411,7 +392,7 @@ export function connectWebSocket(fixture_id) {
 
           console.log('[POST -> RR DEV] Response:', res.data);
         } catch (err) {
-          console.error('[POST -> RR DEV] Error sending:', err.message);
+          console.error('[POST -> RR DEV] Error sending:', err.message, err.response?.data);
         }
 
         // --- Send to PICKEM ---
