@@ -187,7 +187,8 @@ export function connectWebSocket(fixture_id) {
 
         const payload = {
           external_id: fixtureId,
-          status: 'Ended'
+          status: 'Ended',
+          end_time: Date.now()
         };
 
         console.log('[fixture_ended] Payload to send:', payload);
