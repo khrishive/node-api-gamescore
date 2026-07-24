@@ -10,6 +10,7 @@ export async function updateFixtureFields(game, requestBody) {
     participants1_id,
     participants1_score,
     status,
+    end_time,
   } = requestBody;
 
   if (!external_id) {
@@ -61,6 +62,11 @@ export async function updateFixtureFields(game, requestBody) {
   const allowed_status = ['Started', 'Ended'];
   if (status && allowed_status.includes(status)) {
     updates.status = status;
+  }
+
+  // ✅ Actualizar end_time si viene en el payload
+  if (end_time !== undefined && end_time !== null) {
+    updates.end_time = end_time;
   }
 
   // 🔄 Si hay algo que actualizar, ejecuta el UPDATE

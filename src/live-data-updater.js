@@ -266,6 +266,7 @@ export function connectWebSocket(fixture_id) {
             external_id: Number(payload.external_id),
             status: typeof payload.status === 'string' ? payload.status.toLowerCase() : payload.status
           };
+          delete pickemPayload.end_time;
 
           const res = await axios.post(PICKEM_URL, pickemPayload, {
             headers: {
@@ -289,6 +290,7 @@ export function connectWebSocket(fixture_id) {
             external_id: Number(payload.external_id),
             status: typeof payload.status === 'string' ? payload.status.toLowerCase() : payload.status
           };
+          delete pickemPayload.end_time;
 
           const res = await axios.post(PICKEM_STAGING_URL, pickemPayload, {
             headers: {
