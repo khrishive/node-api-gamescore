@@ -17,14 +17,10 @@ function getDbBySport(sport = 'cs2') {
   return dbCS2;
 }
 
-// 🧠 Format values by type
-function normalize(value, type) {
-  if (value === null || value === undefined) {
-    if (type === 'text') return 'TBD';
-    if (type === 'number') return 0;
-    if (type === 'timestamp') return 9999999999999;
-  }
-  return value;
+// 🧠 Pass values through as-is; missing values become NULL (never a placeholder like
+// "TBD", 0 or a far-future timestamp, which would be indistinguishable from real data)
+function normalize(value) {
+  return value === null || value === undefined ? null : value;
 }
 
 // 🧠 Extract and normalize event fields
@@ -33,36 +29,36 @@ function extractEventData(payload, fixtureId, event) {
   const actor = payload.killer ?? payload.planter ?? payload.assister ?? payload.defuser ?? null;
 
   return {
-    fixture_id: normalize(fixtureId, 'number'),
-    snapshot_number: normalize(payload.snapshotNumber, 'number'),
-    sort_index: normalize(event.sortIndex, 'number'),
-    event_type: normalize(event.type, 'text'),
-    name: normalize(name, 'text'),
-    map_name: normalize(payload.mapName, 'text'),
-    map_number: normalize(payload.mapNumber, 'number'),
-    half_number: normalize(payload.halfNumber, 'number'),
-    round_number: normalize(payload.roundNumber, 'number'),
-    event_timestamp: normalize(payload.timestamp, 'timestamp'),
+    fixture_id: normalize(fixtureId),
+    snapshot_number: normalize(payload.snapshotNumber),
+    sort_index: normalize(event.sortIndex),
+    event_type: normalize(event.type),
+    name: normalize(name),
+    map_name: normalize(payload.mapName),
+    map_number: normalize(payload.mapNumber),
+    half_number: normalize(payload.halfNumber),
+    round_number: normalize(payload.roundNumber),
+    event_timestamp: normalize(payload.timestamp),
 
-    actor_id: normalize(actor?.id, 'text'),
-    actor_name: normalize(actor?.name, 'text'),
-    actor_team_id: normalize(actor?.teamId, 'text'),
-    actor_side: normalize(actor?.side, 'text'),
+    actor_id: normalize(actor?.id),
+    actor_name: normalize(actor?.name),
+    actor_team_id: normalize(actor?.teamId),
+    actor_side: normalize(actor?.side),
 
-    victim_id: normalize(payload.victim?.id, 'text'),
-    victim_name: normalize(payload.victim?.name, 'text'),
-    victim_team_id: normalize(payload.victim?.teamId, 'text'),
-    victim_side: normalize(payload.victim?.side, 'text'),
+    victim_id: normalize(payload.victim?.id),
+    victim_name: normalize(payload.victim?.name),
+    victim_team_id: normalize(payload.victim?.teamId),
+    victim_side: normalize(payload.victim?.side),
 
-    weapon: normalize(payload.weapon, 'text'),
-    kill_id: normalize(payload.killId, 'text'),
-    headshot: normalize(payload.headshot, 'number'),
-    penetrated: normalize(payload.penetrated, 'number'),
-    no_scope: normalize(payload.noScope, 'number'),
-    through_smoke: normalize(payload.throughSmoke, 'number'),
-    while_blinded: normalize(payload.whileBlinded, 'number'),
+    weapon: normalize(payload.weapon),
+    kill_id: normalize(payload.killId),
+    headshot: normalize(payload.headshot),
+    penetrated: normalize(payload.penetrated),
+    no_scope: normalize(payload.noScope),
+    through_smoke: normalize(payload.throughSmoke),
+    while_blinded: normalize(payload.whileBlinded),
 
-    winner_team_id: normalize(payload.winnerId, 'text')
+    winner_team_id: normalize(payload.winnerId)
   };
 }
 
