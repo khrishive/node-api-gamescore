@@ -86,6 +86,37 @@ export async function getMapStats(req, res) {
   }
 }
 
+// Same source table as getMapStats, but returns one row per player per map,
+// with no cross-map averaging. ADR is a per-round rate, so averaging it across
+// maps of different length (e.g. a Bo3 of 16/30/20 rounds) is meaningless —
+// callers that need a fixture-level number should weight by rounds themselves
+// using map_number to join against map_team_round_scores.
+export async function getMapStatsByMap(req, res) {
+  const fixtureId = req.params.fixtureId;
+  const sport = req.query.sport || 'cs2';
+  const db = getDbBySport(sport);
+
+  if (!fixtureId) {
+    return res.status(400).json({ error: 'Missing fixtureId parameter' });
+  }
+
+  try {
+    const [rows] = await db.query(
+      `SELECT player_id, player_name, team_id, map_number, map_name,
+              kills, deaths, assists, plus_minus, adr, headshot_percent
+       FROM map_team_players
+       WHERE fixture_id = ?
+       ORDER BY map_number, team_id, player_id`,
+      [fixtureId]
+    );
+
+    res.json(rows);
+  } catch (error) {
+    console.error('Error fetching per-map map_team_players stats:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
 export async function getMapRoundScores(req, res) {
   const fixtureId = req.params.fixtureId;
   const sport = req.query.sport || 'cs2';
