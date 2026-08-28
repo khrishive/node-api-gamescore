@@ -119,7 +119,7 @@ export async function getFixtureStats(fixtureId, mapId = null, sport = 'cs2') {
 
   // 6. Stats agregadas por equipo
   const teamStats = teams.map(team => {
-    const players = playerStats.filter(p => p.team_id === team.id);
+    const players = playerStats.filter(p => String(p.team_id) === String(team.id));
     return {
       ...team,
       players: players.map(p => ({
