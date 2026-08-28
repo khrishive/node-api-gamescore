@@ -20,17 +20,24 @@ const RR_DEV_URL = process.env.RR_DEV_URL;
 const PICKEM_URL = process.env.PICKEM_URL;
 const PICKEM_STAGING_URL = process.env.PICKEM_STAGING_URL;
 
-let reconnectAttempts = 0;
-
-export function connectWebSocket(fixture_id) {
-  let context = {
+// GSK's WebSocket drops connections often (invalid close frames on their
+// end) and never replays missed events on reconnect. Reusing the same
+// context object across reconnects (instead of starting from a blank one)
+// keeps the last-known mapId/roundId valid for whatever's left of the
+// current round, instead of losing everything until the next map_started/
+// round_started. There's no REST endpoint that exposes the in-progress
+// map/round to resync from — GET /fixtures/:id only reports maps once
+// fully verified/completed.
+export function connectWebSocket(fixture_id, existingContext = null) {
+  const context = existingContext || {
     fixtureId: fixture_id,
     mapId: null,
     mapNumber: null,
     mapName: null,
     roundId: null,
     roundNumber: null,
-    ended: false // 🔹 flag to know if it has already finished
+    ended: false, // 🔹 flag to know if it has already finished
+    reconnectAttempts: 0
   };
 
   const WS_URL = `wss://api.gamescorekeeper.com/v2/live/${fixture_id}`;
@@ -44,7 +51,7 @@ export function connectWebSocket(fixture_id) {
 
   ws.on('open', () => {
     console.log(`[WebSocket] Connected to fixture ${context.fixtureId}`);
-    reconnectAttempts = 0;
+    context.reconnectAttempts = 0;
 
     pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
@@ -503,20 +510,20 @@ export function connectWebSocket(fixture_id) {
     // 🔹 Normal closure → do not reconnect
     if (code === 1000) {
       console.log(`[WebSocket] Connection closed normally (${context.fixtureId}), it will not be retried.`);
-      reconnectAttempts = 0;
+      context.reconnectAttempts = 0;
       return;
     }
 
     // 🔹 Abnormal errors → limit attempts
-    reconnectAttempts++;
-    if (reconnectAttempts > 5) {
+    context.reconnectAttempts++;
+    if (context.reconnectAttempts > 5) {
       console.error(`[WebSocket] Too many failed attempts (${context.fixtureId}), stopping reconnections.`);
       return;
     }
 
-    const timeout = Math.min(30000, 5000 * reconnectAttempts);
-    console.log(`[WebSocket] Retrying connection in ${timeout}ms (Attempt ${reconnectAttempts})`);
-    setTimeout(() => connectWebSocket(fixture_id), timeout);
+    const timeout = Math.min(30000, 5000 * context.reconnectAttempts);
+    console.log(`[WebSocket] Retrying connection in ${timeout}ms (Attempt ${context.reconnectAttempts})`);
+    setTimeout(() => connectWebSocket(fixture_id, context), timeout);
   });
 }
 
