@@ -1,4 +1,4 @@
-import { db } from '../../db.js';
+import { dbCS2 as db } from '../../db.js';
 import KillsLogger from './loggers/KillsLogger.js';
 
 function isValidKillEvent(killEvent, fixtureId, mapId, roundId) {

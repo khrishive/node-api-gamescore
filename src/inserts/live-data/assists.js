@@ -1,10 +1,13 @@
-import { db } from '../../db.js';
+import { dbCS2 as db } from '../../db.js';
 import assistsLogger from './loggers/assistsLogger.js';
 
+// GSK's assist/flash_assist payloads carry no id of their own — only the
+// killId of the kill they're attached to. `assists.id` is auto-increment;
+// dedup happens via the unique key on (kill_id, assister_id, type).
 function isValidAssistEvent(assistEvent, fixtureId, mapId, roundId, type) {
   return (
     assistEvent &&
-    assistEvent.id &&
+    assistEvent.killId &&
     assistEvent.assister && assistEvent.assister.id &&
     assistEvent.victim && assistEvent.victim.id &&
     typeof assistEvent.timestamp !== 'undefined' &&
@@ -26,27 +29,29 @@ export async function insertAssist(assistEvent, fixtureId, mapId, roundId, type)
     return;
   }
 
-  const {
-    id, assister, victim, killId, timestamp
-  } = assistEvent;
+  const { assister, victim, killId, timestamp } = assistEvent;
 
   try {
     await db.query(`
       INSERT IGNORE INTO assists (
-        id, round_id, map_id, fixture_id, assister_id, victim_id, kill_id, type, timestamp
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        round_id, map_id, fixture_id,
+        assister_id, assister_team_id,
+        victim_id, victim_team_id,
+        kill_id, type, timestamp
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `, [
-      id, roundId, mapId, fixtureId, assister.id, victim.id, killId, type, timestamp
+      roundId, mapId, fixtureId,
+      assister.id, assister.teamId ?? null,
+      victim.id, victim.teamId ?? null,
+      killId, type, timestamp
     ]);
     assistsLogger.debug({
       msg: '[insertAssist] Assist inserted',
-      id, roundId, mapId, fixtureId,
+      roundId, mapId, fixtureId,
       assisterId: assister.id,
       victimId: victim.id,
       killId, type, timestamp
     });
-
-    console.log('Assist processed')
   } catch (error) {
     assistsLogger.error({
       msg: '[insertAssist] Error inserting assist',

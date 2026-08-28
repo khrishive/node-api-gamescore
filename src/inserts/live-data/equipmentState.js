@@ -1,4 +1,4 @@
-import { db } from '../../db.js';
+import { dbCS2 as db } from '../../db.js';
 import equipmentStateLogger from './loggers/equipmentStateLogger.js';
 
 function isValidPlayer(player) {

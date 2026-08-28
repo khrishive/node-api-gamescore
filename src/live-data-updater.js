@@ -4,6 +4,7 @@ import WebSocket from 'ws';
 import dotenv from 'dotenv';
 import axios from 'axios';
 import {updateFixtureFields} from './inserts/insertUpdatesOnLiveFixturesScores.js';
+import { handleLiveEvent } from './inserts/live-data/index.js';
 
 dotenv.config();
 
@@ -24,7 +25,10 @@ let reconnectAttempts = 0;
 export function connectWebSocket(fixture_id) {
   let context = {
     fixtureId: fixture_id,
+    mapId: null,
     mapNumber: null,
+    mapName: null,
+    roundId: null,
     roundNumber: null,
     ended: false // 🔹 flag to know if it has already finished
   };
@@ -461,17 +465,10 @@ export function connectWebSocket(fixture_id) {
         }
       }
 
-      // --- Update context ---
-      if (message.type === 'occurrence' && message.payload) {
-        const name = message.payload.name;
-        if (name === 'map_started') {
-          context.mapNumber = message.payload.mapNumber || null;
-          context.roundNumber = null;
-        }
-        if (name === 'round_started') {
-          context.roundNumber = message.payload.roundNumber || null;
-        }
-      }
+      // --- Dispatch to kills/assists/maps/rounds/equipment_state derivation ---
+      // handleLiveEvent also maintains context.mapNumber/mapId/roundNumber/roundId
+      // as map_started/round_started events come in.
+      await handleLiveEvent(message, context);
 
       // --- System events ---
       if (message.type === 'auth') {

@@ -1,7 +1,11 @@
-import { db } from '../../db.js';
+import { dbCS2 as db } from '../../db.js';
 import utilsLogger from './loggers/utilsLogger.js';
 
-// Insert a player if it does not exist
+// Insert a bare-minimum player row if it doesn't exist yet. Real profile data
+// (first_name, country, etc.) is filled in separately by
+// insertMissingTeamsAndPlayers.js — this is only a safety net so a kill/assist
+// referencing a brand-new player id doesn't leave it completely unknown.
+// INSERT IGNORE never overwrites an existing (richer) row.
 export async function ensurePlayerExists(player) {
   utilsLogger.debug({
     msg: '[ensurePlayerExists] Data received for insert',
@@ -17,7 +21,7 @@ export async function ensurePlayerExists(player) {
   }
   try {
     await db.query(`
-      INSERT IGNORE INTO players (id, nickname)
+      INSERT IGNORE INTO player (id, nickname)
       VALUES (?, ?)
     `, [player.id, player.name || player.nickname || null]);
     utilsLogger.debug({

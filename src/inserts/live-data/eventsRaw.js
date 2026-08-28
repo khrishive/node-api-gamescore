@@ -1,4 +1,4 @@
-import { db } from '../../db.js';
+import { dbCS2 as db } from '../../db.js';
 
 function isValidRawEvent(event, fixtureId, eventType, timestamp) {
   return (
